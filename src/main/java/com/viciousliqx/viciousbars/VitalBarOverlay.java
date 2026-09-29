@@ -3,17 +3,19 @@ package com.viciousliqx.viciousbars;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.image.BufferedImage;
+import net.runelite.api.Client;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayPosition;
 
 /**
- * Shared drawing + floating-placement logic for every vital bar. FIXED
- * placement (docked to a panel edge) isn't implemented yet - only FLOATING
- * bars render for now, so a bar's Placement config must be set to Floating
- * to see anything on screen at this stage. Subclasses supply the live data
- * (current/max, color, icon, styling) for one specific bar.
+ * Shared drawing + placement logic for every vital bar. FLOATING bars are
+ * draggable (alt-click, standard RuneLite overlay behavior) with a
+ * persisted position; FIXED bars are pinned every frame to a position
+ * computed by {@link PanelDock} and can't be dragged. Subclasses supply the
+ * live data (current/max, color, icon, styling) for one specific bar.
  */
 public abstract class VitalBarOverlay extends Overlay
 {
@@ -21,13 +23,23 @@ public abstract class VitalBarOverlay extends Overlay
 	private static final int ICON_SIZE = 18;
 	private static final int PADDING = 3;
 
-	protected VitalBarOverlay()
+	private final Client client;
+
+	protected VitalBarOverlay(Client client)
 	{
+		this.client = client;
 		setPosition(OverlayPosition.DYNAMIC);
-		setMovable(true);
 	}
 
 	protected abstract boolean shouldRender();
+
+	protected abstract PlacementMode getPlacementMode();
+
+	protected abstract DockSide getDockSide();
+
+	protected abstract int getDockSlot();
+
+	protected abstract int getDockPadding();
 
 	protected abstract int getCurrent();
 
@@ -58,7 +70,28 @@ public abstract class VitalBarOverlay extends Overlay
 			return null;
 		}
 
-		Orientation orientation = getOrientation();
+		PlacementMode placementMode = getPlacementMode();
+		setMovable(placementMode == PlacementMode.FLOATING);
+
+		Orientation orientation;
+		if (placementMode == PlacementMode.FIXED)
+		{
+			DockSide side = getDockSide();
+			orientation = side.orientation();
+
+			Point pos = PanelDock.position(client, side, getDockSlot(), getThickness(), getDockPadding());
+			if (pos == null)
+			{
+				// Panel widget not present (wrong layout, or not logged in yet) - nothing to dock to.
+				return null;
+			}
+			setPreferredLocation(pos);
+		}
+		else
+		{
+			orientation = getOrientation();
+		}
+
 		int width = orientation == Orientation.VERTICAL ? getThickness() : getLength();
 		int height = orientation == Orientation.VERTICAL ? getLength() : getThickness();
 

@@ -23,6 +23,7 @@ class WarmthBarOverlay extends VitalBarOverlay
 	@Inject
 	private WarmthBarOverlay(Client client, ViciousBarsConfig config, SkillIconManager skillIconManager)
 	{
+		super(client);
 		this.client = client;
 		this.config = config;
 		this.skillIconManager = skillIconManager;
@@ -31,7 +32,7 @@ class WarmthBarOverlay extends VitalBarOverlay
 	@Override
 	protected boolean shouldRender()
 	{
-		if (!config.warmthEnabled() || config.warmthPlacementMode() != PlacementMode.FLOATING)
+		if (!config.warmthEnabled())
 		{
 			return false;
 		}
@@ -47,6 +48,30 @@ class WarmthBarOverlay extends VitalBarOverlay
 				return client.getLocalPlayer() != null
 					&& client.getLocalPlayer().getWorldLocation().getRegionID() == WINTERTODT_REGION;
 		}
+	}
+
+	@Override
+	protected PlacementMode getPlacementMode()
+	{
+		return config.warmthPlacementMode();
+	}
+
+	@Override
+	protected DockSide getDockSide()
+	{
+		return config.warmthDockSide();
+	}
+
+	@Override
+	protected int getDockSlot()
+	{
+		return config.warmthDockSlot();
+	}
+
+	@Override
+	protected int getDockPadding()
+	{
+		return config.dockPadding();
 	}
 
 	@Override

@@ -20,6 +20,7 @@ class SpecBarOverlay extends VitalBarOverlay
 	@Inject
 	private SpecBarOverlay(Client client, ViciousBarsConfig config, SpriteManager spriteManager)
 	{
+		super(client);
 		this.client = client;
 		this.config = config;
 		this.spriteManager = spriteManager;
@@ -28,7 +29,31 @@ class SpecBarOverlay extends VitalBarOverlay
 	@Override
 	protected boolean shouldRender()
 	{
-		return config.specEnabled() && config.specPlacementMode() == PlacementMode.FLOATING;
+		return config.specEnabled();
+	}
+
+	@Override
+	protected PlacementMode getPlacementMode()
+	{
+		return config.specPlacementMode();
+	}
+
+	@Override
+	protected DockSide getDockSide()
+	{
+		return config.specDockSide();
+	}
+
+	@Override
+	protected int getDockSlot()
+	{
+		return config.specDockSlot();
+	}
+
+	@Override
+	protected int getDockPadding()
+	{
+		return config.dockPadding();
 	}
 
 	@Override

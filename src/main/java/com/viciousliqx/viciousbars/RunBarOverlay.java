@@ -19,6 +19,7 @@ class RunBarOverlay extends VitalBarOverlay
 	@Inject
 	private RunBarOverlay(Client client, ViciousBarsConfig config, SpriteManager spriteManager)
 	{
+		super(client);
 		this.client = client;
 		this.config = config;
 		this.spriteManager = spriteManager;
@@ -27,7 +28,31 @@ class RunBarOverlay extends VitalBarOverlay
 	@Override
 	protected boolean shouldRender()
 	{
-		return config.runEnabled() && config.runPlacementMode() == PlacementMode.FLOATING;
+		return config.runEnabled();
+	}
+
+	@Override
+	protected PlacementMode getPlacementMode()
+	{
+		return config.runPlacementMode();
+	}
+
+	@Override
+	protected DockSide getDockSide()
+	{
+		return config.runDockSide();
+	}
+
+	@Override
+	protected int getDockSlot()
+	{
+		return config.runDockSlot();
+	}
+
+	@Override
+	protected int getDockPadding()
+	{
+		return config.dockPadding();
 	}
 
 	@Override

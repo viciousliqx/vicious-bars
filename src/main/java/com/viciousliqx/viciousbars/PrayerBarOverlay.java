@@ -18,6 +18,7 @@ class PrayerBarOverlay extends VitalBarOverlay
 	@Inject
 	private PrayerBarOverlay(Client client, ViciousBarsConfig config, SkillIconManager skillIconManager)
 	{
+		super(client);
 		this.client = client;
 		this.config = config;
 		this.skillIconManager = skillIconManager;
@@ -26,7 +27,31 @@ class PrayerBarOverlay extends VitalBarOverlay
 	@Override
 	protected boolean shouldRender()
 	{
-		return config.prayerEnabled() && config.prayerPlacementMode() == PlacementMode.FLOATING;
+		return config.prayerEnabled();
+	}
+
+	@Override
+	protected PlacementMode getPlacementMode()
+	{
+		return config.prayerPlacementMode();
+	}
+
+	@Override
+	protected DockSide getDockSide()
+	{
+		return config.prayerDockSide();
+	}
+
+	@Override
+	protected int getDockSlot()
+	{
+		return config.prayerDockSlot();
+	}
+
+	@Override
+	protected int getDockPadding()
+	{
+		return config.dockPadding();
 	}
 
 	@Override

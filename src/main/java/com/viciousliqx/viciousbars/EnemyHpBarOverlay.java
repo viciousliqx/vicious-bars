@@ -3,6 +3,7 @@ package com.viciousliqx.viciousbars;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import javax.inject.Inject;
+import net.runelite.api.Client;
 import net.runelite.api.NPC;
 import net.runelite.api.gameval.SpriteID;
 import net.runelite.client.game.SpriteManager;
@@ -16,8 +17,9 @@ class EnemyHpBarOverlay extends VitalBarOverlay
 	private final SpriteManager spriteManager;
 
 	@Inject
-	private EnemyHpBarOverlay(ViciousBarsConfig config, OpponentTracker opponentTracker, SpriteManager spriteManager)
+	private EnemyHpBarOverlay(Client client, ViciousBarsConfig config, OpponentTracker opponentTracker, SpriteManager spriteManager)
 	{
+		super(client);
 		this.config = config;
 		this.opponentTracker = opponentTracker;
 		this.spriteManager = spriteManager;
@@ -31,7 +33,7 @@ class EnemyHpBarOverlay extends VitalBarOverlay
 	@Override
 	protected boolean shouldRender()
 	{
-		if (!config.enemyHpEnabled() || config.enemyHpPlacementMode() != PlacementMode.FLOATING)
+		if (!config.enemyHpEnabled())
 		{
 			return false;
 		}
@@ -40,6 +42,30 @@ class EnemyHpBarOverlay extends VitalBarOverlay
 		// -1 means the server never sent health data for this NPC - nothing
 		// meaningful to draw, same case core's NPC health overlay skips.
 		return target != null && target.getHealthRatio() >= 0 && target.getHealthScale() > 0;
+	}
+
+	@Override
+	protected PlacementMode getPlacementMode()
+	{
+		return config.enemyHpPlacementMode();
+	}
+
+	@Override
+	protected DockSide getDockSide()
+	{
+		return config.enemyHpDockSide();
+	}
+
+	@Override
+	protected int getDockSlot()
+	{
+		return config.enemyHpDockSlot();
+	}
+
+	@Override
+	protected int getDockPadding()
+	{
+		return config.dockPadding();
 	}
 
 	@Override

@@ -23,6 +23,7 @@ class HpBarOverlay extends VitalBarOverlay
 	@Inject
 	private HpBarOverlay(Client client, ViciousBarsConfig config, SpriteManager spriteManager)
 	{
+		super(client);
 		this.client = client;
 		this.config = config;
 		this.spriteManager = spriteManager;
@@ -31,7 +32,31 @@ class HpBarOverlay extends VitalBarOverlay
 	@Override
 	protected boolean shouldRender()
 	{
-		return config.hpEnabled() && config.hpPlacementMode() == PlacementMode.FLOATING;
+		return config.hpEnabled();
+	}
+
+	@Override
+	protected PlacementMode getPlacementMode()
+	{
+		return config.hpPlacementMode();
+	}
+
+	@Override
+	protected DockSide getDockSide()
+	{
+		return config.hpDockSide();
+	}
+
+	@Override
+	protected int getDockSlot()
+	{
+		return config.hpDockSlot();
+	}
+
+	@Override
+	protected int getDockPadding()
+	{
+		return config.dockPadding();
 	}
 
 	@Override
