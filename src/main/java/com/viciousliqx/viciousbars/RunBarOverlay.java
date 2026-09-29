@@ -80,4 +80,16 @@ class RunBarOverlay extends VitalBarOverlay
 	{
 		return config.runFloatingOrientation();
 	}
+
+	@Override
+	protected int getThickness()
+	{
+		return config.runThickness();
+	}
+
+	@Override
+	protected int getLength()
+	{
+		return config.runLength();
+	}
 }

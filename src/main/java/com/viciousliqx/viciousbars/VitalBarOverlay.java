@@ -17,8 +17,6 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  */
 public abstract class VitalBarOverlay extends Overlay
 {
-	private static final int THICKNESS = 24;
-	private static final int LENGTH = 150;
 	private static final Color BACKGROUND = new Color(0, 0, 0, 150);
 	private static final int ICON_SIZE = 18;
 	private static final int PADDING = 3;
@@ -48,6 +46,10 @@ public abstract class VitalBarOverlay extends Overlay
 
 	protected abstract Orientation getOrientation();
 
+	protected abstract int getThickness();
+
+	protected abstract int getLength();
+
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
@@ -57,8 +59,8 @@ public abstract class VitalBarOverlay extends Overlay
 		}
 
 		Orientation orientation = getOrientation();
-		int width = orientation == Orientation.VERTICAL ? THICKNESS : LENGTH;
-		int height = orientation == Orientation.VERTICAL ? LENGTH : THICKNESS;
+		int width = orientation == Orientation.VERTICAL ? getThickness() : getLength();
+		int height = orientation == Orientation.VERTICAL ? getLength() : getThickness();
 
 		graphics.setColor(BACKGROUND);
 		graphics.fillRect(0, 0, width, height);

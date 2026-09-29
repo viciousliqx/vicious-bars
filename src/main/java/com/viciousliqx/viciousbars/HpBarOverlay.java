@@ -94,4 +94,16 @@ class HpBarOverlay extends VitalBarOverlay
 	{
 		return config.hpFloatingOrientation();
 	}
+
+	@Override
+	protected int getThickness()
+	{
+		return config.hpThickness();
+	}
+
+	@Override
+	protected int getLength()
+	{
+		return config.hpLength();
+	}
 }

@@ -5,7 +5,7 @@ package com.viciousliqx.viciousbars;
  * bars that actually have a vanilla orb (HP, Prayer, Special Attack, Run) -
  * Warmth and Enemy HP have no orb to relocate/merge/mirror.
  */
-public enum BaubleMode
+public enum OrbMode
 {
 	/** Orb untouched, bar is purely a bar. */
 	VANILLA,

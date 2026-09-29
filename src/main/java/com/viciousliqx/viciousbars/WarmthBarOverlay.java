@@ -99,4 +99,16 @@ class WarmthBarOverlay extends VitalBarOverlay
 	{
 		return config.warmthFloatingOrientation();
 	}
+
+	@Override
+	protected int getThickness()
+	{
+		return config.warmthThickness();
+	}
+
+	@Override
+	protected int getLength()
+	{
+		return config.warmthLength();
+	}
 }

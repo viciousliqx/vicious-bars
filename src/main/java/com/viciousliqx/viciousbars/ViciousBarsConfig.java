@@ -12,6 +12,31 @@ public interface ViciousBarsConfig extends Config
 	String GROUP = "vicious-bars";
 
 	// ------------------------------------------------------------------
+	// Layout (shared across every bar)
+	// ------------------------------------------------------------------
+
+	@ConfigSection(
+		name = "Layout",
+		description = "Settings shared across every bar",
+		position = -1,
+		closedByDefault = true
+	)
+	String layoutSection = "layoutSection";
+
+	@ConfigItem(
+		keyName = "dockPadding",
+		name = "Dock padding",
+		description = "Gap in pixels between bars stacked on the same dock side.",
+		section = layoutSection,
+		position = 0
+	)
+	@Range(min = 0)
+	default int dockPadding()
+	{
+		return 2;
+	}
+
+	// ------------------------------------------------------------------
 	// Hitpoints
 	// ------------------------------------------------------------------
 
@@ -85,15 +110,15 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "hpBaubleMode",
-		name = "Bauble mode",
+		keyName = "hpOrbMode",
+		name = "Orb mode",
 		description = "How this bar relates to the vanilla Hitpoints orb (Vanilla/Relocated/Merged/Mirrored).",
 		section = hpSection,
 		position = 5
 	)
-	default BaubleMode hpBaubleMode()
+	default OrbMode hpOrbMode()
 	{
-		return BaubleMode.VANILLA;
+		return OrbMode.VANILLA;
 	}
 
 	@ConfigItem(
@@ -130,6 +155,32 @@ public interface ViciousBarsConfig extends Config
 	default Justification hpJustification()
 	{
 		return Justification.CENTER;
+	}
+
+	@ConfigItem(
+		keyName = "hpThickness",
+		name = "Thickness",
+		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
+		section = hpSection,
+		position = 9
+	)
+	@Range(min = 1)
+	default int hpThickness()
+	{
+		return 24;
+	}
+
+	@ConfigItem(
+		keyName = "hpLength",
+		name = "Length",
+		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
+		section = hpSection,
+		position = 10
+	)
+	@Range(min = 1)
+	default int hpLength()
+	{
+		return 150;
 	}
 
 	// ------------------------------------------------------------------
@@ -206,15 +257,15 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "prayerBaubleMode",
-		name = "Bauble mode",
+		keyName = "prayerOrbMode",
+		name = "Orb mode",
 		description = "How this bar relates to the vanilla Prayer orb (Vanilla/Relocated/Merged/Mirrored). Merged/Mirrored open quick-prayers on click, same as the orb.",
 		section = prayerSection,
 		position = 5
 	)
-	default BaubleMode prayerBaubleMode()
+	default OrbMode prayerOrbMode()
 	{
-		return BaubleMode.VANILLA;
+		return OrbMode.VANILLA;
 	}
 
 	@ConfigItem(
@@ -251,6 +302,32 @@ public interface ViciousBarsConfig extends Config
 	default Justification prayerJustification()
 	{
 		return Justification.CENTER;
+	}
+
+	@ConfigItem(
+		keyName = "prayerThickness",
+		name = "Thickness",
+		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
+		section = prayerSection,
+		position = 9
+	)
+	@Range(min = 1)
+	default int prayerThickness()
+	{
+		return 24;
+	}
+
+	@ConfigItem(
+		keyName = "prayerLength",
+		name = "Length",
+		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
+		section = prayerSection,
+		position = 10
+	)
+	@Range(min = 1)
+	default int prayerLength()
+	{
+		return 150;
 	}
 
 	// ------------------------------------------------------------------
@@ -327,15 +404,15 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "specBaubleMode",
-		name = "Bauble mode",
+		keyName = "specOrbMode",
+		name = "Orb mode",
 		description = "How this bar relates to the vanilla Special Attack orb (Vanilla/Relocated/Merged/Mirrored). Merged/Mirrored activate special attack on click, same as the orb.",
 		section = specSection,
 		position = 5
 	)
-	default BaubleMode specBaubleMode()
+	default OrbMode specOrbMode()
 	{
-		return BaubleMode.VANILLA;
+		return OrbMode.VANILLA;
 	}
 
 	@ConfigItem(
@@ -372,6 +449,32 @@ public interface ViciousBarsConfig extends Config
 	default Justification specJustification()
 	{
 		return Justification.CENTER;
+	}
+
+	@ConfigItem(
+		keyName = "specThickness",
+		name = "Thickness",
+		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
+		section = specSection,
+		position = 9
+	)
+	@Range(min = 1)
+	default int specThickness()
+	{
+		return 24;
+	}
+
+	@ConfigItem(
+		keyName = "specLength",
+		name = "Length",
+		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
+		section = specSection,
+		position = 10
+	)
+	@Range(min = 1)
+	default int specLength()
+	{
+		return 150;
 	}
 
 	// ------------------------------------------------------------------
@@ -448,15 +551,15 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "runBaubleMode",
-		name = "Bauble mode",
+		keyName = "runOrbMode",
+		name = "Orb mode",
 		description = "How this bar relates to the vanilla Run Energy orb (Vanilla/Relocated/Merged/Mirrored). Merged/Mirrored toggle run on click, same as the orb.",
 		section = runSection,
 		position = 5
 	)
-	default BaubleMode runBaubleMode()
+	default OrbMode runOrbMode()
 	{
-		return BaubleMode.VANILLA;
+		return OrbMode.VANILLA;
 	}
 
 	@ConfigItem(
@@ -493,6 +596,32 @@ public interface ViciousBarsConfig extends Config
 	default Justification runJustification()
 	{
 		return Justification.CENTER;
+	}
+
+	@ConfigItem(
+		keyName = "runThickness",
+		name = "Thickness",
+		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
+		section = runSection,
+		position = 9
+	)
+	@Range(min = 1)
+	default int runThickness()
+	{
+		return 24;
+	}
+
+	@ConfigItem(
+		keyName = "runLength",
+		name = "Length",
+		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
+		section = runSection,
+		position = 10
+	)
+	@Range(min = 1)
+	default int runLength()
+	{
+		return 150;
 	}
 
 	// ------------------------------------------------------------------
@@ -616,6 +745,32 @@ public interface ViciousBarsConfig extends Config
 		return Justification.CENTER;
 	}
 
+	@ConfigItem(
+		keyName = "warmthThickness",
+		name = "Thickness",
+		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
+		section = warmthSection,
+		position = 9
+	)
+	@Range(min = 1)
+	default int warmthThickness()
+	{
+		return 24;
+	}
+
+	@ConfigItem(
+		keyName = "warmthLength",
+		name = "Length",
+		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
+		section = warmthSection,
+		position = 10
+	)
+	@Range(min = 1)
+	default int warmthLength()
+	{
+		return 150;
+	}
+
 	// ------------------------------------------------------------------
 	// Enemy Hitpoints (current target only - no vanilla orb, so no bauble mode)
 	// ------------------------------------------------------------------
@@ -723,5 +878,31 @@ public interface ViciousBarsConfig extends Config
 	default Justification enemyHpJustification()
 	{
 		return Justification.CENTER;
+	}
+
+	@ConfigItem(
+		keyName = "enemyHpThickness",
+		name = "Thickness",
+		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
+		section = enemyHpSection,
+		position = 8
+	)
+	@Range(min = 1)
+	default int enemyHpThickness()
+	{
+		return 24;
+	}
+
+	@ConfigItem(
+		keyName = "enemyHpLength",
+		name = "Length",
+		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
+		section = enemyHpSection,
+		position = 9
+	)
+	@Range(min = 1)
+	default int enemyHpLength()
+	{
+		return 150;
 	}
 }

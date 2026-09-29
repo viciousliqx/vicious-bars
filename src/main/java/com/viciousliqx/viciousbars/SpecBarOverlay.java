@@ -79,4 +79,16 @@ class SpecBarOverlay extends VitalBarOverlay
 	{
 		return config.specFloatingOrientation();
 	}
+
+	@Override
+	protected int getThickness()
+	{
+		return config.specThickness();
+	}
+
+	@Override
+	protected int getLength()
+	{
+		return config.specLength();
+	}
 }

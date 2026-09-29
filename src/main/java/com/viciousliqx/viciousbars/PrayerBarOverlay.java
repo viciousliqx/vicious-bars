@@ -78,4 +78,16 @@ class PrayerBarOverlay extends VitalBarOverlay
 	{
 		return config.prayerFloatingOrientation();
 	}
+
+	@Override
+	protected int getThickness()
+	{
+		return config.prayerThickness();
+	}
+
+	@Override
+	protected int getLength()
+	{
+		return config.prayerLength();
+	}
 }

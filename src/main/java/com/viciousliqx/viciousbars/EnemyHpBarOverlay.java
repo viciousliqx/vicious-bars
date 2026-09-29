@@ -93,4 +93,16 @@ class EnemyHpBarOverlay extends VitalBarOverlay
 	{
 		return config.enemyHpFloatingOrientation();
 	}
+
+	@Override
+	protected int getThickness()
+	{
+		return config.enemyHpThickness();
+	}
+
+	@Override
+	protected int getLength()
+	{
+		return config.enemyHpLength();
+	}
 }
