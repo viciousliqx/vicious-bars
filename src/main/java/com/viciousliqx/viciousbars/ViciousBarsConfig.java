@@ -18,7 +18,8 @@ public interface ViciousBarsConfig extends Config
 	@ConfigSection(
 		name = "Hitpoints",
 		description = "The Hitpoints bar",
-		position = 0
+		position = 0,
+		closedByDefault = true
 	)
 	String hpSection = "hpSection";
 
@@ -48,7 +49,7 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "hpDockSide",
-		name = "Dock side",
+		name = "Dock side (Fixed only)",
 		description = "Which side of the panel to dock to when Placement is Fixed. Determines orientation: left/right = vertical, top/bottom = horizontal.",
 		section = hpSection,
 		position = 2
@@ -60,7 +61,7 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "hpDockSlot",
-		name = "Dock slot",
+		name = "Dock slot (Fixed only)",
 		description = "Order among other bars docked to the same side. 1 = closest to the panel corner, higher numbers further out.",
 		section = hpSection,
 		position = 3
@@ -73,7 +74,7 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "hpFloatingOrientation",
-		name = "Floating orientation",
+		name = "Floating orientation (Floating only)",
 		description = "Bar orientation when Placement is Floating.",
 		section = hpSection,
 		position = 4
@@ -102,7 +103,8 @@ public interface ViciousBarsConfig extends Config
 	@ConfigSection(
 		name = "Prayer",
 		description = "The Prayer bar",
-		position = 1
+		position = 1,
+		closedByDefault = true
 	)
 	String prayerSection = "prayerSection";
 
@@ -132,7 +134,7 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "prayerDockSide",
-		name = "Dock side",
+		name = "Dock side (Fixed only)",
 		description = "Which side of the panel to dock to when Placement is Fixed. Determines orientation: left/right = vertical, top/bottom = horizontal.",
 		section = prayerSection,
 		position = 2
@@ -144,7 +146,7 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "prayerDockSlot",
-		name = "Dock slot",
+		name = "Dock slot (Fixed only)",
 		description = "Order among other bars docked to the same side. 1 = closest to the panel corner, higher numbers further out.",
 		section = prayerSection,
 		position = 3
@@ -157,7 +159,7 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "prayerFloatingOrientation",
-		name = "Floating orientation",
+		name = "Floating orientation (Floating only)",
 		description = "Bar orientation when Placement is Floating.",
 		section = prayerSection,
 		position = 4
@@ -186,7 +188,8 @@ public interface ViciousBarsConfig extends Config
 	@ConfigSection(
 		name = "Special Attack",
 		description = "The Special Attack bar",
-		position = 2
+		position = 2,
+		closedByDefault = true
 	)
 	String specSection = "specSection";
 
@@ -216,7 +219,7 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "specDockSide",
-		name = "Dock side",
+		name = "Dock side (Fixed only)",
 		description = "Which side of the panel to dock to when Placement is Fixed. Determines orientation: left/right = vertical, top/bottom = horizontal.",
 		section = specSection,
 		position = 2
@@ -228,7 +231,7 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "specDockSlot",
-		name = "Dock slot",
+		name = "Dock slot (Fixed only)",
 		description = "Order among other bars docked to the same side. 1 = closest to the panel corner, higher numbers further out.",
 		section = specSection,
 		position = 3
@@ -241,7 +244,7 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "specFloatingOrientation",
-		name = "Floating orientation",
+		name = "Floating orientation (Floating only)",
 		description = "Bar orientation when Placement is Floating.",
 		section = specSection,
 		position = 4
@@ -270,7 +273,8 @@ public interface ViciousBarsConfig extends Config
 	@ConfigSection(
 		name = "Run Energy",
 		description = "The Run Energy bar",
-		position = 3
+		position = 3,
+		closedByDefault = true
 	)
 	String runSection = "runSection";
 
@@ -300,7 +304,7 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "runDockSide",
-		name = "Dock side",
+		name = "Dock side (Fixed only)",
 		description = "Which side of the panel to dock to when Placement is Fixed. Determines orientation: left/right = vertical, top/bottom = horizontal.",
 		section = runSection,
 		position = 2
@@ -312,7 +316,7 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "runDockSlot",
-		name = "Dock slot",
+		name = "Dock slot (Fixed only)",
 		description = "Order among other bars docked to the same side. 1 = closest to the panel corner, higher numbers further out.",
 		section = runSection,
 		position = 3
@@ -325,7 +329,7 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "runFloatingOrientation",
-		name = "Floating orientation",
+		name = "Floating orientation (Floating only)",
 		description = "Bar orientation when Placement is Floating.",
 		section = runSection,
 		position = 4
@@ -354,7 +358,8 @@ public interface ViciousBarsConfig extends Config
 	@ConfigSection(
 		name = "Warmth",
 		description = "The Warmth bar (Wintertodt only)",
-		position = 4
+		position = 4,
+		closedByDefault = true
 	)
 	String warmthSection = "warmthSection";
 
@@ -396,7 +401,7 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "warmthDockSide",
-		name = "Dock side",
+		name = "Dock side (Fixed only)",
 		description = "Which side of the panel to dock to when Placement is Fixed. Determines orientation: left/right = vertical, top/bottom = horizontal.",
 		section = warmthSection,
 		position = 3
@@ -408,7 +413,7 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "warmthDockSlot",
-		name = "Dock slot",
+		name = "Dock slot (Fixed only)",
 		description = "Order among other bars docked to the same side. 1 = closest to the panel corner, higher numbers further out.",
 		section = warmthSection,
 		position = 4
@@ -421,7 +426,7 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "warmthFloatingOrientation",
-		name = "Floating orientation",
+		name = "Floating orientation (Floating only)",
 		description = "Bar orientation when Placement is Floating.",
 		section = warmthSection,
 		position = 5
@@ -438,7 +443,8 @@ public interface ViciousBarsConfig extends Config
 	@ConfigSection(
 		name = "Enemy Hitpoints",
 		description = "Current target's Hitpoints bar",
-		position = 5
+		position = 5,
+		closedByDefault = true
 	)
 	String enemyHpSection = "enemyHpSection";
 
@@ -468,7 +474,7 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "enemyHpDockSide",
-		name = "Dock side",
+		name = "Dock side (Fixed only)",
 		description = "Which side of the panel to dock to when Placement is Fixed. Determines orientation: left/right = vertical, top/bottom = horizontal.",
 		section = enemyHpSection,
 		position = 2
@@ -480,7 +486,7 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "enemyHpDockSlot",
-		name = "Dock slot",
+		name = "Dock slot (Fixed only)",
 		description = "Order among other bars docked to the same side. 1 = closest to the panel corner, higher numbers further out.",
 		section = enemyHpSection,
 		position = 3
@@ -493,7 +499,7 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "enemyHpFloatingOrientation",
-		name = "Floating orientation",
+		name = "Floating orientation (Floating only)",
 		description = "Bar orientation when Placement is Floating.",
 		section = enemyHpSection,
 		position = 4
