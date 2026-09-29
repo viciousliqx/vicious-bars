@@ -96,6 +96,42 @@ public interface ViciousBarsConfig extends Config
 		return BaubleMode.VANILLA;
 	}
 
+	@ConfigItem(
+		keyName = "hpShowIcon",
+		name = "Show icon",
+		description = "Show the Hitpoints orb icon on the bar.",
+		section = hpSection,
+		position = 6
+	)
+	default boolean hpShowIcon()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "hpShowCounter",
+		name = "Show counter",
+		description = "Show the current Hitpoints value as text on the bar.",
+		section = hpSection,
+		position = 7
+	)
+	default boolean hpShowCounter()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "hpJustification",
+		name = "Justification",
+		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
+		section = hpSection,
+		position = 8
+	)
+	default Justification hpJustification()
+	{
+		return Justification.CENTER;
+	}
+
 	// ------------------------------------------------------------------
 	// Prayer
 	// ------------------------------------------------------------------
@@ -179,6 +215,42 @@ public interface ViciousBarsConfig extends Config
 	default BaubleMode prayerBaubleMode()
 	{
 		return BaubleMode.VANILLA;
+	}
+
+	@ConfigItem(
+		keyName = "prayerShowIcon",
+		name = "Show icon",
+		description = "Show the Prayer orb icon on the bar.",
+		section = prayerSection,
+		position = 6
+	)
+	default boolean prayerShowIcon()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "prayerShowCounter",
+		name = "Show counter",
+		description = "Show the current Prayer value as text on the bar.",
+		section = prayerSection,
+		position = 7
+	)
+	default boolean prayerShowCounter()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "prayerJustification",
+		name = "Justification",
+		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
+		section = prayerSection,
+		position = 8
+	)
+	default Justification prayerJustification()
+	{
+		return Justification.CENTER;
 	}
 
 	// ------------------------------------------------------------------
@@ -266,6 +338,42 @@ public interface ViciousBarsConfig extends Config
 		return BaubleMode.VANILLA;
 	}
 
+	@ConfigItem(
+		keyName = "specShowIcon",
+		name = "Show icon",
+		description = "Show the Special Attack orb icon on the bar.",
+		section = specSection,
+		position = 6
+	)
+	default boolean specShowIcon()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "specShowCounter",
+		name = "Show counter",
+		description = "Show the current Special Attack value as text on the bar.",
+		section = specSection,
+		position = 7
+	)
+	default boolean specShowCounter()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "specJustification",
+		name = "Justification",
+		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
+		section = specSection,
+		position = 8
+	)
+	default Justification specJustification()
+	{
+		return Justification.CENTER;
+	}
+
 	// ------------------------------------------------------------------
 	// Run Energy
 	// ------------------------------------------------------------------
@@ -349,6 +457,42 @@ public interface ViciousBarsConfig extends Config
 	default BaubleMode runBaubleMode()
 	{
 		return BaubleMode.VANILLA;
+	}
+
+	@ConfigItem(
+		keyName = "runShowIcon",
+		name = "Show icon",
+		description = "Show the Run Energy orb icon on the bar.",
+		section = runSection,
+		position = 6
+	)
+	default boolean runShowIcon()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "runShowCounter",
+		name = "Show counter",
+		description = "Show the current Run Energy value as text on the bar.",
+		section = runSection,
+		position = 7
+	)
+	default boolean runShowCounter()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "runJustification",
+		name = "Justification",
+		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
+		section = runSection,
+		position = 8
+	)
+	default Justification runJustification()
+	{
+		return Justification.CENTER;
 	}
 
 	// ------------------------------------------------------------------
@@ -436,6 +580,42 @@ public interface ViciousBarsConfig extends Config
 		return Orientation.VERTICAL;
 	}
 
+	@ConfigItem(
+		keyName = "warmthShowIcon",
+		name = "Show icon",
+		description = "Show an icon on the bar. Warmth has no vanilla orb icon, so this borrows the Firemaking skill icon instead.",
+		section = warmthSection,
+		position = 6
+	)
+	default boolean warmthShowIcon()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "warmthShowCounter",
+		name = "Show counter",
+		description = "Show the current Warmth percentage as text on the bar.",
+		section = warmthSection,
+		position = 7
+	)
+	default boolean warmthShowCounter()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "warmthJustification",
+		name = "Justification",
+		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
+		section = warmthSection,
+		position = 8
+	)
+	default Justification warmthJustification()
+	{
+		return Justification.CENTER;
+	}
+
 	// ------------------------------------------------------------------
 	// Enemy Hitpoints (current target only - no vanilla orb, so no bauble mode)
 	// ------------------------------------------------------------------
@@ -507,5 +687,41 @@ public interface ViciousBarsConfig extends Config
 	default Orientation enemyHpFloatingOrientation()
 	{
 		return Orientation.HORIZONTAL;
+	}
+
+	@ConfigItem(
+		keyName = "enemyHpShowIcon",
+		name = "Show icon",
+		description = "Show an icon on the bar. Enemy Hitpoints has no vanilla orb of its own, so this borrows the Hitpoints orb icon.",
+		section = enemyHpSection,
+		position = 5
+	)
+	default boolean enemyHpShowIcon()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "enemyHpShowCounter",
+		name = "Show counter",
+		description = "Show the target's current Hitpoints value as text on the bar.",
+		section = enemyHpSection,
+		position = 6
+	)
+	default boolean enemyHpShowCounter()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "enemyHpJustification",
+		name = "Justification",
+		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
+		section = enemyHpSection,
+		position = 7
+	)
+	default Justification enemyHpJustification()
+	{
+		return Justification.CENTER;
 	}
 }
