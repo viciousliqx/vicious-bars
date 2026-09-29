@@ -85,7 +85,11 @@ public abstract class VitalBarOverlay extends Overlay
 				// Panel widget not present (wrong layout, or not logged in yet) - nothing to dock to.
 				return null;
 			}
-			setPreferredLocation(pos);
+			// Non-movable DYNAMIC overlays aren't auto-translated by the overlay
+			// renderer the way movable/dragged ones are (confirmed against Status
+			// Bars' own source, which draws at absolute coordinates for exactly
+			// this reason) - so we translate ourselves to reach the same effect.
+			graphics.translate(pos.x, pos.y);
 		}
 		else
 		{

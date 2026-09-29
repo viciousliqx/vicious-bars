@@ -12,31 +12,6 @@ public interface ViciousBarsConfig extends Config
 	String GROUP = "vicious-bars";
 
 	// ------------------------------------------------------------------
-	// Layout (shared across every bar)
-	// ------------------------------------------------------------------
-
-	@ConfigSection(
-		name = "Layout",
-		description = "Settings shared across every bar",
-		position = -1,
-		closedByDefault = true
-	)
-	String layoutSection = "layoutSection";
-
-	@ConfigItem(
-		keyName = "dockPadding",
-		name = "Dock padding",
-		description = "Gap in pixels between bars stacked on the same dock side.",
-		section = layoutSection,
-		position = 0
-	)
-	@Range(min = 0)
-	default int dockPadding()
-	{
-		return 2;
-	}
-
-	// ------------------------------------------------------------------
 	// Hitpoints
 	// ------------------------------------------------------------------
 
@@ -904,5 +879,31 @@ public interface ViciousBarsConfig extends Config
 	default int enemyHpLength()
 	{
 		return 150;
+	}
+
+	// ------------------------------------------------------------------
+	// Fixed Layout (shared across every bar in Fixed placement - Floating
+	// will get its own equivalent section if/when it needs shared settings)
+	// ------------------------------------------------------------------
+
+	@ConfigSection(
+		name = "Fixed Layout",
+		description = "Settings shared across every bar using Fixed placement",
+		position = 6,
+		closedByDefault = true
+	)
+	String fixedLayoutSection = "fixedLayoutSection";
+
+	@ConfigItem(
+		keyName = "dockPadding",
+		name = "Dock padding",
+		description = "Gap in pixels between bars stacked on the same dock side.",
+		section = fixedLayoutSection,
+		position = 0
+	)
+	@Range(min = 0)
+	default int dockPadding()
+	{
+		return 2;
 	}
 }
