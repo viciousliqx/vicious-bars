@@ -3,17 +3,14 @@ package com.viciousliqx.viciousbars;
 import com.google.inject.Provides;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.Client;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
 
-/**
- * FLOATING placement only for now - FIXED (docked to a panel edge) isn't
- * implemented yet. A bar's Placement config must be set to Floating to see
- * it render.
- */
 @Slf4j
 @PluginDescriptor(
 	name = "Vicious Bars"
@@ -24,6 +21,12 @@ public class ViciousBarsPlugin extends Plugin
 	private ViciousBarsConfig config;
 
 	@Inject
+	private Client client;
+
+	@Inject
+	private ClientThread clientThread;
+
+	@Inject
 	private OverlayManager overlayManager;
 
 	@Inject
@@ -31,6 +34,9 @@ public class ViciousBarsPlugin extends Plugin
 
 	@Inject
 	private OpponentTracker opponentTracker;
+
+	@Inject
+	private OrbRelocator orbRelocator;
 
 	@Inject
 	private HpBarOverlay hpBarOverlay;
@@ -77,6 +83,11 @@ public class ViciousBarsPlugin extends Plugin
 
 		eventBus.unregister(opponentTracker);
 		opponentTracker.reset();
+
+		// Widget mutation must happen on the client thread; shutDown() isn't
+		// guaranteed to run there (same reason Movable Orbs wraps its own
+		// restore-on-shutdown call the same way).
+		clientThread.invoke(() -> orbRelocator.releaseAll(client));
 
 		log.debug("Vicious Bars stopped!");
 	}

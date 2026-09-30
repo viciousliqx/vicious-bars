@@ -11,14 +11,17 @@ class PrayerBarOverlay extends VitalBarOverlay
 {
 	private static final Color COLOR = new Color(60, 170, 220);
 
+	// Verified against the real "Movable Orbs" Hub plugin (anonyser/runelite-movable-orbs).
+	private static final int PRAYER_ORB_COMPONENT = (160 << 16) | 18;
+
 	private final Client client;
 	private final ViciousBarsConfig config;
 	private final SkillIconManager skillIconManager;
 
 	@Inject
-	private PrayerBarOverlay(Client client, ViciousBarsConfig config, SkillIconManager skillIconManager)
+	private PrayerBarOverlay(Client client, OrbRelocator orbRelocator, ViciousBarsConfig config, SkillIconManager skillIconManager)
 	{
-		super(client);
+		super(client, orbRelocator);
 		this.client = client;
 		this.config = config;
 		this.skillIconManager = skillIconManager;
@@ -114,5 +117,17 @@ class PrayerBarOverlay extends VitalBarOverlay
 	protected int getLength()
 	{
 		return config.prayerLength();
+	}
+
+	@Override
+	protected OrbMode getOrbMode()
+	{
+		return config.prayerOrbMode();
+	}
+
+	@Override
+	protected int getOrbComponentId()
+	{
+		return PRAYER_ORB_COMPONENT;
 	}
 }

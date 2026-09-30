@@ -12,14 +12,17 @@ class RunBarOverlay extends VitalBarOverlay
 	private static final Color COLOR = new Color(70, 180, 90);
 	private static final int MAX_PERCENT = 100;
 
+	// Verified against the real "Movable Orbs" Hub plugin (anonyser/runelite-movable-orbs).
+	private static final int RUN_ENERGY_ORB_COMPONENT = (160 << 16) | 26;
+
 	private final Client client;
 	private final ViciousBarsConfig config;
 	private final SpriteManager spriteManager;
 
 	@Inject
-	private RunBarOverlay(Client client, ViciousBarsConfig config, SpriteManager spriteManager)
+	private RunBarOverlay(Client client, OrbRelocator orbRelocator, ViciousBarsConfig config, SpriteManager spriteManager)
 	{
-		super(client);
+		super(client, orbRelocator);
 		this.client = client;
 		this.config = config;
 		this.spriteManager = spriteManager;
@@ -116,5 +119,17 @@ class RunBarOverlay extends VitalBarOverlay
 	protected int getLength()
 	{
 		return config.runLength();
+	}
+
+	@Override
+	protected OrbMode getOrbMode()
+	{
+		return config.runOrbMode();
+	}
+
+	@Override
+	protected int getOrbComponentId()
+	{
+		return RUN_ENERGY_ORB_COMPONENT;
 	}
 }

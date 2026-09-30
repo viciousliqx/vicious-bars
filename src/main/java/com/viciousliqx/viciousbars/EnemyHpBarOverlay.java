@@ -17,9 +17,9 @@ class EnemyHpBarOverlay extends VitalBarOverlay
 	private final SpriteManager spriteManager;
 
 	@Inject
-	private EnemyHpBarOverlay(Client client, ViciousBarsConfig config, OpponentTracker opponentTracker, SpriteManager spriteManager)
+	private EnemyHpBarOverlay(Client client, OrbRelocator orbRelocator, ViciousBarsConfig config, OpponentTracker opponentTracker, SpriteManager spriteManager)
 	{
-		super(client);
+		super(client, orbRelocator);
 		this.config = config;
 		this.opponentTracker = opponentTracker;
 		this.spriteManager = spriteManager;
@@ -130,5 +130,17 @@ class EnemyHpBarOverlay extends VitalBarOverlay
 	protected int getLength()
 	{
 		return config.enemyHpLength();
+	}
+
+	@Override
+	protected OrbMode getOrbMode()
+	{
+		return OrbMode.VANILLA;
+	}
+
+	@Override
+	protected int getOrbComponentId()
+	{
+		return -1;
 	}
 }

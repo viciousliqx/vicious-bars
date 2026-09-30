@@ -24,10 +24,12 @@ public abstract class VitalBarOverlay extends Overlay
 	private static final int PADDING = 3;
 
 	private final Client client;
+	private final OrbRelocator orbRelocator;
 
-	protected VitalBarOverlay(Client client)
+	protected VitalBarOverlay(Client client, OrbRelocator orbRelocator)
 	{
 		this.client = client;
+		this.orbRelocator = orbRelocator;
 		setPosition(OverlayPosition.DYNAMIC);
 	}
 
@@ -62,6 +64,12 @@ public abstract class VitalBarOverlay extends Overlay
 
 	protected abstract int getLength();
 
+	/** VANILLA for bars with no orb (Warmth, Enemy HP). */
+	protected abstract OrbMode getOrbMode();
+
+	/** Packed widget component id (groupId << 16 | childId) for this bar's vanilla orb, or -1 if it has none. */
+	protected abstract int getOrbComponentId();
+
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
@@ -74,6 +82,7 @@ public abstract class VitalBarOverlay extends Overlay
 		setMovable(placementMode == PlacementMode.FLOATING);
 
 		Orientation orientation;
+		Point origin;
 		if (placementMode == PlacementMode.FIXED)
 		{
 			DockSide side = getDockSide();
@@ -90,10 +99,15 @@ public abstract class VitalBarOverlay extends Overlay
 			// Bars' own source, which draws at absolute coordinates for exactly
 			// this reason) - so we translate ourselves to reach the same effect.
 			graphics.translate(pos.x, pos.y);
+			origin = pos;
 		}
 		else
 		{
 			orientation = getOrientation();
+			// The overlay renderer already translated the graphics context to
+			// here (that's how movable overlays position themselves) and
+			// recorded it in our bounds before calling render().
+			origin = getBounds().getLocation();
 		}
 
 		int width = orientation == Orientation.VERTICAL ? getThickness() : getLength();
@@ -118,12 +132,33 @@ public abstract class VitalBarOverlay extends Overlay
 			graphics.fillRect(0, 0, fillWidth, height);
 		}
 
-		drawIconAndCounter(graphics, width, height, orientation, current);
+		Point iconLocal = drawIconAndCounter(graphics, width, height, orientation, current);
+
+		updateOrbRelocation(iconLocal, origin);
 
 		return new Dimension(width, height);
 	}
 
-	private void drawIconAndCounter(Graphics2D graphics, int width, int height, Orientation orientation, int current)
+	private void updateOrbRelocation(Point iconLocal, Point origin)
+	{
+		int componentId = getOrbComponentId();
+		if (componentId < 0)
+		{
+			return;
+		}
+
+		if (getOrbMode() == OrbMode.RELOCATED && iconLocal != null)
+		{
+			orbRelocator.relocate(client, componentId, origin.x + iconLocal.x, origin.y + iconLocal.y);
+		}
+		else
+		{
+			orbRelocator.release(client, componentId);
+		}
+	}
+
+	/** Returns the icon's local (bar-relative) top-left position, or null if no icon was drawn. */
+	private Point drawIconAndCounter(Graphics2D graphics, int width, int height, Orientation orientation, int current)
 	{
 		boolean showIcon = isShowIcon();
 		BufferedImage icon = showIcon ? getIcon() : null;
@@ -131,7 +166,7 @@ public abstract class VitalBarOverlay extends Overlay
 
 		if (icon == null && !showCounter)
 		{
-			return;
+			return null;
 		}
 
 		String counterText = showCounter ? Integer.toString(current) : null;
@@ -146,13 +181,16 @@ public abstract class VitalBarOverlay extends Overlay
 		}
 
 		int along = along(getJustification(), orientation == Orientation.VERTICAL ? height : width, clusterLength);
+		Point iconLocal = null;
 
 		if (orientation == Orientation.VERTICAL)
 		{
 			int y = along;
 			if (icon != null)
 			{
-				graphics.drawImage(icon, (width - ICON_SIZE) / 2, y, ICON_SIZE, ICON_SIZE, null);
+				int iconX = (width - ICON_SIZE) / 2;
+				graphics.drawImage(icon, iconX, y, ICON_SIZE, ICON_SIZE, null);
+				iconLocal = new Point(iconX, y);
 				y += ICON_SIZE + PADDING;
 			}
 			if (counterText != null)
@@ -166,7 +204,9 @@ public abstract class VitalBarOverlay extends Overlay
 			int x = along;
 			if (icon != null)
 			{
-				graphics.drawImage(icon, x, (height - ICON_SIZE) / 2, ICON_SIZE, ICON_SIZE, null);
+				int iconY = (height - ICON_SIZE) / 2;
+				graphics.drawImage(icon, x, iconY, ICON_SIZE, ICON_SIZE, null);
+				iconLocal = new Point(x, iconY);
 				x += ICON_SIZE + PADDING;
 			}
 			if (counterText != null)
@@ -176,6 +216,8 @@ public abstract class VitalBarOverlay extends Overlay
 				graphics.drawString(counterText, x, textY);
 			}
 		}
+
+		return iconLocal;
 	}
 
 	private static int along(Justification justification, int totalLength, int clusterLength)
