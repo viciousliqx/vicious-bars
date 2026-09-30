@@ -46,7 +46,12 @@ class OrbClickListener implements MouseListener
 			if (bounds != null && bounds.contains(event.getPoint()))
 			{
 				clientThread.invoke(bar::onOrbActivate);
-				return null;
+				// Verified against MouseManager's real source: it never null-checks
+				// a listener's return value, it checks isConsumed() - returning null
+				// here throws a NullPointerException on the very next listener in
+				// the chain, every time. Consume + return the event, don't null it.
+				event.consume();
+				return event;
 			}
 		}
 
