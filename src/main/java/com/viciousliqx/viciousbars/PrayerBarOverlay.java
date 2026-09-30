@@ -68,6 +68,18 @@ class PrayerBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected Justification getDockJustification()
+	{
+		return config.prayerDockJustification();
+	}
+
+	@Override
+	protected boolean isClampToPanel()
+	{
+		return config.clampToPanel();
+	}
+
+	@Override
 	protected int getCurrent()
 	{
 		return client.getBoostedSkillLevel(Skill.PRAYER);

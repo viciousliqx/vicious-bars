@@ -52,6 +52,10 @@ public abstract class VitalBarOverlay extends Overlay
 
 	protected abstract int getDockOffset();
 
+	protected abstract Justification getDockJustification();
+
+	protected abstract boolean isClampToPanel();
+
 	protected abstract int getCurrent();
 
 	protected abstract int getMax();
@@ -102,12 +106,23 @@ public abstract class VitalBarOverlay extends Overlay
 
 		Orientation orientation;
 		Point origin;
+		int length = getLength();
 		if (placementMode == PlacementMode.FIXED)
 		{
 			DockSide side = getDockSide();
 			orientation = side.orientation();
 
-			Point pos = PanelDock.position(client, side, getDockSlot(), getThickness(), getDockPadding(), getDockOffset());
+			if (isClampToPanel())
+			{
+				int panelLength = PanelDock.panelLength(client, side);
+				if (panelLength >= 0)
+				{
+					length = panelLength;
+				}
+			}
+
+			Point pos = PanelDock.position(client, side, getDockSlot(), getThickness(), getDockPadding(), getDockOffset(),
+				length, getDockJustification());
 			if (pos == null)
 			{
 				// Panel widget not present (wrong layout, or not logged in yet) - nothing to dock to.
@@ -130,8 +145,8 @@ public abstract class VitalBarOverlay extends Overlay
 			origin = getBounds().getLocation();
 		}
 
-		int width = orientation == Orientation.VERTICAL ? getThickness() : getLength();
-		int height = orientation == Orientation.VERTICAL ? getLength() : getThickness();
+		int width = orientation == Orientation.VERTICAL ? getThickness() : length;
+		int height = orientation == Orientation.VERTICAL ? length : getThickness();
 
 		float opacityFraction = Math.max(0, Math.min(getOpacity(), 100)) / 100f;
 

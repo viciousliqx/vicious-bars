@@ -77,6 +77,18 @@ class EnemyHpBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected Justification getDockJustification()
+	{
+		return config.enemyHpDockJustification();
+	}
+
+	@Override
+	protected boolean isClampToPanel()
+	{
+		return config.clampToPanel();
+	}
+
+	@Override
 	protected int getCurrent()
 	{
 		NPC target = opponent();

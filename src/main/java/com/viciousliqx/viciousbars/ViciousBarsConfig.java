@@ -172,6 +172,18 @@ public interface ViciousBarsConfig extends Config
 		return 100;
 	}
 
+	@ConfigItem(
+		keyName = "hpDockJustification",
+		name = "Dock justification",
+		description = "Where this bar sits along the panel's length when Placement is Fixed. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length) to have them share a slot.",
+		section = hpSection,
+		position = 12
+	)
+	default Justification hpDockJustification()
+	{
+		return Justification.START;
+	}
+
 	// ------------------------------------------------------------------
 	// Prayer
 	// ------------------------------------------------------------------
@@ -354,6 +366,18 @@ public interface ViciousBarsConfig extends Config
 	default int prayerOpacity()
 	{
 		return 100;
+	}
+
+	@ConfigItem(
+		keyName = "prayerDockJustification",
+		name = "Dock justification",
+		description = "Where this bar sits along the panel's length when Placement is Fixed. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length) to have them share a slot.",
+		section = prayerSection,
+		position = 14
+	)
+	default Justification prayerDockJustification()
+	{
+		return Justification.START;
 	}
 
 	// ------------------------------------------------------------------
@@ -540,6 +564,18 @@ public interface ViciousBarsConfig extends Config
 		return 100;
 	}
 
+	@ConfigItem(
+		keyName = "specDockJustification",
+		name = "Dock justification",
+		description = "Where this bar sits along the panel's length when Placement is Fixed. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length) to have them share a slot.",
+		section = specSection,
+		position = 14
+	)
+	default Justification specDockJustification()
+	{
+		return Justification.START;
+	}
+
 	// ------------------------------------------------------------------
 	// Run Energy
 	// ------------------------------------------------------------------
@@ -724,6 +760,18 @@ public interface ViciousBarsConfig extends Config
 		return 100;
 	}
 
+	@ConfigItem(
+		keyName = "runDockJustification",
+		name = "Dock justification",
+		description = "Where this bar sits along the panel's length when Placement is Fixed. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length) to have them share a slot.",
+		section = runSection,
+		position = 14
+	)
+	default Justification runDockJustification()
+	{
+		return Justification.START;
+	}
+
 	// ------------------------------------------------------------------
 	// Warmth (Wintertodt only - no vanilla orb, so no orb mode)
 	// ------------------------------------------------------------------
@@ -884,6 +932,18 @@ public interface ViciousBarsConfig extends Config
 		return 100;
 	}
 
+	@ConfigItem(
+		keyName = "warmthDockJustification",
+		name = "Dock justification",
+		description = "Where this bar sits along the panel's length when Placement is Fixed. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length) to have them share a slot.",
+		section = warmthSection,
+		position = 12
+	)
+	default Justification warmthDockJustification()
+	{
+		return Justification.START;
+	}
+
 	// ------------------------------------------------------------------
 	// Enemy Hitpoints (current target only - no vanilla orb, so no bauble mode)
 	// ------------------------------------------------------------------
@@ -1032,6 +1092,18 @@ public interface ViciousBarsConfig extends Config
 		return 100;
 	}
 
+	@ConfigItem(
+		keyName = "enemyHpDockJustification",
+		name = "Dock justification",
+		description = "Where this bar sits along the panel's length when Placement is Fixed. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length) to have them share a slot.",
+		section = enemyHpSection,
+		position = 11
+	)
+	default Justification enemyHpDockJustification()
+	{
+		return Justification.START;
+	}
+
 	// ------------------------------------------------------------------
 	// Fixed Layout (shared across every bar in Fixed placement - Floating
 	// will get its own equivalent section if/when it needs shared settings)
@@ -1069,5 +1141,17 @@ public interface ViciousBarsConfig extends Config
 	default int dockOffset()
 	{
 		return 4;
+	}
+
+	@ConfigItem(
+		keyName = "clampToPanel",
+		name = "Clamp to panel",
+		description = "When on, every Fixed bar's Length is overridden to match the panel's own dimension (height for left/right bars, width for top/bottom) instead of its own Length setting. Leave off to size bars manually - required if you want two bars sharing a Dock slot via Dock justification.",
+		section = fixedLayoutSection,
+		position = 2
+	)
+	default boolean clampToPanel()
+	{
+		return false;
 	}
 }

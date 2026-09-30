@@ -68,6 +68,18 @@ class HpBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected Justification getDockJustification()
+	{
+		return config.hpDockJustification();
+	}
+
+	@Override
+	protected boolean isClampToPanel()
+	{
+		return config.clampToPanel();
+	}
+
+	@Override
 	protected int getCurrent()
 	{
 		return client.getBoostedSkillLevel(Skill.HITPOINTS);

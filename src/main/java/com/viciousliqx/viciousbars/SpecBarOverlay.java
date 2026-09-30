@@ -69,6 +69,18 @@ class SpecBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected Justification getDockJustification()
+	{
+		return config.specDockJustification();
+	}
+
+	@Override
+	protected boolean isClampToPanel()
+	{
+		return config.clampToPanel();
+	}
+
+	@Override
 	protected int getCurrent()
 	{
 		// VarPlayer.SPECIAL_ATTACK_PERCENT is 0-1000; convert to a 0-100 percentage.

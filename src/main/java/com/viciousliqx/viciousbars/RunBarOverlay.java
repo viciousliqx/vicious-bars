@@ -72,6 +72,18 @@ class RunBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected Justification getDockJustification()
+	{
+		return config.runDockJustification();
+	}
+
+	@Override
+	protected boolean isClampToPanel()
+	{
+		return config.clampToPanel();
+	}
+
+	@Override
 	protected int getCurrent()
 	{
 		// client.getEnergy() is 0-10000; convert to a 0-100 percentage for display.

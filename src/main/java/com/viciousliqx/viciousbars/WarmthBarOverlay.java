@@ -83,6 +83,18 @@ class WarmthBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected Justification getDockJustification()
+	{
+		return config.warmthDockJustification();
+	}
+
+	@Override
+	protected boolean isClampToPanel()
+	{
+		return config.clampToPanel();
+	}
+
+	@Override
 	protected int getCurrent()
 	{
 		// Varbits.WINTERTODT_WARMTH is 0-1000; convert to a 0-100 percentage.
