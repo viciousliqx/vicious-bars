@@ -138,7 +138,10 @@ class PrayerBarOverlay extends VitalBarOverlay
 		// whole premise is an overlay button mirroring the prayer orb's click.
 		boolean active = client.getVarbitValue(Varbits.QUICK_PRAYER) != 0;
 		String option = active ? "Deactivate" : "Activate";
-		log.debug("onOrbActivate: active={} option={} component={}", active, option, PRAYER_ORB_COMPONENT);
+		net.runelite.api.widgets.Widget widget = client.getWidget(PRAYER_ORB_COMPONENT);
+		log.debug("onOrbActivate: active={} option={} component={} widget={} actions={}",
+			active, option, PRAYER_ORB_COMPONENT, widget,
+			widget != null ? java.util.Arrays.toString(widget.getActions()) : "n/a");
 		client.menuAction(0, PRAYER_ORB_COMPONENT, MenuAction.CC_OP, 0, -1, option, "Quick-prayers");
 		log.debug("onOrbActivate: menuAction returned without throwing");
 	}
