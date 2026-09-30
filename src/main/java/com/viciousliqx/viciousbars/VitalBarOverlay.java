@@ -8,6 +8,7 @@ import java.awt.image.BufferedImage;
 import net.runelite.api.Client;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.Overlay;
+import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 
 /**
@@ -31,6 +32,11 @@ public abstract class VitalBarOverlay extends Overlay
 		this.client = client;
 		this.orbRelocator = orbRelocator;
 		setPosition(OverlayPosition.DYNAMIC);
+		// UNDER_WIDGETS ("under all interfaces, but above overheads") rather than
+		// the more common ABOVE_WIDGETS, specifically so a Relocated orb widget
+		// sitting at our icon's position renders on TOP of our bar instead of
+		// getting painted over by our own background fill.
+		setLayer(OverlayLayer.UNDER_WIDGETS);
 	}
 
 	protected abstract boolean shouldRender();

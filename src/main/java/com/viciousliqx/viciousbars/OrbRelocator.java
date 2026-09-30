@@ -21,6 +21,7 @@ import net.runelite.api.widgets.WidgetPositionMode;
 @Singleton
 class OrbRelocator
 {
+
 	private static class Original
 	{
 		final int xPositionMode;
@@ -59,10 +60,21 @@ class OrbRelocator
 
 		originals.computeIfAbsent(componentId, id -> new Original(widget));
 
+		// originalX/Y are relative to the widget's parent, not the full canvas
+		// (Movable Orbs gets away without this conversion because it works in
+		// mouse-drag DELTAS added to an already-valid originalX/Y, never an
+		// absolute canvas-space target the way we need to for a computed dock
+		// position) - so convert our canvas-absolute target into parent-relative.
+		Widget parent = widget.getParent();
+		int parentX = parent != null ? parent.getCanvasLocation().getX() : 0;
+		int parentY = parent != null ? parent.getCanvasLocation().getY() : 0;
+		int relativeX = x - parentX;
+		int relativeY = y - parentY;
+
 		widget.setXPositionMode(WidgetPositionMode.ABSOLUTE_LEFT);
 		widget.setYPositionMode(WidgetPositionMode.ABSOLUTE_TOP);
-		widget.setOriginalX(x);
-		widget.setOriginalY(y);
+		widget.setOriginalX(relativeX);
+		widget.setOriginalY(relativeY);
 		widget.revalidate();
 	}
 
