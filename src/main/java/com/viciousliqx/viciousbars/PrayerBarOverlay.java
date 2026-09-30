@@ -8,6 +8,8 @@ import net.runelite.api.Client;
 import net.runelite.api.MenuAction;
 import net.runelite.api.Skill;
 import net.runelite.api.Varbits;
+import net.runelite.api.events.GameTick;
+import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.SkillIconManager;
 
 @Singleton
@@ -18,9 +20,26 @@ class PrayerBarOverlay extends VitalBarOverlay
 	// the orb's container, not the actual clickable sub-widget.
 	private static final int PRAYER_ORB_COMPONENT = (160 << 16) | 20;
 
+	// Sane fallback before we've observed a real tick's length, and a ceiling
+	// on how long an observed gap can be before we distrust it (e.g. logging
+	// in, or the game window losing focus) rather than let one freak reading
+	// make the metronome crawl for a full cycle.
+	private static final long DEFAULT_TICK_NANOS = 600_000_000L;
+	private static final long MAX_PLAUSIBLE_TICK_NANOS = DEFAULT_TICK_NANOS * 5;
+	private static final long FLASH_DURATION_NANOS = 150_000_000L;
+
 	private final Client client;
 	private final ViciousBarsConfig config;
 	private final SkillIconManager skillIconManager;
+
+	// Metronome timing state - GameTick is the only authoritative signal we
+	// get, so the marker's SPEED is a best guess (based on the last real
+	// tick's measured length) but the FLASH always fires exactly on a real
+	// tick, never on the interpolated guess, so the one cue that actually
+	// matters for flicking timing is never subject to drift.
+	private long lastTickNanos = System.nanoTime();
+	private long tickDurationEstimateNanos = DEFAULT_TICK_NANOS;
+	private long flashUntilNanos;
 
 	@Inject
 	private PrayerBarOverlay(Client client, ViciousBarsConfig config, SkillIconManager skillIconManager)
@@ -29,6 +48,37 @@ class PrayerBarOverlay extends VitalBarOverlay
 		this.client = client;
 		this.config = config;
 		this.skillIconManager = skillIconManager;
+	}
+
+	@Subscribe
+	public void onGameTick(GameTick event)
+	{
+		long now = System.nanoTime();
+		long observed = now - lastTickNanos;
+		if (observed > 0 && observed < MAX_PLAUSIBLE_TICK_NANOS)
+		{
+			tickDurationEstimateNanos = observed;
+		}
+		lastTickNanos = now;
+		flashUntilNanos = now + FLASH_DURATION_NANOS;
+	}
+
+	@Override
+	protected boolean isMetronomeEnabled()
+	{
+		return config.prayerMetronomeEnabled();
+	}
+
+	@Override
+	protected float getMetronomeFraction()
+	{
+		return (float) (System.nanoTime() - lastTickNanos) / tickDurationEstimateNanos;
+	}
+
+	@Override
+	protected boolean isMetronomeFlashing()
+	{
+		return System.nanoTime() < flashUntilNanos;
 	}
 
 	@Override

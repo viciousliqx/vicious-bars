@@ -404,6 +404,18 @@ public interface ViciousBarsConfig extends Config
 		return 100;
 	}
 
+	@ConfigItem(
+		keyName = "prayerMetronomeEnabled",
+		name = "Metronome",
+		description = "Shows a small marker sweeping across the bar once per game tick, with the icon flashing each time it completes a lap - a timing aid for prayer flicking.",
+		section = prayerSection,
+		position = 16
+	)
+	default boolean prayerMetronomeEnabled()
+	{
+		return false;
+	}
+
 	// ------------------------------------------------------------------
 	// Special Attack
 	// ------------------------------------------------------------------

@@ -27,6 +27,9 @@ public abstract class VitalBarOverlay extends Overlay
 	private static final int BACKGROUND_BASE_ALPHA = 150;
 	private static final int ICON_SIZE = 18;
 	private static final int PADDING = 3;
+	private static final Color METRONOME_MARKER_COLOR = new Color(255, 255, 255, 200);
+	private static final int METRONOME_MARKER_THICKNESS = 3;
+	private static final Color METRONOME_FLASH_COLOR = new Color(255, 255, 255, 140);
 
 	private final Client client;
 	// Written on the client/render thread, read from the AWT event thread by
@@ -85,6 +88,27 @@ public abstract class VitalBarOverlay extends Overlay
 
 	/** Called when the icon is clicked while Orb mode is Merged or Mirrored. No-op for bars with no orb. */
 	protected abstract void onOrbActivate();
+
+	// Metronome is Prayer-only for now - concrete no-op defaults here rather
+	// than forcing the other 5 bars to override methods they'll never use.
+
+	/** True only for bars with a metronome, and only while its config toggle is on. */
+	protected boolean isMetronomeEnabled()
+	{
+		return false;
+	}
+
+	/** 0-1, how far through the current game tick we are. Only meaningful when {@link #isMetronomeEnabled()}. */
+	protected float getMetronomeFraction()
+	{
+		return 0f;
+	}
+
+	/** True for a brief window right after a real game tick, to flash the icon. */
+	protected boolean isMetronomeFlashing()
+	{
+		return false;
+	}
 
 	/** Current on-screen icon rectangle, or null if no icon is currently drawn. Used by {@link OrbClickListener}. */
 	Rectangle getIconBounds()
@@ -171,7 +195,13 @@ public abstract class VitalBarOverlay extends Overlay
 			graphics.fillRect(0, 0, fillWidth, height);
 		}
 
-		Point iconLocal = drawIconAndCounter(graphics, width, height, orientation, current);
+		if (isMetronomeEnabled())
+		{
+			drawMetronomeMarker(graphics, width, height, orientation);
+		}
+
+		Point iconLocal = drawIconAndCounter(graphics, width, height, orientation, current,
+			isMetronomeEnabled() && isMetronomeFlashing());
 		iconBounds = iconLocal != null
 			? new Rectangle(origin.x + iconLocal.x, origin.y + iconLocal.y, ICON_SIZE, ICON_SIZE)
 			: null;
@@ -179,8 +209,26 @@ public abstract class VitalBarOverlay extends Overlay
 		return new Dimension(width, height);
 	}
 
+	/** Sweeps a thin marker along the bar's length, position driven by how far through the current tick we are. */
+	private void drawMetronomeMarker(Graphics2D graphics, int width, int height, Orientation orientation)
+	{
+		float fraction = Math.max(0f, Math.min(1f, getMetronomeFraction()));
+		graphics.setColor(METRONOME_MARKER_COLOR);
+		if (orientation == Orientation.VERTICAL)
+		{
+			int y = Math.round(fraction * (height - METRONOME_MARKER_THICKNESS));
+			graphics.fillRect(0, y, width, METRONOME_MARKER_THICKNESS);
+		}
+		else
+		{
+			int x = Math.round(fraction * (width - METRONOME_MARKER_THICKNESS));
+			graphics.fillRect(x, 0, METRONOME_MARKER_THICKNESS, height);
+		}
+	}
+
 	/** Returns the icon's local (bar-relative) top-left position, or null if no icon was drawn. */
-	private Point drawIconAndCounter(Graphics2D graphics, int width, int height, Orientation orientation, int current)
+	private Point drawIconAndCounter(Graphics2D graphics, int width, int height, Orientation orientation, int current,
+		boolean flashIcon)
 	{
 		OrbMode orbMode = getOrbMode();
 		// The icon IS the click target in Merged/Mirrored mode, so it can't be
@@ -215,6 +263,11 @@ public abstract class VitalBarOverlay extends Overlay
 			{
 				int iconX = (width - ICON_SIZE) / 2;
 				graphics.drawImage(icon, iconX, y, ICON_SIZE, ICON_SIZE, null);
+				if (flashIcon)
+				{
+					graphics.setColor(METRONOME_FLASH_COLOR);
+					graphics.fillRect(iconX, y, ICON_SIZE, ICON_SIZE);
+				}
 				iconLocal = new Point(iconX, y);
 				y += ICON_SIZE + PADDING;
 			}
@@ -231,6 +284,11 @@ public abstract class VitalBarOverlay extends Overlay
 			{
 				int iconY = (height - ICON_SIZE) / 2;
 				graphics.drawImage(icon, x, iconY, ICON_SIZE, ICON_SIZE, null);
+				if (flashIcon)
+				{
+					graphics.setColor(METRONOME_FLASH_COLOR);
+					graphics.fillRect(x, iconY, ICON_SIZE, ICON_SIZE);
+				}
 				iconLocal = new Point(x, iconY);
 				x += ICON_SIZE + PADDING;
 			}

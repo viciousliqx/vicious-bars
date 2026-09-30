@@ -60,6 +60,7 @@ public class ViciousBarsPlugin extends Plugin
 	{
 		eventBus.register(opponentTracker);
 		eventBus.register(menuActionSniffer);
+		eventBus.register(prayerBarOverlay);
 		mouseManager.registerMouseListener(orbClickListener);
 
 		overlayManager.add(hpBarOverlay);
@@ -83,6 +84,7 @@ public class ViciousBarsPlugin extends Plugin
 		overlayManager.remove(enemyHpBarOverlay);
 
 		mouseManager.unregisterMouseListener(orbClickListener);
+		eventBus.unregister(prayerBarOverlay);
 		eventBus.unregister(menuActionSniffer);
 		eventBus.unregister(opponentTracker);
 		opponentTracker.reset();
