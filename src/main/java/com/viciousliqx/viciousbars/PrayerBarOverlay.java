@@ -142,7 +142,10 @@ class PrayerBarOverlay extends VitalBarOverlay
 		log.debug("onOrbActivate: active={} option={} component={} widget={} actions={}",
 			active, option, PRAYER_ORB_COMPONENT, widget,
 			widget != null ? java.util.Arrays.toString(widget.getActions()) : "n/a");
-		client.menuAction(0, PRAYER_ORB_COMPONENT, MenuAction.CC_OP, 0, -1, option, "Quick-prayers");
+		// Trying identifier=1 instead of 0 - OSRS widget actions/ops are
+		// conventionally 1-indexed (op1 = primary action); 0 ran without
+		// throwing but never actually toggled the varbit, three separate times.
+		client.menuAction(0, PRAYER_ORB_COMPONENT, MenuAction.CC_OP, 1, -1, option, "Quick-prayers");
 		log.debug("onOrbActivate: menuAction returned without throwing");
 	}
 }
