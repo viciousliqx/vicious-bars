@@ -13,17 +13,14 @@ class SpecBarOverlay extends VitalBarOverlay
 	private static final Color COLOR = new Color(220, 170, 40);
 	private static final int MAX_PERCENT = 100;
 
-	// Verified against the real "Movable Orbs" Hub plugin (anonyser/runelite-movable-orbs).
-	private static final int SPECIAL_ATTACK_ORB_COMPONENT = (160 << 16) | 34;
-
 	private final Client client;
 	private final ViciousBarsConfig config;
 	private final SpriteManager spriteManager;
 
 	@Inject
-	private SpecBarOverlay(Client client, OrbRelocator orbRelocator, ViciousBarsConfig config, SpriteManager spriteManager)
+	private SpecBarOverlay(Client client, ViciousBarsConfig config, SpriteManager spriteManager)
 	{
-		super(client, orbRelocator);
+		super(client);
 		this.client = client;
 		this.config = config;
 		this.spriteManager = spriteManager;
@@ -127,8 +124,8 @@ class SpecBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
-	protected int getOrbComponentId()
+	protected void onOrbActivate()
 	{
-		return SPECIAL_ATTACK_ORB_COMPONENT;
+		// TODO: activate-special-attack action, implemented after Prayer is proven.
 	}
 }

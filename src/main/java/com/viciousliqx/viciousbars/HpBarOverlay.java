@@ -16,17 +16,14 @@ class HpBarOverlay extends VitalBarOverlay
 	private static final Color ENVENOMED = new Color(60, 120, 40);
 	private static final Color DISEASED = new Color(150, 110, 40);
 
-	// Verified against the real "Movable Orbs" Hub plugin (anonyser/runelite-movable-orbs).
-	private static final int HITPOINTS_ORB_COMPONENT = (160 << 16) | 7;
-
 	private final Client client;
 	private final ViciousBarsConfig config;
 	private final SpriteManager spriteManager;
 
 	@Inject
-	private HpBarOverlay(Client client, OrbRelocator orbRelocator, ViciousBarsConfig config, SpriteManager spriteManager)
+	private HpBarOverlay(Client client, ViciousBarsConfig config, SpriteManager spriteManager)
 	{
-		super(client, orbRelocator);
+		super(client);
 		this.client = client;
 		this.config = config;
 		this.spriteManager = spriteManager;
@@ -142,8 +139,8 @@ class HpBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
-	protected int getOrbComponentId()
+	protected void onOrbActivate()
 	{
-		return HITPOINTS_ORB_COMPONENT;
+		// TODO: cure-poison action, implemented after Prayer/Run/Spec are proven.
 	}
 }

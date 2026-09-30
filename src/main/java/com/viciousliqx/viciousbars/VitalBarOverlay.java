@@ -4,11 +4,11 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import net.runelite.api.Client;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.Overlay;
-import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 
 /**
@@ -17,6 +17,10 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  * persisted position; FIXED bars are pinned every frame to a position
  * computed by {@link PanelDock} and can't be dragged. Subclasses supply the
  * live data (current/max, color, icon, styling) for one specific bar.
+ *
+ * For bars with an Orb mode (HP/Prayer/Spec/Run), the icon's current
+ * on-screen rectangle is tracked every frame so {@link OrbClickListener} can
+ * hit-test real mouse clicks against it and invoke {@link #onOrbActivate()}.
  */
 public abstract class VitalBarOverlay extends Overlay
 {
@@ -25,18 +29,12 @@ public abstract class VitalBarOverlay extends Overlay
 	private static final int PADDING = 3;
 
 	private final Client client;
-	private final OrbRelocator orbRelocator;
+	private Rectangle iconBounds;
 
-	protected VitalBarOverlay(Client client, OrbRelocator orbRelocator)
+	protected VitalBarOverlay(Client client)
 	{
 		this.client = client;
-		this.orbRelocator = orbRelocator;
 		setPosition(OverlayPosition.DYNAMIC);
-		// UNDER_WIDGETS ("under all interfaces, but above overheads") rather than
-		// the more common ABOVE_WIDGETS, specifically so a Relocated orb widget
-		// sitting at our icon's position renders on TOP of our bar instead of
-		// getting painted over by our own background fill.
-		setLayer(OverlayLayer.UNDER_WIDGETS);
 	}
 
 	protected abstract boolean shouldRender();
@@ -73,14 +71,21 @@ public abstract class VitalBarOverlay extends Overlay
 	/** VANILLA for bars with no orb (Warmth, Enemy HP). */
 	protected abstract OrbMode getOrbMode();
 
-	/** Packed widget component id (groupId << 16 | childId) for this bar's vanilla orb, or -1 if it has none. */
-	protected abstract int getOrbComponentId();
+	/** Called when the icon is clicked while Orb mode is Merged or Mirrored. No-op for bars with no orb. */
+	protected abstract void onOrbActivate();
+
+	/** Current on-screen icon rectangle, or null if no icon is currently drawn. Used by {@link OrbClickListener}. */
+	Rectangle getIconBounds()
+	{
+		return iconBounds;
+	}
 
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
 		if (!shouldRender())
 		{
+			iconBounds = null;
 			return null;
 		}
 
@@ -98,6 +103,7 @@ public abstract class VitalBarOverlay extends Overlay
 			if (pos == null)
 			{
 				// Panel widget not present (wrong layout, or not logged in yet) - nothing to dock to.
+				iconBounds = null;
 				return null;
 			}
 			// Non-movable DYNAMIC overlays aren't auto-translated by the overlay
@@ -139,34 +145,20 @@ public abstract class VitalBarOverlay extends Overlay
 		}
 
 		Point iconLocal = drawIconAndCounter(graphics, width, height, orientation, current);
-
-		updateOrbRelocation(iconLocal, origin);
+		iconBounds = iconLocal != null
+			? new Rectangle(origin.x + iconLocal.x, origin.y + iconLocal.y, ICON_SIZE, ICON_SIZE)
+			: null;
 
 		return new Dimension(width, height);
-	}
-
-	private void updateOrbRelocation(Point iconLocal, Point origin)
-	{
-		int componentId = getOrbComponentId();
-		if (componentId < 0)
-		{
-			return;
-		}
-
-		if (getOrbMode() == OrbMode.RELOCATED && iconLocal != null)
-		{
-			orbRelocator.relocate(client, componentId, origin.x + iconLocal.x, origin.y + iconLocal.y);
-		}
-		else
-		{
-			orbRelocator.release(client, componentId);
-		}
 	}
 
 	/** Returns the icon's local (bar-relative) top-left position, or null if no icon was drawn. */
 	private Point drawIconAndCounter(Graphics2D graphics, int width, int height, Orientation orientation, int current)
 	{
-		boolean showIcon = isShowIcon();
+		OrbMode orbMode = getOrbMode();
+		// The icon IS the click target in Merged/Mirrored mode, so it can't be
+		// turned off in those modes regardless of the Show Icon setting.
+		boolean showIcon = isShowIcon() || orbMode == OrbMode.MERGED || orbMode == OrbMode.MIRRORED;
 		BufferedImage icon = showIcon ? getIcon() : null;
 		boolean showCounter = isShowCounter();
 

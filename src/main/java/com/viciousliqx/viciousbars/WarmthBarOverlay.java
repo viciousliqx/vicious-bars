@@ -21,9 +21,9 @@ class WarmthBarOverlay extends VitalBarOverlay
 	private final SkillIconManager skillIconManager;
 
 	@Inject
-	private WarmthBarOverlay(Client client, OrbRelocator orbRelocator, ViciousBarsConfig config, SkillIconManager skillIconManager)
+	private WarmthBarOverlay(Client client, ViciousBarsConfig config, SkillIconManager skillIconManager)
 	{
-		super(client, orbRelocator);
+		super(client);
 		this.client = client;
 		this.config = config;
 		this.skillIconManager = skillIconManager;
@@ -144,8 +144,8 @@ class WarmthBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
-	protected int getOrbComponentId()
+	protected void onOrbActivate()
 	{
-		return -1;
+		// No orb - never called.
 	}
 }

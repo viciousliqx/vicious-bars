@@ -3,10 +3,9 @@ package com.viciousliqx.viciousbars;
 import com.google.inject.Provides;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.Client;
-import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.EventBus;
+import net.runelite.client.input.MouseManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -21,22 +20,19 @@ public class ViciousBarsPlugin extends Plugin
 	private ViciousBarsConfig config;
 
 	@Inject
-	private Client client;
-
-	@Inject
-	private ClientThread clientThread;
-
-	@Inject
 	private OverlayManager overlayManager;
 
 	@Inject
 	private EventBus eventBus;
 
 	@Inject
+	private MouseManager mouseManager;
+
+	@Inject
 	private OpponentTracker opponentTracker;
 
 	@Inject
-	private OrbRelocator orbRelocator;
+	private OrbClickListener orbClickListener;
 
 	@Inject
 	private HpBarOverlay hpBarOverlay;
@@ -60,6 +56,7 @@ public class ViciousBarsPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		eventBus.register(opponentTracker);
+		mouseManager.registerMouseListener(orbClickListener);
 
 		overlayManager.add(hpBarOverlay);
 		overlayManager.add(prayerBarOverlay);
@@ -81,13 +78,9 @@ public class ViciousBarsPlugin extends Plugin
 		overlayManager.remove(warmthBarOverlay);
 		overlayManager.remove(enemyHpBarOverlay);
 
+		mouseManager.unregisterMouseListener(orbClickListener);
 		eventBus.unregister(opponentTracker);
 		opponentTracker.reset();
-
-		// Widget mutation must happen on the client thread; shutDown() isn't
-		// guaranteed to run there (same reason Movable Orbs wraps its own
-		// restore-on-shutdown call the same way).
-		clientThread.invoke(() -> orbRelocator.releaseAll(client));
 
 		log.debug("Vicious Bars stopped!");
 	}

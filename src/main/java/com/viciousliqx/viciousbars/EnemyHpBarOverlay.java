@@ -17,9 +17,9 @@ class EnemyHpBarOverlay extends VitalBarOverlay
 	private final SpriteManager spriteManager;
 
 	@Inject
-	private EnemyHpBarOverlay(Client client, OrbRelocator orbRelocator, ViciousBarsConfig config, OpponentTracker opponentTracker, SpriteManager spriteManager)
+	private EnemyHpBarOverlay(Client client, ViciousBarsConfig config, OpponentTracker opponentTracker, SpriteManager spriteManager)
 	{
-		super(client, orbRelocator);
+		super(client);
 		this.config = config;
 		this.opponentTracker = opponentTracker;
 		this.spriteManager = spriteManager;
@@ -139,8 +139,8 @@ class EnemyHpBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
-	protected int getOrbComponentId()
+	protected void onOrbActivate()
 	{
-		return -1;
+		// No orb - never called.
 	}
 }
