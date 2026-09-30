@@ -125,6 +125,12 @@ class SpecBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getOpacity()
+	{
+		return config.specOpacity();
+	}
+
+	@Override
 	protected OrbMode getOrbMode()
 	{
 		return config.specOrbMode();

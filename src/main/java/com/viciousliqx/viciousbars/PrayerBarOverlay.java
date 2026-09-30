@@ -129,6 +129,12 @@ class PrayerBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getOpacity()
+	{
+		return config.prayerOpacity();
+	}
+
+	@Override
 	protected OrbMode getOrbMode()
 	{
 		return config.prayerOrbMode();

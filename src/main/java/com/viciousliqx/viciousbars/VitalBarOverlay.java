@@ -24,7 +24,7 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  */
 public abstract class VitalBarOverlay extends Overlay
 {
-	private static final Color BACKGROUND = new Color(0, 0, 0, 150);
+	private static final int BACKGROUND_BASE_ALPHA = 150;
 	private static final int ICON_SIZE = 18;
 	private static final int PADDING = 3;
 
@@ -70,6 +70,9 @@ public abstract class VitalBarOverlay extends Overlay
 	protected abstract int getThickness();
 
 	protected abstract int getLength();
+
+	/** 0-100. Scales both the background and the fill color's alpha. */
+	protected abstract int getOpacity();
 
 	/** VANILLA for bars with no orb (Warmth, Enemy HP). */
 	protected abstract OrbMode getOrbMode();
@@ -128,14 +131,18 @@ public abstract class VitalBarOverlay extends Overlay
 		int width = orientation == Orientation.VERTICAL ? getThickness() : getLength();
 		int height = orientation == Orientation.VERTICAL ? getLength() : getThickness();
 
-		graphics.setColor(BACKGROUND);
+		float opacityFraction = Math.max(0, Math.min(getOpacity(), 100)) / 100f;
+
+		graphics.setColor(new Color(0, 0, 0, Math.round(BACKGROUND_BASE_ALPHA * opacityFraction)));
 		graphics.fillRect(0, 0, width, height);
 
 		int max = Math.max(getMax(), 1);
 		int current = Math.max(0, Math.min(getCurrent(), max));
 		double ratio = (double) current / max;
 
-		graphics.setColor(getColor());
+		Color fillColor = getColor();
+		graphics.setColor(new Color(fillColor.getRed(), fillColor.getGreen(), fillColor.getBlue(),
+			Math.round(255 * opacityFraction)));
 		if (orientation == Orientation.VERTICAL)
 		{
 			int fillHeight = (int) Math.round(ratio * height);

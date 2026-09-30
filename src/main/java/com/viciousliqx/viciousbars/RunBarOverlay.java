@@ -125,6 +125,12 @@ class RunBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getOpacity()
+	{
+		return config.runOpacity();
+	}
+
+	@Override
 	protected OrbMode getOrbMode()
 	{
 		return config.runOrbMode();

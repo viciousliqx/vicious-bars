@@ -159,6 +159,19 @@ public interface ViciousBarsConfig extends Config
 		return 150;
 	}
 
+	@ConfigItem(
+		keyName = "hpOpacity",
+		name = "Opacity",
+		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
+		section = hpSection,
+		position = 11
+	)
+	@Range(min = 0, max = 100)
+	default int hpOpacity()
+	{
+		return 100;
+	}
+
 	// ------------------------------------------------------------------
 	// Prayer
 	// ------------------------------------------------------------------
@@ -330,6 +343,19 @@ public interface ViciousBarsConfig extends Config
 		return new Color(25, 35, 80);
 	}
 
+	@ConfigItem(
+		keyName = "prayerOpacity",
+		name = "Opacity",
+		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
+		section = prayerSection,
+		position = 13
+	)
+	@Range(min = 0, max = 100)
+	default int prayerOpacity()
+	{
+		return 100;
+	}
+
 	// ------------------------------------------------------------------
 	// Special Attack
 	// ------------------------------------------------------------------
@@ -475,6 +501,19 @@ public interface ViciousBarsConfig extends Config
 	default int specLength()
 	{
 		return 150;
+	}
+
+	@ConfigItem(
+		keyName = "specOpacity",
+		name = "Opacity",
+		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
+		section = specSection,
+		position = 11
+	)
+	@Range(min = 0, max = 100)
+	default int specOpacity()
+	{
+		return 100;
 	}
 
 	// ------------------------------------------------------------------
@@ -636,6 +675,19 @@ public interface ViciousBarsConfig extends Config
 		return new Color(212, 175, 55);
 	}
 
+	@ConfigItem(
+		keyName = "runOpacity",
+		name = "Opacity",
+		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
+		section = runSection,
+		position = 12
+	)
+	@Range(min = 0, max = 100)
+	default int runOpacity()
+	{
+		return 100;
+	}
+
 	// ------------------------------------------------------------------
 	// Warmth (Wintertodt only - no vanilla orb, so no orb mode)
 	// ------------------------------------------------------------------
@@ -783,6 +835,19 @@ public interface ViciousBarsConfig extends Config
 		return 150;
 	}
 
+	@ConfigItem(
+		keyName = "warmthOpacity",
+		name = "Opacity",
+		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
+		section = warmthSection,
+		position = 11
+	)
+	@Range(min = 0, max = 100)
+	default int warmthOpacity()
+	{
+		return 100;
+	}
+
 	// ------------------------------------------------------------------
 	// Enemy Hitpoints (current target only - no vanilla orb, so no bauble mode)
 	// ------------------------------------------------------------------
@@ -916,6 +981,19 @@ public interface ViciousBarsConfig extends Config
 	default int enemyHpLength()
 	{
 		return 150;
+	}
+
+	@ConfigItem(
+		keyName = "enemyHpOpacity",
+		name = "Opacity",
+		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
+		section = enemyHpSection,
+		position = 10
+	)
+	@Range(min = 0, max = 100)
+	default int enemyHpOpacity()
+	{
+		return 100;
 	}
 
 	// ------------------------------------------------------------------

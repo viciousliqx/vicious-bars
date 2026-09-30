@@ -135,6 +135,12 @@ class EnemyHpBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getOpacity()
+	{
+		return config.enemyHpOpacity();
+	}
+
+	@Override
 	protected OrbMode getOrbMode()
 	{
 		return OrbMode.VANILLA;

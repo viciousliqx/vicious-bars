@@ -135,6 +135,12 @@ class HpBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getOpacity()
+	{
+		return config.hpOpacity();
+	}
+
+	@Override
 	protected OrbMode getOrbMode()
 	{
 		return config.hpOrbMode();
