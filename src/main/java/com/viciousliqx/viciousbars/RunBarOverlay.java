@@ -3,10 +3,12 @@ package com.viciousliqx.viciousbars;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.gameval.SpriteID;
 import net.runelite.client.game.SpriteManager;
 
+@Singleton
 class RunBarOverlay extends VitalBarOverlay
 {
 	private static final Color COLOR = new Color(70, 180, 90);

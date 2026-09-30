@@ -3,11 +3,13 @@ package com.viciousliqx.viciousbars;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.NPC;
 import net.runelite.api.gameval.SpriteID;
 import net.runelite.client.game.SpriteManager;
 
+@Singleton
 class EnemyHpBarOverlay extends VitalBarOverlay
 {
 	private static final Color COLOR = new Color(220, 40, 40);

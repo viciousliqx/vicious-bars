@@ -3,12 +3,14 @@ package com.viciousliqx.viciousbars;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.MenuAction;
 import net.runelite.api.Skill;
 import net.runelite.api.Varbits;
 import net.runelite.client.game.SkillIconManager;
 
+@Singleton
 class PrayerBarOverlay extends VitalBarOverlay
 {
 	private static final Color COLOR = new Color(60, 170, 220);

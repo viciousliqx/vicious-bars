@@ -3,11 +3,13 @@ package com.viciousliqx.viciousbars;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.Skill;
 import net.runelite.api.Varbits;
 import net.runelite.client.game.SkillIconManager;
 
+@Singleton
 class WarmthBarOverlay extends VitalBarOverlay
 {
 	// Confirmed via oldschool.runescape.wiki/w/Warmth - the Wintertodt prison region.
