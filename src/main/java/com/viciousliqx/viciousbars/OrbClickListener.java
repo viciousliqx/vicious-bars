@@ -4,7 +4,7 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.input.MouseListener;
 
 /**
@@ -12,38 +12,40 @@ import net.runelite.client.input.MouseListener;
  * rectangle, and invokes the bar's action when Orb mode is Merged or
  * Mirrored. Vanilla bars never register a hit (their orbMode check fails) so
  * clicks pass through untouched.
+ *
+ * mouseClicked runs on the AWT event thread, not RuneLite's client thread -
+ * calling client.* from here directly throws (confirmed: "AssertionError:
+ * must be called on client thread"), so the actual activation is deferred via
+ * ClientThread, same as Movable Orbs does for its own widget mutations.
  */
-@Slf4j
 @Singleton
 class OrbClickListener implements MouseListener
 {
+	private final ClientThread clientThread;
 	private final VitalBarOverlay[] orbBars;
 
 	@Inject
-	private OrbClickListener(HpBarOverlay hp, PrayerBarOverlay prayer, SpecBarOverlay spec, RunBarOverlay run)
+	private OrbClickListener(ClientThread clientThread, HpBarOverlay hp, PrayerBarOverlay prayer, SpecBarOverlay spec, RunBarOverlay run)
 	{
+		this.clientThread = clientThread;
 		this.orbBars = new VitalBarOverlay[] { hp, prayer, spec, run };
 	}
 
 	@Override
 	public MouseEvent mouseClicked(MouseEvent event)
 	{
-		log.debug("OrbClickListener.mouseClicked at {}", event.getPoint());
 		for (VitalBarOverlay bar : orbBars)
 		{
 			OrbMode mode = bar.getOrbMode();
-			Rectangle bounds = bar.getIconBounds();
-			log.debug("  {} mode={} iconBounds={}", bar.getClass().getSimpleName(), mode, bounds);
-
 			if (mode != OrbMode.MERGED && mode != OrbMode.MIRRORED)
 			{
 				continue;
 			}
 
+			Rectangle bounds = bar.getIconBounds();
 			if (bounds != null && bounds.contains(event.getPoint()))
 			{
-				log.debug("  HIT - activating {}", bar.getClass().getSimpleName());
-				bar.onOrbActivate();
+				clientThread.invoke(bar::onOrbActivate);
 				return null;
 			}
 		}
