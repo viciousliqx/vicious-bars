@@ -87,7 +87,7 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "hpOrbMode",
 		name = "Orb mode",
-		description = "How this bar relates to the vanilla Hitpoints orb (Vanilla/Relocated/Merged/Mirrored).",
+		description = "How this bar relates to the vanilla Hitpoints orb (Vanilla/Merged/Mirrored).",
 		section = hpSection,
 		position = 5
 	)
@@ -234,7 +234,7 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "prayerOrbMode",
 		name = "Orb mode",
-		description = "How this bar relates to the vanilla Prayer orb (Vanilla/Relocated/Merged/Mirrored). Merged/Mirrored open quick-prayers on click, same as the orb.",
+		description = "How this bar relates to the vanilla Prayer orb (Vanilla/Merged/Mirrored). Merged/Mirrored open quick-prayers on click, same as the orb.",
 		section = prayerSection,
 		position = 5
 	)
@@ -381,7 +381,7 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "specOrbMode",
 		name = "Orb mode",
-		description = "How this bar relates to the vanilla Special Attack orb (Vanilla/Relocated/Merged/Mirrored). Merged/Mirrored activate special attack on click, same as the orb.",
+		description = "How this bar relates to the vanilla Special Attack orb (Vanilla/Merged/Mirrored). Merged/Mirrored activate special attack on click, same as the orb.",
 		section = specSection,
 		position = 5
 	)
@@ -528,7 +528,7 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "runOrbMode",
 		name = "Orb mode",
-		description = "How this bar relates to the vanilla Run Energy orb (Vanilla/Relocated/Merged/Mirrored). Merged/Mirrored toggle run on click, same as the orb.",
+		description = "How this bar relates to the vanilla Run Energy orb (Vanilla/Merged/Mirrored). Merged/Mirrored toggle run on click, same as the orb.",
 		section = runSection,
 		position = 5
 	)

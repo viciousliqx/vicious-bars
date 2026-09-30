@@ -4,14 +4,16 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.input.MouseListener;
 
 /**
  * Hit-tests real mouse clicks against each orb-bearing bar's current icon
  * rectangle, and invokes the bar's action when Orb mode is Merged or
- * Mirrored. Vanilla/Relocated bars never register a hit (their orbMode check
- * fails) so clicks pass through untouched.
+ * Mirrored. Vanilla bars never register a hit (their orbMode check fails) so
+ * clicks pass through untouched.
  */
+@Slf4j
 @Singleton
 class OrbClickListener implements MouseListener
 {
@@ -26,17 +28,21 @@ class OrbClickListener implements MouseListener
 	@Override
 	public MouseEvent mouseClicked(MouseEvent event)
 	{
+		log.debug("OrbClickListener.mouseClicked at {}", event.getPoint());
 		for (VitalBarOverlay bar : orbBars)
 		{
 			OrbMode mode = bar.getOrbMode();
+			Rectangle bounds = bar.getIconBounds();
+			log.debug("  {} mode={} iconBounds={}", bar.getClass().getSimpleName(), mode, bounds);
+
 			if (mode != OrbMode.MERGED && mode != OrbMode.MIRRORED)
 			{
 				continue;
 			}
 
-			Rectangle bounds = bar.getIconBounds();
 			if (bounds != null && bounds.contains(event.getPoint()))
 			{
+				log.debug("  HIT - activating {}", bar.getClass().getSimpleName());
 				bar.onOrbActivate();
 				return null;
 			}
