@@ -4,7 +4,6 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.input.MouseListener;
 
@@ -14,12 +13,15 @@ import net.runelite.client.input.MouseListener;
  * Mirrored. Vanilla bars never register a hit (their orbMode check fails) so
  * clicks pass through untouched.
  *
- * mouseClicked runs on the AWT event thread, not RuneLite's client thread -
- * calling client.* from here directly throws (confirmed: "AssertionError:
- * must be called on client thread"), so the actual activation is deferred via
- * ClientThread, same as Movable Orbs does for its own widget mutations.
+ * Consumes on BOTH mousePressed and mouseClicked - OSRS's click-to-walk
+ * appears to react to the press, not the synthesized "clicked" event, so
+ * consuming only mouseClicked was too late to stop movement underneath the
+ * icon (confirmed: clicking the icon still walked the player there).
+ *
+ * The actual activation runs via ClientThread.invoke() - mouseClicked/
+ * mousePressed run on the AWT event thread, not RuneLite's client thread,
+ * and client.* calls assert they're only ever called from the client thread.
  */
-@Slf4j
 @Singleton
 class OrbClickListener implements MouseListener
 {
@@ -33,8 +35,7 @@ class OrbClickListener implements MouseListener
 		this.orbBars = new VitalBarOverlay[] { hp, prayer, spec, run };
 	}
 
-	@Override
-	public MouseEvent mouseClicked(MouseEvent event)
+	private VitalBarOverlay hitOrbBar(MouseEvent event)
 	{
 		for (VitalBarOverlay bar : orbBars)
 		{
@@ -47,29 +48,46 @@ class OrbClickListener implements MouseListener
 			Rectangle bounds = bar.getIconBounds();
 			if (bounds != null && bounds.contains(event.getPoint()))
 			{
-				log.debug("hit {} at {}, bounds={}", bar.getClass().getSimpleName(), event.getPoint(), bounds);
-					clientThread.invoke(bar::onOrbActivate);
-				// Verified against MouseManager's real source: it never null-checks
-				// a listener's return value, it checks isConsumed() - returning null
-				// here throws a NullPointerException on the very next listener in
-				// the chain, every time. Consume + return the event, don't null it.
-				event.consume();
-				return event;
+				return bar;
 			}
 		}
 
-		return event;
+		return null;
 	}
 
 	@Override
 	public MouseEvent mousePressed(MouseEvent event)
 	{
+		if (hitOrbBar(event) != null)
+		{
+			// Verified against MouseManager's real source: it never null-checks
+			// a listener's return value, it checks isConsumed() - returning null
+			// here throws a NullPointerException on the very next listener in
+			// the chain, every time. Consume + return the event, don't null it.
+			event.consume();
+		}
+		return event;
+	}
+
+	@Override
+	public MouseEvent mouseClicked(MouseEvent event)
+	{
+		VitalBarOverlay bar = hitOrbBar(event);
+		if (bar != null)
+		{
+			clientThread.invoke(bar::onOrbActivate);
+			event.consume();
+		}
 		return event;
 	}
 
 	@Override
 	public MouseEvent mouseReleased(MouseEvent event)
 	{
+		if (hitOrbBar(event) != null)
+		{
+			event.consume();
+		}
 		return event;
 	}
 

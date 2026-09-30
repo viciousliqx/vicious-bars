@@ -32,6 +32,9 @@ public class ViciousBarsPlugin extends Plugin
 	private OpponentTracker opponentTracker;
 
 	@Inject
+	private MenuActionSniffer menuActionSniffer;
+
+	@Inject
 	private OrbClickListener orbClickListener;
 
 	@Inject
@@ -56,6 +59,7 @@ public class ViciousBarsPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		eventBus.register(opponentTracker);
+		eventBus.register(menuActionSniffer);
 		mouseManager.registerMouseListener(orbClickListener);
 
 		overlayManager.add(hpBarOverlay);
@@ -79,6 +83,7 @@ public class ViciousBarsPlugin extends Plugin
 		overlayManager.remove(enemyHpBarOverlay);
 
 		mouseManager.unregisterMouseListener(orbClickListener);
+		eventBus.unregister(menuActionSniffer);
 		eventBus.unregister(opponentTracker);
 		opponentTracker.reset();
 
