@@ -19,6 +19,14 @@ class SpecBarOverlay extends VitalBarOverlay
 	// vanilla orb.
 	private static final int SPECIAL_ATTACK_ORB_COMPONENT = (160 << 16) | 36;
 
+	// VarPlayer 301 - not a named RuneLite constant. Captured via
+	// SpecialAttackSniffer: flipped 0 -> 1 in the exact same tick as a real
+	// "Use Special Attack" click, while every other varbit/varp that changed
+	// in that window was a continuously-ticking counter unrelated to the
+	// click. Only one real click's worth of data so far (arming, not
+	// un-arming) - worth confirming both directions once tested in-game.
+	private static final int SPECIAL_ATTACK_QUEUED_VARP = 301;
+
 	private final Client client;
 	private final ViciousBarsConfig config;
 	private final SpriteManager spriteManager;
@@ -93,13 +101,15 @@ class SpecBarOverlay extends VitalBarOverlay
 		return MAX_PERCENT;
 	}
 
+	private boolean isQueued()
+	{
+		return client.getVarpValue(SPECIAL_ATTACK_QUEUED_VARP) != 0;
+	}
+
 	@Override
 	protected Color getColor()
 	{
-		// TODO: switch to config.specQueuedColor() once we have verified
-		// real data for the "special attack queued" varbit (pending capture
-		// via SpecialAttackSniffer). Baseline color only for now.
-		return config.specBarColor();
+		return isQueued() ? config.specQueuedColor() : config.specBarColor();
 	}
 
 	@Override
