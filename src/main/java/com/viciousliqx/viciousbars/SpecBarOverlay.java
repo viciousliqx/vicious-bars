@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
+import net.runelite.api.MenuAction;
 import net.runelite.api.VarPlayer;
 import net.runelite.api.gameval.SpriteID;
 import net.runelite.client.game.SpriteManager;
@@ -14,6 +15,10 @@ class SpecBarOverlay extends VitalBarOverlay
 {
 	private static final Color COLOR = new Color(220, 170, 40);
 	private static final int MAX_PERCENT = 100;
+
+	// Captured via a real MenuOptionClicked event from manually clicking the
+	// vanilla orb.
+	private static final int SPECIAL_ATTACK_ORB_COMPONENT = (160 << 16) | 36;
 
 	private final Client client;
 	private final ViciousBarsConfig config;
@@ -128,6 +133,10 @@ class SpecBarOverlay extends VitalBarOverlay
 	@Override
 	protected void onOrbActivate()
 	{
-		// TODO: activate-special-attack action, implemented after Prayer is proven.
+		// Exact parameters captured from a real click on the vanilla orb via
+		// MenuOptionClicked: action=CC_OP id=1 param0=-1 option='Use'
+		// target='<col=ff9040>Special Attack</col>' (the color tag is the
+		// real, literal target string the game itself uses).
+		client.menuAction(-1, SPECIAL_ATTACK_ORB_COMPONENT, MenuAction.CC_OP, 1, -1, "Use", "<col=ff9040>Special Attack</col>");
 	}
 }

@@ -4,21 +4,21 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.MenuAction;
 import net.runelite.api.Skill;
 import net.runelite.api.Varbits;
 import net.runelite.client.game.SkillIconManager;
 
-@Slf4j
 @Singleton
 class PrayerBarOverlay extends VitalBarOverlay
 {
 	private static final Color COLOR = new Color(60, 170, 220);
 
-	// Verified against the real "Movable Orbs" Hub plugin (anonyser/runelite-movable-orbs).
-	private static final int PRAYER_ORB_COMPONENT = (160 << 16) | 18;
+	// Captured via a real MenuOptionClicked event from manually clicking the
+	// vanilla orb - NOT (160<<16)|18 from Movable Orbs, which turned out to be
+	// the orb's container, not the actual clickable sub-widget.
+	private static final int PRAYER_ORB_COMPONENT = (160 << 16) | 20;
 
 	private final Client client;
 	private final ViciousBarsConfig config;
@@ -134,18 +134,11 @@ class PrayerBarOverlay extends VitalBarOverlay
 	@Override
 	protected void onOrbActivate()
 	{
-		// Verified against the real "prayer-manager" plugin (MGreenwood), whose
-		// whole premise is an overlay button mirroring the prayer orb's click.
+		// Exact parameters captured from a real click on the vanilla orb via
+		// MenuOptionClicked: action=CC_OP id=1 param0=-1 option=Activate/
+		// Deactivate target=Quick-prayers.
 		boolean active = client.getVarbitValue(Varbits.QUICK_PRAYER) != 0;
 		String option = active ? "Deactivate" : "Activate";
-		net.runelite.api.widgets.Widget widget = client.getWidget(PRAYER_ORB_COMPONENT);
-		log.debug("onOrbActivate: active={} option={} component={} widget={} actions={}",
-			active, option, PRAYER_ORB_COMPONENT, widget,
-			widget != null ? java.util.Arrays.toString(widget.getActions()) : "n/a");
-		// Trying identifier=1 instead of 0 - OSRS widget actions/ops are
-		// conventionally 1-indexed (op1 = primary action); 0 ran without
-		// throwing but never actually toggled the varbit, three separate times.
-		client.menuAction(0, PRAYER_ORB_COMPONENT, MenuAction.CC_OP, 1, -1, option, "Quick-prayers");
-		log.debug("onOrbActivate: menuAction returned without throwing");
+		client.menuAction(-1, PRAYER_ORB_COMPONENT, MenuAction.CC_OP, 1, -1, option, "Quick-prayers");
 	}
 }

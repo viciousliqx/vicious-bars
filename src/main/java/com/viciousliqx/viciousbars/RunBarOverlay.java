@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
+import net.runelite.api.MenuAction;
 import net.runelite.api.gameval.SpriteID;
 import net.runelite.client.game.SpriteManager;
 
@@ -13,6 +14,10 @@ class RunBarOverlay extends VitalBarOverlay
 {
 	private static final Color COLOR = new Color(70, 180, 90);
 	private static final int MAX_PERCENT = 100;
+
+	// Captured via a real MenuOptionClicked event from manually clicking the
+	// vanilla orb.
+	private static final int RUN_ORB_COMPONENT = (160 << 16) | 28;
 
 	private final Client client;
 	private final ViciousBarsConfig config;
@@ -129,6 +134,9 @@ class RunBarOverlay extends VitalBarOverlay
 	@Override
 	protected void onOrbActivate()
 	{
-		// TODO: toggle-run action, implemented after Prayer is proven.
+		// Exact parameters captured from a real click on the vanilla orb via
+		// MenuOptionClicked: action=CC_OP id=1 param0=-1 option='Toggle Run'
+		// target=''.
+		client.menuAction(-1, RUN_ORB_COMPONENT, MenuAction.CC_OP, 1, -1, "Toggle Run", "");
 	}
 }
