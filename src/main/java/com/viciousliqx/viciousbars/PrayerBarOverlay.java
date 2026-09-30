@@ -62,6 +62,12 @@ class PrayerBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getDockOffset()
+	{
+		return config.dockOffset();
+	}
+
+	@Override
 	protected int getCurrent()
 	{
 		return client.getBoostedSkillLevel(Skill.PRAYER);

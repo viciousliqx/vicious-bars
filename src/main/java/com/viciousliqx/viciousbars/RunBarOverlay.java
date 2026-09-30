@@ -18,6 +18,10 @@ class RunBarOverlay extends VitalBarOverlay
 	// vanilla orb.
 	private static final int RUN_ORB_COMPONENT = (160 << 16) | 28;
 
+	// VarPlayer 173 "TOGGLE_RUN" - wiki-documented (oldschool.runescape.wiki/w/RuneScape:Varplayer/173),
+	// no named constant in RuneLite's own VarPlayer enum, so queried by raw id.
+	private static final int TOGGLE_RUN_VARP = 173;
+
 	private final Client client;
 	private final ViciousBarsConfig config;
 	private final SpriteManager spriteManager;
@@ -62,6 +66,12 @@ class RunBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getDockOffset()
+	{
+		return config.dockOffset();
+	}
+
+	@Override
 	protected int getCurrent()
 	{
 		// client.getEnergy() is 0-10000; convert to a 0-100 percentage for display.
@@ -77,7 +87,7 @@ class RunBarOverlay extends VitalBarOverlay
 	@Override
 	protected Color getColor()
 	{
-		return config.runColor();
+		return client.getVarpValue(TOGGLE_RUN_VARP) != 0 ? config.runActiveColor() : config.runInactiveColor();
 	}
 
 	@Override

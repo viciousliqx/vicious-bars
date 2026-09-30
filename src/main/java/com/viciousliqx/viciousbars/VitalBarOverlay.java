@@ -50,6 +50,8 @@ public abstract class VitalBarOverlay extends Overlay
 
 	protected abstract int getDockPadding();
 
+	protected abstract int getDockOffset();
+
 	protected abstract int getCurrent();
 
 	protected abstract int getMax();
@@ -105,7 +107,7 @@ public abstract class VitalBarOverlay extends Overlay
 			DockSide side = getDockSide();
 			orientation = side.orientation();
 
-			Point pos = PanelDock.position(client, side, getDockSlot(), getThickness(), getDockPadding());
+			Point pos = PanelDock.position(client, side, getDockSlot(), getThickness(), getDockPadding(), getDockOffset());
 			if (pos == null)
 			{
 				// Panel widget not present (wrong layout, or not logged in yet) - nothing to dock to.

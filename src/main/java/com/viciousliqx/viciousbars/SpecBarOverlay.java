@@ -13,7 +13,6 @@ import net.runelite.client.game.SpriteManager;
 @Singleton
 class SpecBarOverlay extends VitalBarOverlay
 {
-	private static final Color COLOR = new Color(220, 170, 40);
 	private static final int MAX_PERCENT = 100;
 
 	// Captured via a real MenuOptionClicked event from manually clicking the
@@ -64,6 +63,12 @@ class SpecBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getDockOffset()
+	{
+		return config.dockOffset();
+	}
+
+	@Override
 	protected int getCurrent()
 	{
 		// VarPlayer.SPECIAL_ATTACK_PERCENT is 0-1000; convert to a 0-100 percentage.
@@ -79,7 +84,10 @@ class SpecBarOverlay extends VitalBarOverlay
 	@Override
 	protected Color getColor()
 	{
-		return COLOR;
+		// TODO: switch to config.specQueuedColor() once we have verified
+		// real data for the "special attack queued" varbit (pending capture
+		// via SpecialAttackSniffer). Baseline color only for now.
+		return config.specBarColor();
 	}
 
 	@Override

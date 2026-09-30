@@ -25,14 +25,12 @@ import net.runelite.api.widgets.Widget;
  */
 final class PanelDock
 {
-	private static final int PANEL_MARGIN = 4;
-
 	private PanelDock()
 	{
 	}
 
 	/** Null if the panel widget isn't currently present/visible (e.g. not logged in). */
-	static Point position(Client client, DockSide side, int slot, int thickness, int padding)
+	static Point position(Client client, DockSide side, int slot, int thickness, int padding, int offset)
 	{
 		Widget panel = client.getWidget(InterfaceID.ToplevelPreEoc.SIDE_BACKGROUND);
 		if (panel == null || panel.isHidden())
@@ -51,14 +49,14 @@ final class PanelDock
 		switch (side)
 		{
 			case LEFT:
-				return new Point(panelX - PANEL_MARGIN - thickness - outward, panelY);
+				return new Point(panelX - offset - thickness - outward, panelY);
 			case RIGHT:
-				return new Point(panelX + panelWidth + PANEL_MARGIN + outward, panelY);
+				return new Point(panelX + panelWidth + offset + outward, panelY);
 			case TOP:
-				return new Point(panelX, panelY - PANEL_MARGIN - thickness - outward);
+				return new Point(panelX, panelY - offset - thickness - outward);
 			case BOTTOM:
 			default:
-				return new Point(panelX, panelY + panelHeight + PANEL_MARGIN + outward);
+				return new Point(panelX, panelY + panelHeight + offset + outward);
 		}
 	}
 }

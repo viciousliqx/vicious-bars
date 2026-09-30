@@ -77,6 +77,12 @@ class WarmthBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getDockOffset()
+	{
+		return config.dockOffset();
+	}
+
+	@Override
 	protected int getCurrent()
 	{
 		// Varbits.WINTERTODT_WARMTH is 0-1000; convert to a 0-100 percentage.

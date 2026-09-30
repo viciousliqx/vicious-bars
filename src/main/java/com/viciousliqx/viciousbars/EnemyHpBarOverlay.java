@@ -71,6 +71,12 @@ class EnemyHpBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getDockOffset()
+	{
+		return config.dockOffset();
+	}
+
+	@Override
 	protected int getCurrent()
 	{
 		NPC target = opponent();

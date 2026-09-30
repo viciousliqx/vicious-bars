@@ -504,11 +504,35 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "specBarColor",
+		name = "Bar color",
+		description = "Bar color when Special Attack isn't queued.",
+		section = specSection,
+		position = 11
+	)
+	default Color specBarColor()
+	{
+		return new Color(220, 170, 40);
+	}
+
+	@ConfigItem(
+		keyName = "specQueuedColor",
+		name = "Attack queued color",
+		description = "Bar color when Special Attack is queued (armed for your next hit) - matches the orb's own color change when selected.",
+		section = specSection,
+		position = 12
+	)
+	default Color specQueuedColor()
+	{
+		return new Color(255, 255, 255);
+	}
+
+	@ConfigItem(
 		keyName = "specOpacity",
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = specSection,
-		position = 11
+		position = 13
 	)
 	@Range(min = 0, max = 100)
 	default int specOpacity()
@@ -664,15 +688,27 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "runColor",
-		name = "Color",
-		description = "Bar color - defaults to the gold/yellow of the vanilla run orb.",
+		keyName = "runActiveColor",
+		name = "Active color",
+		description = "Bar color while Run is toggled on - defaults to the gold/yellow of the vanilla run orb.",
 		section = runSection,
 		position = 11
 	)
-	default Color runColor()
+	default Color runActiveColor()
 	{
 		return new Color(212, 175, 55);
+	}
+
+	@ConfigItem(
+		keyName = "runInactiveColor",
+		name = "Inactive color",
+		description = "Bar color while Run is toggled off.",
+		section = runSection,
+		position = 12
+	)
+	default Color runInactiveColor()
+	{
+		return new Color(130, 130, 130);
 	}
 
 	@ConfigItem(
@@ -680,7 +716,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = runSection,
-		position = 12
+		position = 13
 	)
 	@Range(min = 0, max = 100)
 	default int runOpacity()
@@ -1020,5 +1056,18 @@ public interface ViciousBarsConfig extends Config
 	default int dockPadding()
 	{
 		return 2;
+	}
+
+	@ConfigItem(
+		keyName = "dockOffset",
+		name = "Dock offset",
+		description = "Gap in pixels between the panel itself and the first (slot 1) bar docked to each side.",
+		section = fixedLayoutSection,
+		position = 1
+	)
+	@Range(min = 0)
+	default int dockOffset()
+	{
+		return 4;
 	}
 }
