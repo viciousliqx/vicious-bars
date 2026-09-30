@@ -68,15 +68,15 @@ class HpBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
-	protected Justification getDockJustification()
+	protected Justification getDockSlotOrientation()
 	{
 		return config.hpDockJustification();
 	}
 
 	@Override
-	protected boolean isClampToPanel()
+	protected boolean isClampSlot()
 	{
-		return config.clampToPanel();
+		return config.hpClampSlot();
 	}
 
 	@Override

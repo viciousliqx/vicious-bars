@@ -83,15 +83,15 @@ class WarmthBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
-	protected Justification getDockJustification()
+	protected Justification getDockSlotOrientation()
 	{
 		return config.warmthDockJustification();
 	}
 
 	@Override
-	protected boolean isClampToPanel()
+	protected boolean isClampSlot()
 	{
-		return config.clampToPanel();
+		return config.warmthClampSlot();
 	}
 
 	@Override

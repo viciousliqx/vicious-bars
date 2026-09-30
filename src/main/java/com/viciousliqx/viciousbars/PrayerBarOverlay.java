@@ -68,15 +68,15 @@ class PrayerBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
-	protected Justification getDockJustification()
+	protected Justification getDockSlotOrientation()
 	{
 		return config.prayerDockJustification();
 	}
 
 	@Override
-	protected boolean isClampToPanel()
+	protected boolean isClampSlot()
 	{
-		return config.clampToPanel();
+		return config.prayerClampSlot();
 	}
 
 	@Override

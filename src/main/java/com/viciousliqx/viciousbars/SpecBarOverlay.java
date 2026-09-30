@@ -77,15 +77,15 @@ class SpecBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
-	protected Justification getDockJustification()
+	protected Justification getDockSlotOrientation()
 	{
 		return config.specDockJustification();
 	}
 
 	@Override
-	protected boolean isClampToPanel()
+	protected boolean isClampSlot()
 	{
-		return config.clampToPanel();
+		return config.specClampSlot();
 	}
 
 	@Override

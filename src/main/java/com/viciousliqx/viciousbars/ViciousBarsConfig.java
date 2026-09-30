@@ -38,8 +38,8 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "hpPlacementMode",
-		name = "Placement",
-		description = "Fixed: docked to a side of the panel. Floating: drag anywhere, like Custom Vital Bars.",
+		name = "Bar type",
+		description = "Docked: docked to a side of the panel. Floating: drag anywhere, like Custom Vital Bars.",
 		section = hpSection,
 		position = 1
 	)
@@ -51,7 +51,7 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "hpDockSide",
 		name = "Dock side",
-		description = "Which side of the panel to dock to when Placement is Fixed. Determines orientation: left/right = vertical, top/bottom = horizontal.",
+		description = "Which side of the panel to dock to when Bar type is Docked. Determines orientation: left/right = vertical, top/bottom = horizontal.",
 		section = hpSection,
 		position = 2
 	)
@@ -74,11 +74,35 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "hpFloatingOrientation",
-		name = "Floating orientation",
-		description = "Bar orientation when Placement is Floating.",
+		keyName = "hpDockJustification",
+		name = "Dock slot orientation",
+		description = "Where this bar sits along the panel's length when Bar type is Docked. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length, or Clamp slot off) to have them share a slot.",
 		section = hpSection,
 		position = 4
+	)
+	default Justification hpDockJustification()
+	{
+		return Justification.START;
+	}
+
+	@ConfigItem(
+		keyName = "hpClampSlot",
+		name = "Clamp slot",
+		description = "When on, this bar's Length is overridden to match the panel's own dimension (height for left/right Dock sides, width for top/bottom) instead of using its own Length setting. Leave off to size this bar manually - needed if it shares a Dock slot with another bar via Dock slot orientation.",
+		section = hpSection,
+		position = 5
+	)
+	default boolean hpClampSlot()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "hpFloatingOrientation",
+		name = "Floating orientation",
+		description = "Bar orientation when Bar type is Floating.",
+		section = hpSection,
+		position = 6
 	)
 	default Orientation hpFloatingOrientation()
 	{
@@ -90,7 +114,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Orb mode",
 		description = "How this bar relates to the vanilla Hitpoints orb (Vanilla/Merged/Mirrored).",
 		section = hpSection,
-		position = 5
+		position = 7
 	)
 	default OrbMode hpOrbMode()
 	{
@@ -102,7 +126,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Show icon",
 		description = "Show the Hitpoints orb icon on the bar.",
 		section = hpSection,
-		position = 6
+		position = 8
 	)
 	default boolean hpShowIcon()
 	{
@@ -114,7 +138,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Show counter",
 		description = "Show the current Hitpoints value as text on the bar.",
 		section = hpSection,
-		position = 7
+		position = 9
 	)
 	default boolean hpShowCounter()
 	{
@@ -123,10 +147,10 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "hpJustification",
-		name = "Justification",
+		name = "Content justification",
 		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = hpSection,
-		position = 8
+		position = 10
 	)
 	default Justification hpJustification()
 	{
@@ -138,7 +162,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = hpSection,
-		position = 9
+		position = 11
 	)
 	@Range(min = 1)
 	default int hpThickness()
@@ -151,7 +175,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = hpSection,
-		position = 10
+		position = 12
 	)
 	@Range(min = 1)
 	default int hpLength()
@@ -164,24 +188,12 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = hpSection,
-		position = 11
+		position = 13
 	)
 	@Range(min = 0, max = 100)
 	default int hpOpacity()
 	{
 		return 100;
-	}
-
-	@ConfigItem(
-		keyName = "hpDockJustification",
-		name = "Dock justification",
-		description = "Where this bar sits along the panel's length when Placement is Fixed. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length) to have them share a slot.",
-		section = hpSection,
-		position = 12
-	)
-	default Justification hpDockJustification()
-	{
-		return Justification.START;
 	}
 
 	// ------------------------------------------------------------------
@@ -210,8 +222,8 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "prayerPlacementMode",
-		name = "Placement",
-		description = "Fixed: docked to a side of the panel. Floating: drag anywhere, like Custom Vital Bars.",
+		name = "Bar type",
+		description = "Docked: docked to a side of the panel. Floating: drag anywhere, like Custom Vital Bars.",
 		section = prayerSection,
 		position = 1
 	)
@@ -223,7 +235,7 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "prayerDockSide",
 		name = "Dock side",
-		description = "Which side of the panel to dock to when Placement is Fixed. Determines orientation: left/right = vertical, top/bottom = horizontal.",
+		description = "Which side of the panel to dock to when Bar type is Docked. Determines orientation: left/right = vertical, top/bottom = horizontal.",
 		section = prayerSection,
 		position = 2
 	)
@@ -246,11 +258,35 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "prayerFloatingOrientation",
-		name = "Floating orientation",
-		description = "Bar orientation when Placement is Floating.",
+		keyName = "prayerDockJustification",
+		name = "Dock slot orientation",
+		description = "Where this bar sits along the panel's length when Bar type is Docked. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length, or Clamp slot off) to have them share a slot.",
 		section = prayerSection,
 		position = 4
+	)
+	default Justification prayerDockJustification()
+	{
+		return Justification.START;
+	}
+
+	@ConfigItem(
+		keyName = "prayerClampSlot",
+		name = "Clamp slot",
+		description = "When on, this bar's Length is overridden to match the panel's own dimension (height for left/right Dock sides, width for top/bottom) instead of using its own Length setting. Leave off to size this bar manually - needed if it shares a Dock slot with another bar via Dock slot orientation.",
+		section = prayerSection,
+		position = 5
+	)
+	default boolean prayerClampSlot()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "prayerFloatingOrientation",
+		name = "Floating orientation",
+		description = "Bar orientation when Bar type is Floating.",
+		section = prayerSection,
+		position = 6
 	)
 	default Orientation prayerFloatingOrientation()
 	{
@@ -262,7 +298,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Orb mode",
 		description = "How this bar relates to the vanilla Prayer orb (Vanilla/Merged/Mirrored). Merged/Mirrored open quick-prayers on click, same as the orb.",
 		section = prayerSection,
-		position = 5
+		position = 7
 	)
 	default OrbMode prayerOrbMode()
 	{
@@ -274,7 +310,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Show icon",
 		description = "Show the Prayer orb icon on the bar.",
 		section = prayerSection,
-		position = 6
+		position = 8
 	)
 	default boolean prayerShowIcon()
 	{
@@ -286,7 +322,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Show counter",
 		description = "Show the current Prayer value as text on the bar.",
 		section = prayerSection,
-		position = 7
+		position = 9
 	)
 	default boolean prayerShowCounter()
 	{
@@ -295,10 +331,10 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "prayerJustification",
-		name = "Justification",
+		name = "Content justification",
 		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = prayerSection,
-		position = 8
+		position = 10
 	)
 	default Justification prayerJustification()
 	{
@@ -310,7 +346,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = prayerSection,
-		position = 9
+		position = 11
 	)
 	@Range(min = 1)
 	default int prayerThickness()
@@ -323,7 +359,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = prayerSection,
-		position = 10
+		position = 12
 	)
 	@Range(min = 1)
 	default int prayerLength()
@@ -336,7 +372,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Active color",
 		description = "Bar color while Quick Prayers is active.",
 		section = prayerSection,
-		position = 11
+		position = 13
 	)
 	default Color prayerActiveColor()
 	{
@@ -348,7 +384,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Inactive color",
 		description = "Bar color while Quick Prayers is inactive - matches the orb's own darker navy when off.",
 		section = prayerSection,
-		position = 12
+		position = 14
 	)
 	default Color prayerInactiveColor()
 	{
@@ -360,24 +396,12 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = prayerSection,
-		position = 13
+		position = 15
 	)
 	@Range(min = 0, max = 100)
 	default int prayerOpacity()
 	{
 		return 100;
-	}
-
-	@ConfigItem(
-		keyName = "prayerDockJustification",
-		name = "Dock justification",
-		description = "Where this bar sits along the panel's length when Placement is Fixed. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length) to have them share a slot.",
-		section = prayerSection,
-		position = 14
-	)
-	default Justification prayerDockJustification()
-	{
-		return Justification.START;
 	}
 
 	// ------------------------------------------------------------------
@@ -406,8 +430,8 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "specPlacementMode",
-		name = "Placement",
-		description = "Fixed: docked to a side of the panel. Floating: drag anywhere, like Custom Vital Bars.",
+		name = "Bar type",
+		description = "Docked: docked to a side of the panel. Floating: drag anywhere, like Custom Vital Bars.",
 		section = specSection,
 		position = 1
 	)
@@ -419,7 +443,7 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "specDockSide",
 		name = "Dock side",
-		description = "Which side of the panel to dock to when Placement is Fixed. Determines orientation: left/right = vertical, top/bottom = horizontal.",
+		description = "Which side of the panel to dock to when Bar type is Docked. Determines orientation: left/right = vertical, top/bottom = horizontal.",
 		section = specSection,
 		position = 2
 	)
@@ -442,11 +466,35 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "specFloatingOrientation",
-		name = "Floating orientation",
-		description = "Bar orientation when Placement is Floating.",
+		keyName = "specDockJustification",
+		name = "Dock slot orientation",
+		description = "Where this bar sits along the panel's length when Bar type is Docked. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length, or Clamp slot off) to have them share a slot.",
 		section = specSection,
 		position = 4
+	)
+	default Justification specDockJustification()
+	{
+		return Justification.START;
+	}
+
+	@ConfigItem(
+		keyName = "specClampSlot",
+		name = "Clamp slot",
+		description = "When on, this bar's Length is overridden to match the panel's own dimension (height for left/right Dock sides, width for top/bottom) instead of using its own Length setting. Leave off to size this bar manually - needed if it shares a Dock slot with another bar via Dock slot orientation.",
+		section = specSection,
+		position = 5
+	)
+	default boolean specClampSlot()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "specFloatingOrientation",
+		name = "Floating orientation",
+		description = "Bar orientation when Bar type is Floating.",
+		section = specSection,
+		position = 6
 	)
 	default Orientation specFloatingOrientation()
 	{
@@ -458,7 +506,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Orb mode",
 		description = "How this bar relates to the vanilla Special Attack orb (Vanilla/Merged/Mirrored). Merged/Mirrored activate special attack on click, same as the orb.",
 		section = specSection,
-		position = 5
+		position = 7
 	)
 	default OrbMode specOrbMode()
 	{
@@ -470,7 +518,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Show icon",
 		description = "Show the Special Attack orb icon on the bar.",
 		section = specSection,
-		position = 6
+		position = 8
 	)
 	default boolean specShowIcon()
 	{
@@ -482,7 +530,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Show counter",
 		description = "Show the current Special Attack value as text on the bar.",
 		section = specSection,
-		position = 7
+		position = 9
 	)
 	default boolean specShowCounter()
 	{
@@ -491,10 +539,10 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "specJustification",
-		name = "Justification",
+		name = "Content justification",
 		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = specSection,
-		position = 8
+		position = 10
 	)
 	default Justification specJustification()
 	{
@@ -506,7 +554,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = specSection,
-		position = 9
+		position = 11
 	)
 	@Range(min = 1)
 	default int specThickness()
@@ -519,7 +567,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = specSection,
-		position = 10
+		position = 12
 	)
 	@Range(min = 1)
 	default int specLength()
@@ -532,7 +580,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Bar color",
 		description = "Bar color when Special Attack isn't queued.",
 		section = specSection,
-		position = 11
+		position = 13
 	)
 	default Color specBarColor()
 	{
@@ -544,7 +592,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Attack queued color",
 		description = "Bar color when Special Attack is queued (armed for your next hit) - matches the orb's own color change when selected.",
 		section = specSection,
-		position = 12
+		position = 14
 	)
 	default Color specQueuedColor()
 	{
@@ -556,24 +604,12 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = specSection,
-		position = 13
+		position = 15
 	)
 	@Range(min = 0, max = 100)
 	default int specOpacity()
 	{
 		return 100;
-	}
-
-	@ConfigItem(
-		keyName = "specDockJustification",
-		name = "Dock justification",
-		description = "Where this bar sits along the panel's length when Placement is Fixed. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length) to have them share a slot.",
-		section = specSection,
-		position = 14
-	)
-	default Justification specDockJustification()
-	{
-		return Justification.START;
 	}
 
 	// ------------------------------------------------------------------
@@ -602,8 +638,8 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "runPlacementMode",
-		name = "Placement",
-		description = "Fixed: docked to a side of the panel. Floating: drag anywhere, like Custom Vital Bars.",
+		name = "Bar type",
+		description = "Docked: docked to a side of the panel. Floating: drag anywhere, like Custom Vital Bars.",
 		section = runSection,
 		position = 1
 	)
@@ -615,7 +651,7 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "runDockSide",
 		name = "Dock side",
-		description = "Which side of the panel to dock to when Placement is Fixed. Determines orientation: left/right = vertical, top/bottom = horizontal.",
+		description = "Which side of the panel to dock to when Bar type is Docked. Determines orientation: left/right = vertical, top/bottom = horizontal.",
 		section = runSection,
 		position = 2
 	)
@@ -638,11 +674,35 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "runFloatingOrientation",
-		name = "Floating orientation",
-		description = "Bar orientation when Placement is Floating.",
+		keyName = "runDockJustification",
+		name = "Dock slot orientation",
+		description = "Where this bar sits along the panel's length when Bar type is Docked. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length, or Clamp slot off) to have them share a slot.",
 		section = runSection,
 		position = 4
+	)
+	default Justification runDockJustification()
+	{
+		return Justification.START;
+	}
+
+	@ConfigItem(
+		keyName = "runClampSlot",
+		name = "Clamp slot",
+		description = "When on, this bar's Length is overridden to match the panel's own dimension (height for left/right Dock sides, width for top/bottom) instead of using its own Length setting. Leave off to size this bar manually - needed if it shares a Dock slot with another bar via Dock slot orientation.",
+		section = runSection,
+		position = 5
+	)
+	default boolean runClampSlot()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "runFloatingOrientation",
+		name = "Floating orientation",
+		description = "Bar orientation when Bar type is Floating.",
+		section = runSection,
+		position = 6
 	)
 	default Orientation runFloatingOrientation()
 	{
@@ -654,7 +714,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Orb mode",
 		description = "How this bar relates to the vanilla Run Energy orb (Vanilla/Merged/Mirrored). Merged/Mirrored toggle run on click, same as the orb.",
 		section = runSection,
-		position = 5
+		position = 7
 	)
 	default OrbMode runOrbMode()
 	{
@@ -666,7 +726,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Show icon",
 		description = "Show the Run Energy orb icon on the bar.",
 		section = runSection,
-		position = 6
+		position = 8
 	)
 	default boolean runShowIcon()
 	{
@@ -678,7 +738,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Show counter",
 		description = "Show the current Run Energy value as text on the bar.",
 		section = runSection,
-		position = 7
+		position = 9
 	)
 	default boolean runShowCounter()
 	{
@@ -687,10 +747,10 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "runJustification",
-		name = "Justification",
+		name = "Content justification",
 		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = runSection,
-		position = 8
+		position = 10
 	)
 	default Justification runJustification()
 	{
@@ -702,7 +762,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = runSection,
-		position = 9
+		position = 11
 	)
 	@Range(min = 1)
 	default int runThickness()
@@ -715,7 +775,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = runSection,
-		position = 10
+		position = 12
 	)
 	@Range(min = 1)
 	default int runLength()
@@ -728,7 +788,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Active color",
 		description = "Bar color while Run is toggled on - defaults to the gold/yellow of the vanilla run orb.",
 		section = runSection,
-		position = 11
+		position = 13
 	)
 	default Color runActiveColor()
 	{
@@ -740,7 +800,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Inactive color",
 		description = "Bar color while Run is toggled off.",
 		section = runSection,
-		position = 12
+		position = 14
 	)
 	default Color runInactiveColor()
 	{
@@ -752,24 +812,12 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = runSection,
-		position = 13
+		position = 15
 	)
 	@Range(min = 0, max = 100)
 	default int runOpacity()
 	{
 		return 100;
-	}
-
-	@ConfigItem(
-		keyName = "runDockJustification",
-		name = "Dock justification",
-		description = "Where this bar sits along the panel's length when Placement is Fixed. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length) to have them share a slot.",
-		section = runSection,
-		position = 14
-	)
-	default Justification runDockJustification()
-	{
-		return Justification.START;
 	}
 
 	// ------------------------------------------------------------------
@@ -810,8 +858,8 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "warmthPlacementMode",
-		name = "Placement",
-		description = "Fixed: docked to a side of the panel. Floating: drag anywhere, like Custom Vital Bars.",
+		name = "Bar type",
+		description = "Docked: docked to a side of the panel. Floating: drag anywhere, like Custom Vital Bars.",
 		section = warmthSection,
 		position = 2
 	)
@@ -823,7 +871,7 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "warmthDockSide",
 		name = "Dock side",
-		description = "Which side of the panel to dock to when Placement is Fixed. Determines orientation: left/right = vertical, top/bottom = horizontal.",
+		description = "Which side of the panel to dock to when Bar type is Docked. Determines orientation: left/right = vertical, top/bottom = horizontal.",
 		section = warmthSection,
 		position = 3
 	)
@@ -846,11 +894,35 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "warmthFloatingOrientation",
-		name = "Floating orientation",
-		description = "Bar orientation when Placement is Floating.",
+		keyName = "warmthDockJustification",
+		name = "Dock slot orientation",
+		description = "Where this bar sits along the panel's length when Bar type is Docked. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length, or Clamp slot off) to have them share a slot.",
 		section = warmthSection,
 		position = 5
+	)
+	default Justification warmthDockJustification()
+	{
+		return Justification.START;
+	}
+
+	@ConfigItem(
+		keyName = "warmthClampSlot",
+		name = "Clamp slot",
+		description = "When on, this bar's Length is overridden to match the panel's own dimension (height for left/right Dock sides, width for top/bottom) instead of using its own Length setting. Leave off to size this bar manually - needed if it shares a Dock slot with another bar via Dock slot orientation.",
+		section = warmthSection,
+		position = 6
+	)
+	default boolean warmthClampSlot()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "warmthFloatingOrientation",
+		name = "Floating orientation",
+		description = "Bar orientation when Bar type is Floating.",
+		section = warmthSection,
+		position = 7
 	)
 	default Orientation warmthFloatingOrientation()
 	{
@@ -862,7 +934,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Show icon",
 		description = "Show an icon on the bar. Warmth has no vanilla orb icon, so this borrows the Firemaking skill icon instead.",
 		section = warmthSection,
-		position = 6
+		position = 8
 	)
 	default boolean warmthShowIcon()
 	{
@@ -874,7 +946,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Show counter",
 		description = "Show the current Warmth percentage as text on the bar.",
 		section = warmthSection,
-		position = 7
+		position = 9
 	)
 	default boolean warmthShowCounter()
 	{
@@ -883,10 +955,10 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "warmthJustification",
-		name = "Justification",
+		name = "Content justification",
 		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = warmthSection,
-		position = 8
+		position = 10
 	)
 	default Justification warmthJustification()
 	{
@@ -898,7 +970,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = warmthSection,
-		position = 9
+		position = 11
 	)
 	@Range(min = 1)
 	default int warmthThickness()
@@ -911,7 +983,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = warmthSection,
-		position = 10
+		position = 12
 	)
 	@Range(min = 1)
 	default int warmthLength()
@@ -924,24 +996,12 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = warmthSection,
-		position = 11
+		position = 13
 	)
 	@Range(min = 0, max = 100)
 	default int warmthOpacity()
 	{
 		return 100;
-	}
-
-	@ConfigItem(
-		keyName = "warmthDockJustification",
-		name = "Dock justification",
-		description = "Where this bar sits along the panel's length when Placement is Fixed. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length) to have them share a slot.",
-		section = warmthSection,
-		position = 12
-	)
-	default Justification warmthDockJustification()
-	{
-		return Justification.START;
 	}
 
 	// ------------------------------------------------------------------
@@ -970,8 +1030,8 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "enemyHpPlacementMode",
-		name = "Placement",
-		description = "Fixed: docked to a side of the panel. Floating: drag anywhere, like Custom Vital Bars.",
+		name = "Bar type",
+		description = "Docked: docked to a side of the panel. Floating: drag anywhere, like Custom Vital Bars.",
 		section = enemyHpSection,
 		position = 1
 	)
@@ -983,7 +1043,7 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "enemyHpDockSide",
 		name = "Dock side",
-		description = "Which side of the panel to dock to when Placement is Fixed. Determines orientation: left/right = vertical, top/bottom = horizontal.",
+		description = "Which side of the panel to dock to when Bar type is Docked. Determines orientation: left/right = vertical, top/bottom = horizontal.",
 		section = enemyHpSection,
 		position = 2
 	)
@@ -1006,11 +1066,35 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "enemyHpFloatingOrientation",
-		name = "Floating orientation",
-		description = "Bar orientation when Placement is Floating.",
+		keyName = "enemyHpDockJustification",
+		name = "Dock slot orientation",
+		description = "Where this bar sits along the panel's length when Bar type is Docked. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length, or Clamp slot off) to have them share a slot.",
 		section = enemyHpSection,
 		position = 4
+	)
+	default Justification enemyHpDockJustification()
+	{
+		return Justification.START;
+	}
+
+	@ConfigItem(
+		keyName = "enemyHpClampSlot",
+		name = "Clamp slot",
+		description = "When on, this bar's Length is overridden to match the panel's own dimension (height for left/right Dock sides, width for top/bottom) instead of using its own Length setting. Leave off to size this bar manually - needed if it shares a Dock slot with another bar via Dock slot orientation.",
+		section = enemyHpSection,
+		position = 5
+	)
+	default boolean enemyHpClampSlot()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "enemyHpFloatingOrientation",
+		name = "Floating orientation",
+		description = "Bar orientation when Bar type is Floating.",
+		section = enemyHpSection,
+		position = 6
 	)
 	default Orientation enemyHpFloatingOrientation()
 	{
@@ -1022,7 +1106,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Show icon",
 		description = "Show an icon on the bar. Enemy Hitpoints has no vanilla orb of its own, so this borrows the Hitpoints orb icon.",
 		section = enemyHpSection,
-		position = 5
+		position = 7
 	)
 	default boolean enemyHpShowIcon()
 	{
@@ -1034,7 +1118,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Show counter",
 		description = "Show the target's current Hitpoints value as text on the bar.",
 		section = enemyHpSection,
-		position = 6
+		position = 8
 	)
 	default boolean enemyHpShowCounter()
 	{
@@ -1043,10 +1127,10 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "enemyHpJustification",
-		name = "Justification",
+		name = "Content justification",
 		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = enemyHpSection,
-		position = 7
+		position = 9
 	)
 	default Justification enemyHpJustification()
 	{
@@ -1058,7 +1142,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = enemyHpSection,
-		position = 8
+		position = 10
 	)
 	@Range(min = 1)
 	default int enemyHpThickness()
@@ -1071,7 +1155,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = enemyHpSection,
-		position = 9
+		position = 11
 	)
 	@Range(min = 1)
 	default int enemyHpLength()
@@ -1084,24 +1168,12 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = enemyHpSection,
-		position = 10
+		position = 12
 	)
 	@Range(min = 0, max = 100)
 	default int enemyHpOpacity()
 	{
 		return 100;
-	}
-
-	@ConfigItem(
-		keyName = "enemyHpDockJustification",
-		name = "Dock justification",
-		description = "Where this bar sits along the panel's length when Placement is Fixed. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length) to have them share a slot.",
-		section = enemyHpSection,
-		position = 11
-	)
-	default Justification enemyHpDockJustification()
-	{
-		return Justification.START;
 	}
 
 	// ------------------------------------------------------------------
@@ -1141,17 +1213,5 @@ public interface ViciousBarsConfig extends Config
 	default int dockOffset()
 	{
 		return 4;
-	}
-
-	@ConfigItem(
-		keyName = "clampToPanel",
-		name = "Clamp to panel",
-		description = "When on, every Fixed bar's Length is overridden to match the panel's own dimension (height for left/right bars, width for top/bottom) instead of its own Length setting. Leave off to size bars manually - required if you want two bars sharing a Dock slot via Dock justification.",
-		section = fixedLayoutSection,
-		position = 2
-	)
-	default boolean clampToPanel()
-	{
-		return false;
 	}
 }
