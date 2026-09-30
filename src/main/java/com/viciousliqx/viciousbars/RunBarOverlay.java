@@ -12,7 +12,6 @@ import net.runelite.client.game.SpriteManager;
 @Singleton
 class RunBarOverlay extends VitalBarOverlay
 {
-	private static final Color COLOR = new Color(70, 180, 90);
 	private static final int MAX_PERCENT = 100;
 
 	// Captured via a real MenuOptionClicked event from manually clicking the
@@ -78,7 +77,7 @@ class RunBarOverlay extends VitalBarOverlay
 	@Override
 	protected Color getColor()
 	{
-		return COLOR;
+		return config.runColor();
 	}
 
 	@Override

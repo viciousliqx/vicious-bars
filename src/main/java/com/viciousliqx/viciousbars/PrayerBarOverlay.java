@@ -13,8 +13,6 @@ import net.runelite.client.game.SkillIconManager;
 @Singleton
 class PrayerBarOverlay extends VitalBarOverlay
 {
-	private static final Color COLOR = new Color(60, 170, 220);
-
 	// Captured via a real MenuOptionClicked event from manually clicking the
 	// vanilla orb - NOT (160<<16)|18 from Movable Orbs, which turned out to be
 	// the orb's container, not the actual clickable sub-widget.
@@ -75,10 +73,15 @@ class PrayerBarOverlay extends VitalBarOverlay
 		return client.getRealSkillLevel(Skill.PRAYER);
 	}
 
+	private boolean isActive()
+	{
+		return client.getVarbitValue(Varbits.QUICK_PRAYER) != 0;
+	}
+
 	@Override
 	protected Color getColor()
 	{
-		return COLOR;
+		return isActive() ? config.prayerActiveColor() : config.prayerInactiveColor();
 	}
 
 	@Override
@@ -137,8 +140,7 @@ class PrayerBarOverlay extends VitalBarOverlay
 		// Exact parameters captured from a real click on the vanilla orb via
 		// MenuOptionClicked: action=CC_OP id=1 param0=-1 option=Activate/
 		// Deactivate target=Quick-prayers.
-		boolean active = client.getVarbitValue(Varbits.QUICK_PRAYER) != 0;
-		String option = active ? "Deactivate" : "Activate";
+		String option = isActive() ? "Deactivate" : "Activate";
 		client.menuAction(-1, PRAYER_ORB_COMPONENT, MenuAction.CC_OP, 1, -1, option, "Quick-prayers");
 	}
 }

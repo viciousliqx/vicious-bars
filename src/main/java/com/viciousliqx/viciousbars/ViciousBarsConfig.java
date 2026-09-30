@@ -1,5 +1,6 @@
 package com.viciousliqx.viciousbars;
 
+import java.awt.Color;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -305,6 +306,30 @@ public interface ViciousBarsConfig extends Config
 		return 150;
 	}
 
+	@ConfigItem(
+		keyName = "prayerActiveColor",
+		name = "Active color",
+		description = "Bar color while Quick Prayers is active.",
+		section = prayerSection,
+		position = 11
+	)
+	default Color prayerActiveColor()
+	{
+		return new Color(60, 170, 220);
+	}
+
+	@ConfigItem(
+		keyName = "prayerInactiveColor",
+		name = "Inactive color",
+		description = "Bar color while Quick Prayers is inactive - matches the orb's own darker navy when off.",
+		section = prayerSection,
+		position = 12
+	)
+	default Color prayerInactiveColor()
+	{
+		return new Color(25, 35, 80);
+	}
+
 	// ------------------------------------------------------------------
 	// Special Attack
 	// ------------------------------------------------------------------
@@ -599,8 +624,20 @@ public interface ViciousBarsConfig extends Config
 		return 150;
 	}
 
+	@ConfigItem(
+		keyName = "runColor",
+		name = "Color",
+		description = "Bar color - defaults to the gold/yellow of the vanilla run orb.",
+		section = runSection,
+		position = 11
+	)
+	default Color runColor()
+	{
+		return new Color(212, 175, 55);
+	}
+
 	// ------------------------------------------------------------------
-	// Warmth (Wintertodt only - no vanilla orb, so no bauble mode)
+	// Warmth (Wintertodt only - no vanilla orb, so no orb mode)
 	// ------------------------------------------------------------------
 
 	@ConfigSection(
