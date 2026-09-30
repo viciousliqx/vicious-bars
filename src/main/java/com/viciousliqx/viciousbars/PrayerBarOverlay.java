@@ -4,12 +4,14 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.MenuAction;
 import net.runelite.api.Skill;
 import net.runelite.api.Varbits;
 import net.runelite.client.game.SkillIconManager;
 
+@Slf4j
 @Singleton
 class PrayerBarOverlay extends VitalBarOverlay
 {
@@ -136,6 +138,8 @@ class PrayerBarOverlay extends VitalBarOverlay
 		// whole premise is an overlay button mirroring the prayer orb's click.
 		boolean active = client.getVarbitValue(Varbits.QUICK_PRAYER) != 0;
 		String option = active ? "Deactivate" : "Activate";
+		log.debug("onOrbActivate: active={} option={} component={}", active, option, PRAYER_ORB_COMPONENT);
 		client.menuAction(0, PRAYER_ORB_COMPONENT, MenuAction.CC_OP, 0, -1, option, "Quick-prayers");
+		log.debug("onOrbActivate: menuAction returned without throwing");
 	}
 }

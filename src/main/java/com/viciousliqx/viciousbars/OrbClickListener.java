@@ -4,6 +4,7 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.input.MouseListener;
 
@@ -18,6 +19,7 @@ import net.runelite.client.input.MouseListener;
  * must be called on client thread"), so the actual activation is deferred via
  * ClientThread, same as Movable Orbs does for its own widget mutations.
  */
+@Slf4j
 @Singleton
 class OrbClickListener implements MouseListener
 {
@@ -45,7 +47,8 @@ class OrbClickListener implements MouseListener
 			Rectangle bounds = bar.getIconBounds();
 			if (bounds != null && bounds.contains(event.getPoint()))
 			{
-				clientThread.invoke(bar::onOrbActivate);
+				log.debug("hit {} at {}, bounds={}", bar.getClass().getSimpleName(), event.getPoint(), bounds);
+					clientThread.invoke(bar::onOrbActivate);
 				// Verified against MouseManager's real source: it never null-checks
 				// a listener's return value, it checks isConsumed() - returning null
 				// here throws a NullPointerException on the very next listener in
