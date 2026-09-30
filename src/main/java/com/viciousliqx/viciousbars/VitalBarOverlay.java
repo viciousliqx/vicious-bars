@@ -29,7 +29,10 @@ public abstract class VitalBarOverlay extends Overlay
 	private static final int PADDING = 3;
 
 	private final Client client;
-	private Rectangle iconBounds;
+	// Written on the client/render thread, read from the AWT event thread by
+	// OrbClickListener - needs volatile for cross-thread visibility, plain
+	// field writes aren't guaranteed to ever become visible on another thread.
+	private volatile Rectangle iconBounds;
 
 	protected VitalBarOverlay(Client client)
 	{
