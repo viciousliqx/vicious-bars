@@ -158,6 +158,12 @@ class WarmthBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getBorderWidth()
+	{
+		return config.borderWidth();
+	}
+
+	@Override
 	protected int getOpacity()
 	{
 		return config.warmthOpacity();

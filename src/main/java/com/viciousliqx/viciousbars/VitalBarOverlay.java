@@ -40,7 +40,6 @@ public abstract class VitalBarOverlay extends Overlay
 	// their multi-piece 9-slice art for v1.
 	private static final Color FRAME_FILL_COLOR = new Color(74, 62, 48);
 	private static final Color FRAME_OUTLINE_COLOR = new Color(20, 17, 14);
-	private static final int FRAME_THICKNESS = 2;
 	// Outer frame is rounded less than the inner "vial" - a fraction of its
 	// own short axis rather than a fixed pixel value, so it scales sensibly
 	// across different Thickness settings instead of looking right only at
@@ -99,6 +98,9 @@ public abstract class VitalBarOverlay extends Overlay
 	protected abstract int getThickness();
 
 	protected abstract int getLength();
+
+	/** Thickness in pixels of the stone frame drawn around the bar - shared across every bar. */
+	protected abstract int getBorderWidth();
 
 	/** 0-100. Scales both the background and the fill color's alpha. */
 	protected abstract int getOpacity();
@@ -213,8 +215,8 @@ public abstract class VitalBarOverlay extends Overlay
 		// Stone-toned frame, drawn at the bar's full declared footprint so
 		// dock-slot stacking math (which assumes Thickness/Length IS the
 		// bar's full visual size) stays exactly correct - the active
-		// content below is inset inward by FRAME_THICKNESS instead of the
-		// frame being added on top of that footprint.
+		// content below is inset inward by borderWidth instead of the frame
+		// being added on top of that footprint.
 		//
 		// The frame is only ever the RING between the outer shape and the
 		// inner capsule - not a filled rect with the vial drawn on top of
@@ -224,8 +226,9 @@ public abstract class VitalBarOverlay extends Overlay
 		// not our own stone color bleeding through underneath. The frame
 		// itself always stays fully opaque regardless of the bar's Opacity -
 		// only the vial fades.
-		int innerWidth = Math.max(1, width - 2 * FRAME_THICKNESS);
-		int innerHeight = Math.max(1, height - 2 * FRAME_THICKNESS);
+		int borderWidth = Math.max(0, getBorderWidth());
+		int innerWidth = Math.max(1, width - 2 * borderWidth);
+		int innerHeight = Math.max(1, height - 2 * borderWidth);
 
 		int outerShortAxis = orientation == Orientation.VERTICAL ? width : height;
 		int outerArc = Math.round(outerShortAxis * FRAME_ARC_FRACTION);
@@ -234,7 +237,7 @@ public abstract class VitalBarOverlay extends Overlay
 
 		RoundRectangle2D.Float outerShape = new RoundRectangle2D.Float(0, 0, width, height, outerArc, outerArc);
 		RoundRectangle2D.Float innerShapeAtInset = new RoundRectangle2D.Float(
-			FRAME_THICKNESS, FRAME_THICKNESS, innerWidth, innerHeight, innerArc, innerArc);
+			borderWidth, borderWidth, innerWidth, innerHeight, innerArc, innerArc);
 
 		Area frameRing = new Area(outerShape);
 		frameRing.subtract(new Area(innerShapeAtInset));
@@ -245,7 +248,7 @@ public abstract class VitalBarOverlay extends Overlay
 		graphics.draw(outerShape);
 		graphics.draw(innerShapeAtInset);
 
-		graphics.translate(FRAME_THICKNESS, FRAME_THICKNESS);
+		graphics.translate(borderWidth, borderWidth);
 		// Clipping to the capsule shape (rather than a plain rect) means the
 		// background/fill/marker/icon below don't need their own rounding
 		// logic - they're just drawn as plain rects and the clip crops them
@@ -290,7 +293,7 @@ public abstract class VitalBarOverlay extends Overlay
 
 		Point iconLocal = drawIconAndCounter(graphics, innerWidth, innerHeight, orientation, current, iconHighlight);
 		iconBounds = iconLocal != null
-			? new Rectangle(origin.x + FRAME_THICKNESS + iconLocal.x, origin.y + FRAME_THICKNESS + iconLocal.y, ICON_SIZE, ICON_SIZE)
+			? new Rectangle(origin.x + borderWidth + iconLocal.x, origin.y + borderWidth + iconLocal.y, ICON_SIZE, ICON_SIZE)
 			: null;
 
 		return new Dimension(width, height);

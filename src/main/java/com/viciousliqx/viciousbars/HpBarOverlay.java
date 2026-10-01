@@ -153,6 +153,12 @@ class HpBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getBorderWidth()
+	{
+		return config.borderWidth();
+	}
+
+	@Override
 	protected int getOpacity()
 	{
 		return config.hpOpacity();

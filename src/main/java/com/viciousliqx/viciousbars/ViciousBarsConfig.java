@@ -1226,6 +1226,31 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	// ------------------------------------------------------------------
+	// Bar Frame (shared across every bar regardless of placement)
+	// ------------------------------------------------------------------
+
+	@ConfigSection(
+		name = "Bar Frame",
+		description = "The stone-toned frame drawn around every bar",
+		position = 6,
+		closedByDefault = true
+	)
+	String barFrameSection = "barFrameSection";
+
+	@ConfigItem(
+		keyName = "borderWidth",
+		name = "Border width",
+		description = "Thickness in pixels of the stone frame around every bar. The frame is drawn at the bar's existing Thickness/Length, not added on top of it, so increasing this shrinks the active fill area slightly rather than making the bar bigger.",
+		section = barFrameSection,
+		position = 0
+	)
+	@Range(min = 0)
+	default int borderWidth()
+	{
+		return 2;
+	}
+
+	// ------------------------------------------------------------------
 	// Fixed Layout (shared across every bar in Fixed placement - Floating
 	// will get its own equivalent section if/when it needs shared settings)
 	// ------------------------------------------------------------------
@@ -1233,7 +1258,7 @@ public interface ViciousBarsConfig extends Config
 	@ConfigSection(
 		name = "Fixed Layout",
 		description = "Settings shared across every bar using Fixed placement",
-		position = 6,
+		position = 7,
 		closedByDefault = true
 	)
 	String fixedLayoutSection = "fixedLayoutSection";
