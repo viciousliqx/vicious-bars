@@ -11,6 +11,7 @@ import net.runelite.api.Varbits;
 import net.runelite.api.events.GameTick;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.SkillIconManager;
+import net.runelite.client.game.SpriteManager;
 
 @Singleton
 class PrayerBarOverlay extends VitalBarOverlay
@@ -43,9 +44,10 @@ class PrayerBarOverlay extends VitalBarOverlay
 	private long flashUntilNanos;
 
 	@Inject
-	private PrayerBarOverlay(Client client, ViciousBarsConfig config, SkillIconManager skillIconManager, OpponentTracker opponentTracker)
+	private PrayerBarOverlay(Client client, ViciousBarsConfig config, SkillIconManager skillIconManager, OpponentTracker opponentTracker,
+		SpriteManager spriteManager)
 	{
-		super(client);
+		super(client, spriteManager);
 		this.client = client;
 		this.config = config;
 		this.skillIconManager = skillIconManager;

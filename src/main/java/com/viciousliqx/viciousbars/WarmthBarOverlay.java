@@ -8,6 +8,7 @@ import net.runelite.api.Client;
 import net.runelite.api.Skill;
 import net.runelite.api.Varbits;
 import net.runelite.client.game.SkillIconManager;
+import net.runelite.client.game.SpriteManager;
 
 @Singleton
 class WarmthBarOverlay extends VitalBarOverlay
@@ -23,9 +24,9 @@ class WarmthBarOverlay extends VitalBarOverlay
 	private final SkillIconManager skillIconManager;
 
 	@Inject
-	private WarmthBarOverlay(Client client, ViciousBarsConfig config, SkillIconManager skillIconManager)
+	private WarmthBarOverlay(Client client, ViciousBarsConfig config, SkillIconManager skillIconManager, SpriteManager spriteManager)
 	{
-		super(client);
+		super(client, spriteManager);
 		this.client = client;
 		this.config = config;
 		this.skillIconManager = skillIconManager;

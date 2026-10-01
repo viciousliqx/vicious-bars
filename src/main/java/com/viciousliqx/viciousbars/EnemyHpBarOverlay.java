@@ -21,7 +21,7 @@ class EnemyHpBarOverlay extends VitalBarOverlay
 	@Inject
 	private EnemyHpBarOverlay(Client client, ViciousBarsConfig config, OpponentTracker opponentTracker, SpriteManager spriteManager)
 	{
-		super(client);
+		super(client, spriteManager);
 		this.config = config;
 		this.opponentTracker = opponentTracker;
 		this.spriteManager = spriteManager;

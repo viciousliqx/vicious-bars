@@ -10,6 +10,8 @@ import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import net.runelite.api.Client;
+import net.runelite.api.gameval.SpriteID;
+import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -51,16 +53,26 @@ public abstract class VitalBarOverlay extends Overlay
 	// semicircle-ended shape) per feedback that full capsule ends were too
 	// round.
 	private static final float INNER_ARC_FRACTION = 0.75f;
+	// Real game sprites (net.runelite.api.gameval.SpriteID.Steelborder/
+	// Steelborder2) - the actual riveted-metal corner pieces the modern
+	// inventory panel itself uses, confirmed against RuneLite's own named
+	// gameval constants, not a guessed id. Native size is 25x30 - sized for
+	// the panel's own much thicker border, not our comparatively thin bars -
+	// so these draw scaled down to a small accent rather than at native size.
+	private static final int CORNER_ACCENT_WIDTH = 10;
+	private static final int CORNER_ACCENT_HEIGHT = 12;
 
 	private final Client client;
+	private final SpriteManager spriteManager;
 	// Written on the client/render thread, read from the AWT event thread by
 	// OrbClickListener - needs volatile for cross-thread visibility, plain
 	// field writes aren't guaranteed to ever become visible on another thread.
 	private volatile Rectangle iconBounds;
 
-	protected VitalBarOverlay(Client client)
+	protected VitalBarOverlay(Client client, SpriteManager spriteManager)
 	{
 		this.client = client;
+		this.spriteManager = spriteManager;
 		setPosition(OverlayPosition.DYNAMIC);
 	}
 
@@ -227,6 +239,7 @@ public abstract class VitalBarOverlay extends Overlay
 		// know about the one below it - the frame doesn't know the vial's
 		// Opacity, the vial doesn't know the icon exists at all.
 		drawFrame(graphics, width, height, borderWidth, innerWidth, innerHeight, innerArc);
+		drawCornerAccents(graphics, width, height);
 		drawVial(graphics, orientation, borderWidth, innerWidth, innerHeight, innerArc);
 
 		// Icon + counter draw last, on top of the frame AND the vial, sized
@@ -285,6 +298,30 @@ public abstract class VitalBarOverlay extends Overlay
 		graphics.setColor(FRAME_OUTLINE_COLOR);
 		graphics.draw(new RoundRectangle2D.Float(0, 0, width - 1, height - 1, FRAME_ARC, FRAME_ARC));
 		graphics.draw(new RoundRectangle2D.Float(borderWidth, borderWidth, innerWidth - 1, innerHeight - 1, innerArc, innerArc));
+	}
+
+	/**
+	 * Decorative metal corner accents using the real game's own Steelborder
+	 * sprites - the same pieces the modern inventory panel's border is built
+	 * from. Purely additive on top of the stone frame, scaled well down from
+	 * their native 25x30 size since that's proportioned for the panel's own
+	 * much thicker border, not our bars.
+	 */
+	private void drawCornerAccents(Graphics2D graphics, int width, int height)
+	{
+		drawCornerAccent(graphics, SpriteID.Steelborder.TOP_LEFT, 0, 0);
+		drawCornerAccent(graphics, SpriteID.Steelborder.TOP_RIGHT, width - CORNER_ACCENT_WIDTH, 0);
+		drawCornerAccent(graphics, SpriteID.Steelborder.BOTTOM_LEFT, 0, height - CORNER_ACCENT_HEIGHT);
+		drawCornerAccent(graphics, SpriteID.Steelborder.BOTTOM_RIGHT, width - CORNER_ACCENT_WIDTH, height - CORNER_ACCENT_HEIGHT);
+	}
+
+	private void drawCornerAccent(Graphics2D graphics, int spriteId, int x, int y)
+	{
+		BufferedImage sprite = spriteManager.getSprite(spriteId, 0);
+		if (sprite != null)
+		{
+			graphics.drawImage(sprite, x, y, CORNER_ACCENT_WIDTH, CORNER_ACCENT_HEIGHT, null);
+		}
 	}
 
 	/**
