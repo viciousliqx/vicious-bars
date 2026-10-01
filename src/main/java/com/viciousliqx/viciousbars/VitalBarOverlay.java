@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
@@ -398,7 +399,8 @@ public abstract class VitalBarOverlay extends Overlay
 				if (iconHighlight != null)
 				{
 					graphics.setColor(iconHighlight);
-					graphics.fillRect(iconX - ICON_GLOW_MARGIN, y - ICON_GLOW_MARGIN,
+					graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+					graphics.fillOval(iconX - ICON_GLOW_MARGIN, y - ICON_GLOW_MARGIN,
 						ICON_SIZE + 2 * ICON_GLOW_MARGIN, ICON_SIZE + 2 * ICON_GLOW_MARGIN);
 				}
 				graphics.drawImage(icon, iconX, y, ICON_SIZE, ICON_SIZE, null);
@@ -420,7 +422,8 @@ public abstract class VitalBarOverlay extends Overlay
 				if (iconHighlight != null)
 				{
 					graphics.setColor(iconHighlight);
-					graphics.fillRect(x - ICON_GLOW_MARGIN, iconY - ICON_GLOW_MARGIN,
+					graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+					graphics.fillOval(x - ICON_GLOW_MARGIN, iconY - ICON_GLOW_MARGIN,
 						ICON_SIZE + 2 * ICON_GLOW_MARGIN, ICON_SIZE + 2 * ICON_GLOW_MARGIN);
 				}
 				graphics.drawImage(icon, x, iconY, ICON_SIZE, ICON_SIZE, null);
