@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import net.runelite.api.Client;
@@ -45,6 +46,10 @@ public abstract class VitalBarOverlay extends Overlay
 	// across different Thickness settings instead of looking right only at
 	// the default.
 	private static final float FRAME_ARC_FRACTION = 0.6f;
+	// Inner "vial" rounding is 75% of a full capsule (25% less than the true
+	// semicircle-ended shape) per feedback that full capsule ends were too
+	// round.
+	private static final float INNER_ARC_FRACTION = 0.75f;
 
 	private final Client client;
 	// Written on the client/render thread, read from the AWT event thread by
@@ -209,27 +214,43 @@ public abstract class VitalBarOverlay extends Overlay
 		// dock-slot stacking math (which assumes Thickness/Length IS the
 		// bar's full visual size) stays exactly correct - the active
 		// content below is inset inward by FRAME_THICKNESS instead of the
-		// frame being added on top of that footprint. Opacity scales the
-		// frame too, same as everything else.
-		int outerShortAxis = orientation == Orientation.VERTICAL ? width : height;
-		int outerArc = Math.round(outerShortAxis * FRAME_ARC_FRACTION);
-		graphics.setColor(withAlphaScaled(FRAME_FILL_COLOR, opacityFraction));
-		graphics.fillRoundRect(0, 0, width, height, outerArc, outerArc);
-		graphics.setColor(withAlphaScaled(FRAME_OUTLINE_COLOR, opacityFraction));
-		graphics.drawRoundRect(0, 0, width - 1, height - 1, outerArc, outerArc);
-
+		// frame being added on top of that footprint.
+		//
+		// The frame is only ever the RING between the outer shape and the
+		// inner capsule - not a filled rect with the vial drawn on top of
+		// it - so the vial's own area is never painted by us at all before
+		// the vial itself draws there. That matters once the vial's Opacity
+		// drops below 100: what shows through is the real game behind it,
+		// not our own stone color bleeding through underneath. The frame
+		// itself always stays fully opaque regardless of the bar's Opacity -
+		// only the vial fades.
 		int innerWidth = Math.max(1, width - 2 * FRAME_THICKNESS);
 		int innerHeight = Math.max(1, height - 2 * FRAME_THICKNESS);
-		graphics.translate(FRAME_THICKNESS, FRAME_THICKNESS);
 
-		// Full-capsule rounding - the diameter equals the bar's own short
-		// axis, so the ends come out as true semicircles (a "vial" shape)
-		// rather than just softened corners. Clipping to this shape (rather
-		// than a plain rect) means the background/fill/marker/icon below
-		// don't need their own rounding logic - they're just drawn as plain
-		// rects and the clip crops them to the capsule for free.
+		int outerShortAxis = orientation == Orientation.VERTICAL ? width : height;
+		int outerArc = Math.round(outerShortAxis * FRAME_ARC_FRACTION);
 		int innerShortAxis = orientation == Orientation.VERTICAL ? innerWidth : innerHeight;
-		graphics.setClip(new RoundRectangle2D.Float(0, 0, innerWidth, innerHeight, innerShortAxis, innerShortAxis));
+		int innerArc = Math.round(innerShortAxis * INNER_ARC_FRACTION);
+
+		RoundRectangle2D.Float outerShape = new RoundRectangle2D.Float(0, 0, width, height, outerArc, outerArc);
+		RoundRectangle2D.Float innerShapeAtInset = new RoundRectangle2D.Float(
+			FRAME_THICKNESS, FRAME_THICKNESS, innerWidth, innerHeight, innerArc, innerArc);
+
+		Area frameRing = new Area(outerShape);
+		frameRing.subtract(new Area(innerShapeAtInset));
+
+		graphics.setColor(FRAME_FILL_COLOR);
+		graphics.fill(frameRing);
+		graphics.setColor(FRAME_OUTLINE_COLOR);
+		graphics.draw(outerShape);
+		graphics.draw(innerShapeAtInset);
+
+		graphics.translate(FRAME_THICKNESS, FRAME_THICKNESS);
+		// Clipping to the capsule shape (rather than a plain rect) means the
+		// background/fill/marker/icon below don't need their own rounding
+		// logic - they're just drawn as plain rects and the clip crops them
+		// to the capsule for free.
+		graphics.setClip(new RoundRectangle2D.Float(0, 0, innerWidth, innerHeight, innerArc, innerArc));
 
 		graphics.setColor(new Color(0, 0, 0, Math.round(BACKGROUND_BASE_ALPHA * opacityFraction)));
 		graphics.fillRect(0, 0, innerWidth, innerHeight);
@@ -373,11 +394,6 @@ public abstract class VitalBarOverlay extends Overlay
 		}
 
 		return iconLocal;
-	}
-
-	private static Color withAlphaScaled(Color color, float fraction)
-	{
-		return new Color(color.getRed(), color.getGreen(), color.getBlue(), Math.round(color.getAlpha() * fraction));
 	}
 
 	private static int along(Justification justification, int totalLength, int clusterLength)
