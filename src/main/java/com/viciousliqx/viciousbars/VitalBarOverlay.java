@@ -354,11 +354,23 @@ public abstract class VitalBarOverlay extends Overlay
 		}
 
 		// The capsule's ends curve inward, so content starting right at the
-		// bar's edge (Start/End justification) would have its corners cut
-		// off by that curve rather than our own frame - floor the margin at
-		// the curve's own radius so content always starts in the capsule's
-		// straight section instead.
-		int minPadding = Math.max(PADDING, capsuleArc / 2);
+		// bar's edge (Start/End justification) can have its corners cut off
+		// by that curve rather than our own frame. How much clearance is
+		// actually needed depends on how close to the SIDE the content
+		// already sits (lateralMargin) - a corner further from the side
+		// wall clears the curve sooner, via basic circle geometry: at
+		// distance d from the wall, the curve's floor is at
+		// r - sqrt(r^2 - (r-d)^2), reaching 0 once d >= r.
+		int lateralAxis = orientation == Orientation.VERTICAL ? width : height;
+		int lateralMargin = Math.max(0, (lateralAxis - ICON_SIZE) / 2);
+		double radius = capsuleArc / 2.0;
+		int curvePadding = 0;
+		if (lateralMargin < radius)
+		{
+			double dx = radius - lateralMargin;
+			curvePadding = (int) Math.ceil(radius - Math.sqrt(Math.max(0, radius * radius - dx * dx)));
+		}
+		int minPadding = Math.max(PADDING, curvePadding);
 		int along = along(getJustification(), orientation == Orientation.VERTICAL ? height : width, clusterLength, minPadding);
 		Point iconLocal = null;
 
