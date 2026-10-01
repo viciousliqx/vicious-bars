@@ -186,6 +186,12 @@ public abstract class VitalBarOverlay extends Overlay
 		int width = orientation == Orientation.VERTICAL ? getThickness() : length;
 		int height = orientation == Orientation.VERTICAL ? length : getThickness();
 
+		// Clip everything we draw (including the icon's glow, which is
+		// intentionally a few pixels bigger than the icon itself) to the
+		// bar's own rectangle, so nothing - now or in any future effect -
+		// can bleed past its edges.
+		graphics.setClip(0, 0, width, height);
+
 		float opacityFraction = Math.max(0, Math.min(getOpacity(), 100)) / 100f;
 
 		graphics.setColor(new Color(0, 0, 0, Math.round(BACKGROUND_BASE_ALPHA * opacityFraction)));
