@@ -29,8 +29,9 @@ public abstract class VitalBarOverlay extends Overlay
 	private static final int PADDING = 3;
 	private static final Color METRONOME_MARKER_COLOR = new Color(255, 255, 255, 200);
 	private static final int METRONOME_MARKER_THICKNESS = 3;
-	private static final Color METRONOME_FLASH_COLOR = new Color(255, 255, 255, 140);
-	private static final Color ICON_LIT_COLOR = new Color(255, 215, 0, 150);
+	private static final Color METRONOME_FLASH_COLOR = new Color(255, 255, 255, 220);
+	private static final Color ICON_LIT_COLOR = new Color(255, 215, 0, 220);
+	private static final int ICON_GLOW_MARGIN = 3;
 
 	private final Client client;
 	// Written on the client/render thread, read from the AWT event thread by
@@ -288,12 +289,13 @@ public abstract class VitalBarOverlay extends Overlay
 			if (icon != null)
 			{
 				int iconX = (width - ICON_SIZE) / 2;
-				graphics.drawImage(icon, iconX, y, ICON_SIZE, ICON_SIZE, null);
 				if (iconHighlight != null)
 				{
 					graphics.setColor(iconHighlight);
-					graphics.fillRect(iconX, y, ICON_SIZE, ICON_SIZE);
+					graphics.fillRect(iconX - ICON_GLOW_MARGIN, y - ICON_GLOW_MARGIN,
+						ICON_SIZE + 2 * ICON_GLOW_MARGIN, ICON_SIZE + 2 * ICON_GLOW_MARGIN);
 				}
+				graphics.drawImage(icon, iconX, y, ICON_SIZE, ICON_SIZE, null);
 				iconLocal = new Point(iconX, y);
 				y += ICON_SIZE + PADDING;
 			}
@@ -309,12 +311,13 @@ public abstract class VitalBarOverlay extends Overlay
 			if (icon != null)
 			{
 				int iconY = (height - ICON_SIZE) / 2;
-				graphics.drawImage(icon, x, iconY, ICON_SIZE, ICON_SIZE, null);
 				if (iconHighlight != null)
 				{
 					graphics.setColor(iconHighlight);
-					graphics.fillRect(x, iconY, ICON_SIZE, ICON_SIZE);
+					graphics.fillRect(x - ICON_GLOW_MARGIN, iconY - ICON_GLOW_MARGIN,
+						ICON_SIZE + 2 * ICON_GLOW_MARGIN, ICON_SIZE + 2 * ICON_GLOW_MARGIN);
 				}
+				graphics.drawImage(icon, x, iconY, ICON_SIZE, ICON_SIZE, null);
 				iconLocal = new Point(x, iconY);
 				x += ICON_SIZE + PADDING;
 			}
