@@ -624,6 +624,19 @@ public interface ViciousBarsConfig extends Config
 		return 100;
 	}
 
+	@ConfigItem(
+		keyName = "specThreshold",
+		name = "Threshold",
+		description = "When Special Attack reaches this percentage, the icon lights up - only while you're in combat.",
+		section = specSection,
+		position = 16
+	)
+	@Range(min = 0, max = 100)
+	default int specThreshold()
+	{
+		return 50;
+	}
+
 	// ------------------------------------------------------------------
 	// Run Energy
 	// ------------------------------------------------------------------

@@ -12,10 +12,14 @@ import net.runelite.api.events.InteractingChanged;
 import net.runelite.client.eventbus.Subscribe;
 
 /**
- * Tracks the local player's current combat target for the Enemy Hitpoints
- * bar, same pattern as RuneLite's built-in OpponentInfo plugin: keep the
- * last opponent for a few seconds after interaction stops so the bar
- * doesn't flicker away the instant a fight ends.
+ * Tracks the local player's current combat target, same pattern as
+ * RuneLite's built-in OpponentInfo plugin: keep the last target for a few
+ * seconds after interaction stops so dependent bars don't flicker away the
+ * instant a fight ends.
+ *
+ * Tracks any Actor (NPC or player) for general "am I in combat" purposes,
+ * but {@link #getOpponent()} only ever exposes the NPC case - that's the
+ * only one the Enemy Hitpoints bar can draw anything meaningful for.
  */
 @Singleton
 public class OpponentTracker
@@ -24,7 +28,7 @@ public class OpponentTracker
 
 	private final Client client;
 
-	private NPC lastOpponent;
+	private Actor lastOpponentActor;
 	private Instant lastInteractionTime;
 
 	@Inject
@@ -41,30 +45,36 @@ public class OpponentTracker
 			return;
 		}
 
-		Actor target = event.getTarget();
+		lastOpponentActor = event.getTarget();
 		lastInteractionTime = Instant.now();
-		lastOpponent = target instanceof NPC ? (NPC) target : null;
 	}
 
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
-		if (lastOpponent != null
+		if (lastOpponentActor != null
 			&& client.getLocalPlayer().getInteracting() == null
 			&& Duration.between(lastInteractionTime, Instant.now()).compareTo(LINGER) > 0)
 		{
-			lastOpponent = null;
+			lastOpponentActor = null;
 		}
 	}
 
+	/** Null unless the current (or recently-lingering) target is specifically an NPC - used by the Enemy Hitpoints bar. */
 	public NPC getOpponent()
 	{
-		return lastOpponent;
+		return lastOpponentActor instanceof NPC ? (NPC) lastOpponentActor : null;
+	}
+
+	/** True while fighting anything - NPC or player - with the same lingering grace period as {@link #getOpponent()}. */
+	public boolean isInCombat()
+	{
+		return lastOpponentActor != null;
 	}
 
 	public void reset()
 	{
-		lastOpponent = null;
+		lastOpponentActor = null;
 		lastInteractionTime = null;
 	}
 }

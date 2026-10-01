@@ -30,6 +30,7 @@ public abstract class VitalBarOverlay extends Overlay
 	private static final Color METRONOME_MARKER_COLOR = new Color(255, 255, 255, 200);
 	private static final int METRONOME_MARKER_THICKNESS = 3;
 	private static final Color METRONOME_FLASH_COLOR = new Color(255, 255, 255, 140);
+	private static final Color ICON_LIT_COLOR = new Color(255, 215, 0, 150);
 
 	private final Client client;
 	// Written on the client/render thread, read from the AWT event thread by
@@ -106,6 +107,12 @@ public abstract class VitalBarOverlay extends Overlay
 
 	/** True for a brief window right after a real game tick, to flash the icon. */
 	protected boolean isMetronomeFlashing()
+	{
+		return false;
+	}
+
+	/** True to highlight the icon with a steady (non-blinking) overlay - e.g. Spec's threshold glow. No-op for bars without one. */
+	protected boolean isIconLit()
 	{
 		return false;
 	}
@@ -200,8 +207,17 @@ public abstract class VitalBarOverlay extends Overlay
 			drawMetronomeMarker(graphics, width, height, orientation);
 		}
 
-		Point iconLocal = drawIconAndCounter(graphics, width, height, orientation, current,
-			isMetronomeEnabled() && isMetronomeFlashing());
+		Color iconHighlight = null;
+		if (isMetronomeEnabled() && isMetronomeFlashing())
+		{
+			iconHighlight = METRONOME_FLASH_COLOR;
+		}
+		else if (isIconLit())
+		{
+			iconHighlight = ICON_LIT_COLOR;
+		}
+
+		Point iconLocal = drawIconAndCounter(graphics, width, height, orientation, current, iconHighlight);
 		iconBounds = iconLocal != null
 			? new Rectangle(origin.x + iconLocal.x, origin.y + iconLocal.y, ICON_SIZE, ICON_SIZE)
 			: null;
@@ -228,7 +244,7 @@ public abstract class VitalBarOverlay extends Overlay
 
 	/** Returns the icon's local (bar-relative) top-left position, or null if no icon was drawn. */
 	private Point drawIconAndCounter(Graphics2D graphics, int width, int height, Orientation orientation, int current,
-		boolean flashIcon)
+		Color iconHighlight)
 	{
 		OrbMode orbMode = getOrbMode();
 		// The icon IS the click target in Merged/Mirrored mode, so it can't be
@@ -263,9 +279,9 @@ public abstract class VitalBarOverlay extends Overlay
 			{
 				int iconX = (width - ICON_SIZE) / 2;
 				graphics.drawImage(icon, iconX, y, ICON_SIZE, ICON_SIZE, null);
-				if (flashIcon)
+				if (iconHighlight != null)
 				{
-					graphics.setColor(METRONOME_FLASH_COLOR);
+					graphics.setColor(iconHighlight);
 					graphics.fillRect(iconX, y, ICON_SIZE, ICON_SIZE);
 				}
 				iconLocal = new Point(iconX, y);
@@ -284,9 +300,9 @@ public abstract class VitalBarOverlay extends Overlay
 			{
 				int iconY = (height - ICON_SIZE) / 2;
 				graphics.drawImage(icon, x, iconY, ICON_SIZE, ICON_SIZE, null);
-				if (flashIcon)
+				if (iconHighlight != null)
 				{
-					graphics.setColor(METRONOME_FLASH_COLOR);
+					graphics.setColor(iconHighlight);
 					graphics.fillRect(x, iconY, ICON_SIZE, ICON_SIZE);
 				}
 				iconLocal = new Point(x, iconY);

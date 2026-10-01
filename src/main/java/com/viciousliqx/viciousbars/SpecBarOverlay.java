@@ -30,14 +30,16 @@ class SpecBarOverlay extends VitalBarOverlay
 	private final Client client;
 	private final ViciousBarsConfig config;
 	private final SpriteManager spriteManager;
+	private final OpponentTracker opponentTracker;
 
 	@Inject
-	private SpecBarOverlay(Client client, ViciousBarsConfig config, SpriteManager spriteManager)
+	private SpecBarOverlay(Client client, ViciousBarsConfig config, SpriteManager spriteManager, OpponentTracker opponentTracker)
 	{
 		super(client);
 		this.client = client;
 		this.config = config;
 		this.spriteManager = spriteManager;
+		this.opponentTracker = opponentTracker;
 	}
 
 	@Override
@@ -164,6 +166,12 @@ class SpecBarOverlay extends VitalBarOverlay
 	protected OrbMode getOrbMode()
 	{
 		return config.specOrbMode();
+	}
+
+	@Override
+	protected boolean isIconLit()
+	{
+		return opponentTracker.isInCombat() && getCurrent() >= config.specThreshold();
 	}
 
 	@Override
