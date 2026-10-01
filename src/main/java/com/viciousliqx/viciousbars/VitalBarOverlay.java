@@ -207,33 +207,63 @@ public abstract class VitalBarOverlay extends Overlay
 		int width = orientation == Orientation.VERTICAL ? getThickness() : length;
 		int height = orientation == Orientation.VERTICAL ? length : getThickness();
 
-		// Clip everything we draw to the bar's own rectangle, so nothing -
-		// now or in any future effect - can bleed past its edges.
+		// Clip everything to the bar's own rectangle - the one safety net
+		// every phase below shares, so nothing we draw can ever bleed past
+		// the bar's declared footprint.
 		graphics.setClip(0, 0, width, height);
 
-		float opacityFraction = Math.max(0, Math.min(getOpacity(), 100)) / 100f;
-
-		// Stone-toned frame, drawn at the bar's full declared footprint so
-		// dock-slot stacking math (which assumes Thickness/Length IS the
-		// bar's full visual size) stays exactly correct - the active
-		// content below is inset inward by borderWidth instead of the frame
-		// being added on top of that footprint.
-		//
-		// The frame is only ever the RING between the outer shape and the
-		// inner capsule - not a filled rect with the vial drawn on top of
-		// it - so the vial's own area is never painted by us at all before
-		// the vial itself draws there. That matters once the vial's Opacity
-		// drops below 100: what shows through is the real game behind it,
-		// not our own stone color bleeding through underneath. The frame
-		// itself always stays fully opaque regardless of the bar's Opacity -
-		// only the vial fades.
 		int borderWidth = Math.max(0, getBorderWidth());
 		int innerWidth = Math.max(1, width - 2 * borderWidth);
 		int innerHeight = Math.max(1, height - 2 * borderWidth);
-
 		int innerShortAxis = orientation == Orientation.VERTICAL ? innerWidth : innerHeight;
 		int innerArc = Math.round(innerShortAxis * INNER_ARC_FRACTION);
 
+		// Three phases, back to front: the stone frame, the vial inside it,
+		// then the icon/counter on top of both. Each phase only needs to
+		// know about the one below it - the frame doesn't know the vial's
+		// Opacity, the vial doesn't know the icon exists at all.
+		drawFrame(graphics, width, height, borderWidth, innerWidth, innerHeight, innerArc);
+		drawVial(graphics, orientation, borderWidth, innerWidth, innerHeight, innerArc);
+
+		// Icon + counter draw last, on top of the frame AND the vial, sized
+		// against the bar's full outer footprint rather than the vial's
+		// inset interior - a label pinned to the front of the whole
+		// assembly, same as a real orb's icon sitting on its meter, not
+		// squeezed inside the fill. Same returned Dimension either way, so
+		// PanelDock and dock-slot stacking never see a difference.
+		int current = Math.max(0, Math.min(getCurrent(), Math.max(getMax(), 1)));
+		Color iconHighlight = resolveIconHighlight();
+		Point iconLocal = drawIconAndCounter(graphics, width, height, orientation, current, iconHighlight);
+		iconBounds = iconLocal != null
+			? new Rectangle(origin.x + iconLocal.x, origin.y + iconLocal.y, ICON_SIZE, ICON_SIZE)
+			: null;
+
+		return new Dimension(width, height);
+	}
+
+	private Color resolveIconHighlight()
+	{
+		if (isMetronomeEnabled() && isMetronomeFlashing())
+		{
+			return METRONOME_FLASH_COLOR;
+		}
+		if (isIconLit())
+		{
+			return ICON_LIT_COLOR;
+		}
+		return null;
+	}
+
+	/**
+	 * The stone-toned ring between the bar's outer footprint and its inner
+	 * vial. Only ever a RING, never a filled rect with the vial drawn over
+	 * it - the vial's own area is never painted by this method at all, so
+	 * once the vial fades (its Opacity drops) what shows through is the
+	 * real game behind it, not our own stone color. Always fully opaque,
+	 * independent of the bar's own Opacity.
+	 */
+	private void drawFrame(Graphics2D graphics, int width, int height, int borderWidth, int innerWidth, int innerHeight, int innerArc)
+	{
 		RoundRectangle2D.Float outerShape = new RoundRectangle2D.Float(0, 0, width, height, FRAME_ARC, FRAME_ARC);
 		RoundRectangle2D.Float innerShapeAtInset = new RoundRectangle2D.Float(
 			borderWidth, borderWidth, innerWidth, innerHeight, innerArc, innerArc);
@@ -247,62 +277,55 @@ public abstract class VitalBarOverlay extends Overlay
 		// Stroke shapes are inset by 1px on the far edge from their fill
 		// counterparts - a 1px-wide stroke is centered ON the path, so a
 		// path running exactly along the bar's own right/bottom edge would
-		// have half its stroke fall outside our own clip and get cut off
-		// (confirmed - that's exactly what was happening, right/bottom edges
-		// losing their outline while left/top kept theirs).
+		// have half its stroke fall outside our own clip and get cut off.
 		graphics.setColor(FRAME_OUTLINE_COLOR);
 		graphics.draw(new RoundRectangle2D.Float(0, 0, width - 1, height - 1, FRAME_ARC, FRAME_ARC));
 		graphics.draw(new RoundRectangle2D.Float(borderWidth, borderWidth, innerWidth - 1, innerHeight - 1, innerArc, innerArc));
+	}
 
-		graphics.translate(borderWidth, borderWidth);
-		// Clipping to the capsule shape (rather than a plain rect) means the
-		// background/fill/marker/icon below don't need their own rounding
-		// logic - they're just drawn as plain rects and the clip crops them
-		// to the capsule for free.
-		graphics.setClip(new RoundRectangle2D.Float(0, 0, innerWidth, innerHeight, innerArc, innerArc));
+	/**
+	 * Background + colored fill + metronome marker, confined to the inner
+	 * capsule. The only phase that fades with the bar's own Opacity. Drawn
+	 * on a scratch copy of the graphics context (translated + clipped to
+	 * the capsule) so none of that state leaks back out to the caller -
+	 * the icon/counter phase that follows needs the ORIGINAL untranslated,
+	 * unclipped (beyond the bar's own footprint) context.
+	 */
+	private void drawVial(Graphics2D graphics, Orientation orientation, int borderWidth, int innerWidth, int innerHeight, int innerArc)
+	{
+		Graphics2D vialGraphics = (Graphics2D) graphics.create();
+		vialGraphics.translate(borderWidth, borderWidth);
+		vialGraphics.setClip(new RoundRectangle2D.Float(0, 0, innerWidth, innerHeight, innerArc, innerArc));
 
-		graphics.setColor(new Color(0, 0, 0, Math.round(BACKGROUND_BASE_ALPHA * opacityFraction)));
-		graphics.fillRect(0, 0, innerWidth, innerHeight);
+		float opacityFraction = Math.max(0, Math.min(getOpacity(), 100)) / 100f;
+
+		vialGraphics.setColor(new Color(0, 0, 0, Math.round(BACKGROUND_BASE_ALPHA * opacityFraction)));
+		vialGraphics.fillRect(0, 0, innerWidth, innerHeight);
 
 		int max = Math.max(getMax(), 1);
 		int current = Math.max(0, Math.min(getCurrent(), max));
 		double ratio = (double) current / max;
 
 		Color fillColor = getColor();
-		graphics.setColor(new Color(fillColor.getRed(), fillColor.getGreen(), fillColor.getBlue(),
+		vialGraphics.setColor(new Color(fillColor.getRed(), fillColor.getGreen(), fillColor.getBlue(),
 			Math.round(255 * opacityFraction)));
 		if (orientation == Orientation.VERTICAL)
 		{
 			int fillHeight = (int) Math.round(ratio * innerHeight);
-			graphics.fillRect(0, innerHeight - fillHeight, innerWidth, fillHeight);
+			vialGraphics.fillRect(0, innerHeight - fillHeight, innerWidth, fillHeight);
 		}
 		else
 		{
 			int fillWidth = (int) Math.round(ratio * innerWidth);
-			graphics.fillRect(0, 0, fillWidth, innerHeight);
+			vialGraphics.fillRect(0, 0, fillWidth, innerHeight);
 		}
 
 		if (isMetronomeEnabled())
 		{
-			drawMetronomeMarker(graphics, innerWidth, innerHeight, orientation);
+			drawMetronomeMarker(vialGraphics, innerWidth, innerHeight, orientation);
 		}
 
-		Color iconHighlight = null;
-		if (isMetronomeEnabled() && isMetronomeFlashing())
-		{
-			iconHighlight = METRONOME_FLASH_COLOR;
-		}
-		else if (isIconLit())
-		{
-			iconHighlight = ICON_LIT_COLOR;
-		}
-
-		Point iconLocal = drawIconAndCounter(graphics, innerWidth, innerHeight, orientation, current, iconHighlight, innerArc);
-		iconBounds = iconLocal != null
-			? new Rectangle(origin.x + borderWidth + iconLocal.x, origin.y + borderWidth + iconLocal.y, ICON_SIZE, ICON_SIZE)
-			: null;
-
-		return new Dimension(width, height);
+		vialGraphics.dispose();
 	}
 
 	/** Sweeps a thin marker along the bar's length, position driven by how far through the current tick we are. */
@@ -328,7 +351,7 @@ public abstract class VitalBarOverlay extends Overlay
 
 	/** Returns the icon's local (bar-relative) top-left position, or null if no icon was drawn. */
 	private Point drawIconAndCounter(Graphics2D graphics, int width, int height, Orientation orientation, int current,
-		Color iconHighlight, int capsuleArc)
+		Color iconHighlight)
 	{
 		OrbMode orbMode = getOrbMode();
 		// The icon IS the click target in Merged/Mirrored mode, so it can't be
@@ -353,25 +376,12 @@ public abstract class VitalBarOverlay extends Overlay
 			clusterLength += (icon != null ? PADDING : 0) + (orientation == Orientation.VERTICAL ? textHeight : textWidth);
 		}
 
-		// The capsule's ends curve inward, so content starting right at the
-		// bar's edge (Start/End justification) can have its corners cut off
-		// by that curve rather than our own frame. How much clearance is
-		// actually needed depends on how close to the SIDE the content
-		// already sits (lateralMargin) - a corner further from the side
-		// wall clears the curve sooner, via basic circle geometry: at
-		// distance d from the wall, the curve's floor is at
-		// r - sqrt(r^2 - (r-d)^2), reaching 0 once d >= r.
-		int lateralAxis = orientation == Orientation.VERTICAL ? width : height;
-		int lateralMargin = Math.max(0, (lateralAxis - ICON_SIZE) / 2);
-		double radius = capsuleArc / 2.0;
-		int curvePadding = 0;
-		if (lateralMargin < radius)
-		{
-			double dx = radius - lateralMargin;
-			curvePadding = (int) Math.ceil(radius - Math.sqrt(Math.max(0, radius * radius - dx * dx)));
-		}
-		int minPadding = Math.max(PADDING, curvePadding);
-		int along = along(getJustification(), orientation == Orientation.VERTICAL ? height : width, clusterLength, minPadding);
+		// No capsule curve to clear anymore - the icon/counter draw against
+		// the bar's full outer rectangle (plain corners from this content's
+		// point of view, since the outer clip set in render() is a plain
+		// rect, not the vial's rounded one), so a flat PADDING is all that's
+		// needed here.
+		int along = along(getJustification(), orientation == Orientation.VERTICAL ? height : width, clusterLength);
 		Point iconLocal = null;
 
 		if (orientation == Orientation.VERTICAL)
@@ -423,14 +433,14 @@ public abstract class VitalBarOverlay extends Overlay
 		return iconLocal;
 	}
 
-	private static int along(Justification justification, int totalLength, int clusterLength, int padding)
+	private static int along(Justification justification, int totalLength, int clusterLength)
 	{
 		switch (justification)
 		{
 			case START:
-				return padding;
+				return PADDING;
 			case END:
-				return totalLength - clusterLength - padding;
+				return totalLength - clusterLength - PADDING;
 			case CENTER:
 			default:
 				return (totalLength - clusterLength) / 2;
