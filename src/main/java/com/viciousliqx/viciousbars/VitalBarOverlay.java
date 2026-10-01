@@ -38,13 +38,14 @@ public abstract class VitalBarOverlay extends Overlay
 	// dev talk for the real sprite groups found (steelborder, v2_stone_borders/
 	// pre_eoc_stones) and why a hand-picked color was chosen over assembling
 	// their multi-piece 9-slice art for v1.
-	private static final Color FRAME_FILL_COLOR = new Color(74, 62, 48);
+	private static final Color FRAME_FILL_COLOR = new Color(96, 82, 64);
 	private static final Color FRAME_OUTLINE_COLOR = new Color(20, 17, 14);
-	// Outer frame is rounded less than the inner "vial" - a fraction of its
-	// own short axis rather than a fixed pixel value, so it scales sensibly
-	// across different Thickness settings instead of looking right only at
-	// the default.
-	private static final float FRAME_ARC_FRACTION = 0.6f;
+	// A small fixed chamfer, not a fraction of the bar's own size - the real
+	// inventory panel's corners are a small, consistent notch regardless of
+	// the panel's overall size, not a dramatic circular round, so matching
+	// that look means a fixed pixel value rather than something that scales
+	// with Thickness the way the inner vial's rounding does.
+	private static final int FRAME_ARC = 6;
 	// Inner "vial" rounding is 75% of a full capsule (25% less than the true
 	// semicircle-ended shape) per feedback that full capsule ends were too
 	// round.
@@ -230,12 +231,10 @@ public abstract class VitalBarOverlay extends Overlay
 		int innerWidth = Math.max(1, width - 2 * borderWidth);
 		int innerHeight = Math.max(1, height - 2 * borderWidth);
 
-		int outerShortAxis = orientation == Orientation.VERTICAL ? width : height;
-		int outerArc = Math.round(outerShortAxis * FRAME_ARC_FRACTION);
 		int innerShortAxis = orientation == Orientation.VERTICAL ? innerWidth : innerHeight;
 		int innerArc = Math.round(innerShortAxis * INNER_ARC_FRACTION);
 
-		RoundRectangle2D.Float outerShape = new RoundRectangle2D.Float(0, 0, width, height, outerArc, outerArc);
+		RoundRectangle2D.Float outerShape = new RoundRectangle2D.Float(0, 0, width, height, FRAME_ARC, FRAME_ARC);
 		RoundRectangle2D.Float innerShapeAtInset = new RoundRectangle2D.Float(
 			borderWidth, borderWidth, innerWidth, innerHeight, innerArc, innerArc);
 
@@ -244,9 +243,16 @@ public abstract class VitalBarOverlay extends Overlay
 
 		graphics.setColor(FRAME_FILL_COLOR);
 		graphics.fill(frameRing);
+
+		// Stroke shapes are inset by 1px on the far edge from their fill
+		// counterparts - a 1px-wide stroke is centered ON the path, so a
+		// path running exactly along the bar's own right/bottom edge would
+		// have half its stroke fall outside our own clip and get cut off
+		// (confirmed - that's exactly what was happening, right/bottom edges
+		// losing their outline while left/top kept theirs).
 		graphics.setColor(FRAME_OUTLINE_COLOR);
-		graphics.draw(outerShape);
-		graphics.draw(innerShapeAtInset);
+		graphics.draw(new RoundRectangle2D.Float(0, 0, width - 1, height - 1, FRAME_ARC, FRAME_ARC));
+		graphics.draw(new RoundRectangle2D.Float(borderWidth, borderWidth, innerWidth - 1, innerHeight - 1, innerArc, innerArc));
 
 		graphics.translate(borderWidth, borderWidth);
 		// Clipping to the capsule shape (rather than a plain rect) means the
@@ -291,7 +297,7 @@ public abstract class VitalBarOverlay extends Overlay
 			iconHighlight = ICON_LIT_COLOR;
 		}
 
-		Point iconLocal = drawIconAndCounter(graphics, innerWidth, innerHeight, orientation, current, iconHighlight);
+		Point iconLocal = drawIconAndCounter(graphics, innerWidth, innerHeight, orientation, current, iconHighlight, innerArc);
 		iconBounds = iconLocal != null
 			? new Rectangle(origin.x + borderWidth + iconLocal.x, origin.y + borderWidth + iconLocal.y, ICON_SIZE, ICON_SIZE)
 			: null;
@@ -322,7 +328,7 @@ public abstract class VitalBarOverlay extends Overlay
 
 	/** Returns the icon's local (bar-relative) top-left position, or null if no icon was drawn. */
 	private Point drawIconAndCounter(Graphics2D graphics, int width, int height, Orientation orientation, int current,
-		Color iconHighlight)
+		Color iconHighlight, int capsuleArc)
 	{
 		OrbMode orbMode = getOrbMode();
 		// The icon IS the click target in Merged/Mirrored mode, so it can't be
@@ -347,7 +353,13 @@ public abstract class VitalBarOverlay extends Overlay
 			clusterLength += (icon != null ? PADDING : 0) + (orientation == Orientation.VERTICAL ? textHeight : textWidth);
 		}
 
-		int along = along(getJustification(), orientation == Orientation.VERTICAL ? height : width, clusterLength);
+		// The capsule's ends curve inward, so content starting right at the
+		// bar's edge (Start/End justification) would have its corners cut
+		// off by that curve rather than our own frame - floor the margin at
+		// the curve's own radius so content always starts in the capsule's
+		// straight section instead.
+		int minPadding = Math.max(PADDING, capsuleArc / 2);
+		int along = along(getJustification(), orientation == Orientation.VERTICAL ? height : width, clusterLength, minPadding);
 		Point iconLocal = null;
 
 		if (orientation == Orientation.VERTICAL)
@@ -399,14 +411,14 @@ public abstract class VitalBarOverlay extends Overlay
 		return iconLocal;
 	}
 
-	private static int along(Justification justification, int totalLength, int clusterLength)
+	private static int along(Justification justification, int totalLength, int clusterLength, int padding)
 	{
 		switch (justification)
 		{
 			case START:
-				return PADDING;
+				return padding;
 			case END:
-				return totalLength - clusterLength - PADDING;
+				return totalLength - clusterLength - padding;
 			case CENTER:
 			default:
 				return (totalLength - clusterLength) / 2;
