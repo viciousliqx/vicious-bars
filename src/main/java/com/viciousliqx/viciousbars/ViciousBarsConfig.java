@@ -416,6 +416,30 @@ public interface ViciousBarsConfig extends Config
 		return false;
 	}
 
+	@ConfigItem(
+		keyName = "prayerMetronomeOnlyInCombat",
+		name = "Metronome only in combat",
+		description = "Only show the metronome while you're in combat (same combat detection the Spec bar's Threshold glow uses) - hidden the rest of the time even if Metronome is on.",
+		section = prayerSection,
+		position = 17
+	)
+	default boolean prayerMetronomeOnlyInCombat()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "prayerMetronomeReversed",
+		name = "Reverse metronome direction",
+		description = "Sweep the marker from the far end of the bar back toward the near end (e.g. bottom-to-top on a vertical bar) instead of the default near-to-far.",
+		section = prayerSection,
+		position = 18
+	)
+	default boolean prayerMetronomeReversed()
+	{
+		return false;
+	}
+
 	// ------------------------------------------------------------------
 	// Special Attack
 	// ------------------------------------------------------------------

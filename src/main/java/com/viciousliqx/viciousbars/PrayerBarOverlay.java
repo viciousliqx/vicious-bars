@@ -31,6 +31,7 @@ class PrayerBarOverlay extends VitalBarOverlay
 	private final Client client;
 	private final ViciousBarsConfig config;
 	private final SkillIconManager skillIconManager;
+	private final OpponentTracker opponentTracker;
 
 	// Metronome timing state - GameTick is the only authoritative signal we
 	// get, so the marker's SPEED is a best guess (based on the last real
@@ -42,12 +43,13 @@ class PrayerBarOverlay extends VitalBarOverlay
 	private long flashUntilNanos;
 
 	@Inject
-	private PrayerBarOverlay(Client client, ViciousBarsConfig config, SkillIconManager skillIconManager)
+	private PrayerBarOverlay(Client client, ViciousBarsConfig config, SkillIconManager skillIconManager, OpponentTracker opponentTracker)
 	{
 		super(client);
 		this.client = client;
 		this.config = config;
 		this.skillIconManager = skillIconManager;
+		this.opponentTracker = opponentTracker;
 	}
 
 	@Subscribe
@@ -66,7 +68,11 @@ class PrayerBarOverlay extends VitalBarOverlay
 	@Override
 	protected boolean isMetronomeEnabled()
 	{
-		return config.prayerMetronomeEnabled();
+		if (!config.prayerMetronomeEnabled())
+		{
+			return false;
+		}
+		return !config.prayerMetronomeOnlyInCombat() || opponentTracker.isInCombat();
 	}
 
 	@Override
@@ -79,6 +85,12 @@ class PrayerBarOverlay extends VitalBarOverlay
 	protected boolean isMetronomeFlashing()
 	{
 		return System.nanoTime() < flashUntilNanos;
+	}
+
+	@Override
+	protected boolean isMetronomeReversed()
+	{
+		return config.prayerMetronomeReversed();
 	}
 
 	@Override

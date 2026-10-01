@@ -111,6 +111,12 @@ public abstract class VitalBarOverlay extends Overlay
 		return false;
 	}
 
+	/** True to sweep the marker from the far end of the bar back toward the near end instead of near-to-far. */
+	protected boolean isMetronomeReversed()
+	{
+		return false;
+	}
+
 	/** True to highlight the icon with a steady (non-blinking) overlay - e.g. Spec's threshold glow. No-op for bars without one. */
 	protected boolean isIconLit()
 	{
@@ -229,6 +235,10 @@ public abstract class VitalBarOverlay extends Overlay
 	private void drawMetronomeMarker(Graphics2D graphics, int width, int height, Orientation orientation)
 	{
 		float fraction = Math.max(0f, Math.min(1f, getMetronomeFraction()));
+		if (isMetronomeReversed())
+		{
+			fraction = 1f - fraction;
+		}
 		graphics.setColor(METRONOME_MARKER_COLOR);
 		if (orientation == Orientation.VERTICAL)
 		{
