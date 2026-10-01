@@ -32,6 +32,14 @@ public abstract class VitalBarOverlay extends Overlay
 	private static final Color METRONOME_FLASH_COLOR = new Color(255, 255, 255, 220);
 	private static final Color ICON_LIT_COLOR = new Color(255, 215, 0, 220);
 	private static final int ICON_GLOW_MARGIN = 3;
+	// Approximated stone/granite look, not an extracted game texture - see
+	// dev talk for the real sprite groups found (steelborder, v2_stone_borders/
+	// pre_eoc_stones) and why a hand-picked color was chosen over assembling
+	// their multi-piece 9-slice art for v1.
+	private static final Color FRAME_FILL_COLOR = new Color(74, 62, 48);
+	private static final Color FRAME_OUTLINE_COLOR = new Color(20, 17, 14);
+	private static final int FRAME_THICKNESS = 2;
+	private static final int FRAME_ARC = 10;
 
 	private final Client client;
 	// Written on the client/render thread, read from the AWT event thread by
@@ -186,16 +194,29 @@ public abstract class VitalBarOverlay extends Overlay
 		int width = orientation == Orientation.VERTICAL ? getThickness() : length;
 		int height = orientation == Orientation.VERTICAL ? length : getThickness();
 
-		// Clip everything we draw (including the icon's glow, which is
-		// intentionally a few pixels bigger than the icon itself) to the
-		// bar's own rectangle, so nothing - now or in any future effect -
-		// can bleed past its edges.
+		// Clip everything we draw to the bar's own rectangle, so nothing -
+		// now or in any future effect - can bleed past its edges.
 		graphics.setClip(0, 0, width, height);
+
+		// Stone-toned frame, drawn at the bar's full declared footprint so
+		// dock-slot stacking math (which assumes Thickness/Length IS the
+		// bar's full visual size) stays exactly correct - the active
+		// content below is inset inward by FRAME_THICKNESS instead of the
+		// frame being added on top of that footprint.
+		graphics.setColor(FRAME_FILL_COLOR);
+		graphics.fillRoundRect(0, 0, width, height, FRAME_ARC, FRAME_ARC);
+		graphics.setColor(FRAME_OUTLINE_COLOR);
+		graphics.drawRoundRect(0, 0, width - 1, height - 1, FRAME_ARC, FRAME_ARC);
+
+		int innerWidth = Math.max(1, width - 2 * FRAME_THICKNESS);
+		int innerHeight = Math.max(1, height - 2 * FRAME_THICKNESS);
+		graphics.translate(FRAME_THICKNESS, FRAME_THICKNESS);
+		graphics.setClip(0, 0, innerWidth, innerHeight);
 
 		float opacityFraction = Math.max(0, Math.min(getOpacity(), 100)) / 100f;
 
 		graphics.setColor(new Color(0, 0, 0, Math.round(BACKGROUND_BASE_ALPHA * opacityFraction)));
-		graphics.fillRect(0, 0, width, height);
+		graphics.fillRect(0, 0, innerWidth, innerHeight);
 
 		int max = Math.max(getMax(), 1);
 		int current = Math.max(0, Math.min(getCurrent(), max));
@@ -206,18 +227,18 @@ public abstract class VitalBarOverlay extends Overlay
 			Math.round(255 * opacityFraction)));
 		if (orientation == Orientation.VERTICAL)
 		{
-			int fillHeight = (int) Math.round(ratio * height);
-			graphics.fillRect(0, height - fillHeight, width, fillHeight);
+			int fillHeight = (int) Math.round(ratio * innerHeight);
+			graphics.fillRect(0, innerHeight - fillHeight, innerWidth, fillHeight);
 		}
 		else
 		{
-			int fillWidth = (int) Math.round(ratio * width);
-			graphics.fillRect(0, 0, fillWidth, height);
+			int fillWidth = (int) Math.round(ratio * innerWidth);
+			graphics.fillRect(0, 0, fillWidth, innerHeight);
 		}
 
 		if (isMetronomeEnabled())
 		{
-			drawMetronomeMarker(graphics, width, height, orientation);
+			drawMetronomeMarker(graphics, innerWidth, innerHeight, orientation);
 		}
 
 		Color iconHighlight = null;
@@ -230,9 +251,9 @@ public abstract class VitalBarOverlay extends Overlay
 			iconHighlight = ICON_LIT_COLOR;
 		}
 
-		Point iconLocal = drawIconAndCounter(graphics, width, height, orientation, current, iconHighlight);
+		Point iconLocal = drawIconAndCounter(graphics, innerWidth, innerHeight, orientation, current, iconHighlight);
 		iconBounds = iconLocal != null
-			? new Rectangle(origin.x + iconLocal.x, origin.y + iconLocal.y, ICON_SIZE, ICON_SIZE)
+			? new Rectangle(origin.x + FRAME_THICKNESS + iconLocal.x, origin.y + FRAME_THICKNESS + iconLocal.y, ICON_SIZE, ICON_SIZE)
 			: null;
 
 		return new Dimension(width, height);
