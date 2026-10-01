@@ -129,6 +129,12 @@ class RunBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getContentOffset()
+	{
+		return config.runContentOffset();
+	}
+
+	@Override
 	protected Orientation getOrientation()
 	{
 		return config.runFloatingOrientation();

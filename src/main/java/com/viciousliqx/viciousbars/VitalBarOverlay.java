@@ -94,6 +94,9 @@ public abstract class VitalBarOverlay extends Overlay
 
 	protected abstract Justification getJustification();
 
+	/** Nudges the icon/counter cluster along the bar by this many pixels - positive toward the far end, negative toward the near end. */
+	protected abstract int getContentOffset();
+
 	protected abstract Orientation getOrientation();
 
 	protected abstract int getThickness();
@@ -380,8 +383,10 @@ public abstract class VitalBarOverlay extends Overlay
 		// the bar's full outer rectangle (plain corners from this content's
 		// point of view, since the outer clip set in render() is a plain
 		// rect, not the vial's rounded one), so a flat PADDING is all that's
-		// needed here.
-		int along = along(getJustification(), orientation == Orientation.VERTICAL ? height : width, clusterLength);
+		// needed here. Content offset is a manual nudge on top of that,
+		// positive toward the far end - lets a specific bar's icon be
+		// fine-tuned a few px without touching Content justification itself.
+		int along = along(getJustification(), orientation == Orientation.VERTICAL ? height : width, clusterLength) + getContentOffset();
 		Point iconLocal = null;
 
 		if (orientation == Orientation.VERTICAL)

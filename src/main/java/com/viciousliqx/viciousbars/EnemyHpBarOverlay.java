@@ -135,6 +135,12 @@ class EnemyHpBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getContentOffset()
+	{
+		return config.enemyHpContentOffset();
+	}
+
+	@Override
 	protected Orientation getOrientation()
 	{
 		return config.enemyHpFloatingOrientation();

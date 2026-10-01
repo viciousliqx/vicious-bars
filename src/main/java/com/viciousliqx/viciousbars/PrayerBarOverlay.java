@@ -191,6 +191,12 @@ class PrayerBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getContentOffset()
+	{
+		return config.prayerContentOffset();
+	}
+
+	@Override
 	protected Orientation getOrientation()
 	{
 		return config.prayerFloatingOrientation();

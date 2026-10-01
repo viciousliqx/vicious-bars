@@ -135,6 +135,12 @@ class HpBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getContentOffset()
+	{
+		return config.hpContentOffset();
+	}
+
+	@Override
 	protected Orientation getOrientation()
 	{
 		return config.hpFloatingOrientation();

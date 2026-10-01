@@ -139,6 +139,12 @@ class SpecBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getContentOffset()
+	{
+		return config.specContentOffset();
+	}
+
+	@Override
 	protected Orientation getOrientation()
 	{
 		return config.specFloatingOrientation();

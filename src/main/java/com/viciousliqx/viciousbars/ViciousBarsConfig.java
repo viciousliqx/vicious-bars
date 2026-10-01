@@ -196,6 +196,18 @@ public interface ViciousBarsConfig extends Config
 		return 100;
 	}
 
+	@ConfigItem(
+		keyName = "hpContentOffset",
+		name = "Content offset",
+		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
+		section = hpSection,
+		position = 14
+	)
+	default int hpContentOffset()
+	{
+		return 0;
+	}
+
 	// ------------------------------------------------------------------
 	// Prayer
 	// ------------------------------------------------------------------
@@ -440,6 +452,18 @@ public interface ViciousBarsConfig extends Config
 		return false;
 	}
 
+	@ConfigItem(
+		keyName = "prayerContentOffset",
+		name = "Content offset",
+		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
+		section = prayerSection,
+		position = 19
+	)
+	default int prayerContentOffset()
+	{
+		return 0;
+	}
+
 	// ------------------------------------------------------------------
 	// Special Attack
 	// ------------------------------------------------------------------
@@ -661,6 +685,18 @@ public interface ViciousBarsConfig extends Config
 		return 50;
 	}
 
+	@ConfigItem(
+		keyName = "specContentOffset",
+		name = "Content offset",
+		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
+		section = specSection,
+		position = 17
+	)
+	default int specContentOffset()
+	{
+		return 0;
+	}
+
 	// ------------------------------------------------------------------
 	// Run Energy
 	// ------------------------------------------------------------------
@@ -869,6 +905,18 @@ public interface ViciousBarsConfig extends Config
 		return 100;
 	}
 
+	@ConfigItem(
+		keyName = "runContentOffset",
+		name = "Content offset",
+		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
+		section = runSection,
+		position = 16
+	)
+	default int runContentOffset()
+	{
+		return 0;
+	}
+
 	// ------------------------------------------------------------------
 	// Warmth (Wintertodt only - no vanilla orb, so no orb mode)
 	// ------------------------------------------------------------------
@@ -1053,6 +1101,18 @@ public interface ViciousBarsConfig extends Config
 		return 100;
 	}
 
+	@ConfigItem(
+		keyName = "warmthContentOffset",
+		name = "Content offset",
+		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
+		section = warmthSection,
+		position = 14
+	)
+	default int warmthContentOffset()
+	{
+		return 0;
+	}
+
 	// ------------------------------------------------------------------
 	// Enemy Hitpoints (current target only - no vanilla orb, so no bauble mode)
 	// ------------------------------------------------------------------
@@ -1223,6 +1283,18 @@ public interface ViciousBarsConfig extends Config
 	default int enemyHpOpacity()
 	{
 		return 100;
+	}
+
+	@ConfigItem(
+		keyName = "enemyHpContentOffset",
+		name = "Content offset",
+		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
+		section = enemyHpSection,
+		position = 13
+	)
+	default int enemyHpContentOffset()
+	{
+		return 0;
 	}
 
 	// ------------------------------------------------------------------

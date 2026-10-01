@@ -140,6 +140,12 @@ class WarmthBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getContentOffset()
+	{
+		return config.warmthContentOffset();
+	}
+
+	@Override
 	protected Orientation getOrientation()
 	{
 		return config.warmthFloatingOrientation();
