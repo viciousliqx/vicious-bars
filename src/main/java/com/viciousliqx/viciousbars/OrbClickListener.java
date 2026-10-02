@@ -9,9 +9,13 @@ import net.runelite.client.input.MouseListener;
 
 /**
  * Hit-tests real mouse clicks against each orb-bearing bar's current icon
- * rectangle, and invokes the bar's action when Orb mode is Merged or
- * Mirrored. Vanilla bars never register a hit (their orbMode check fails) so
- * clicks pass through untouched.
+ * rectangle when Orb mode is Merged or Mirrored. Left click invokes the
+ * bar's primary action ({@link VitalBarOverlay#onOrbActivate()}, same as the
+ * real orb's left click); right click invokes its secondary action
+ * ({@link VitalBarOverlay#onOrbSecondaryActivate()}, e.g. Prayer's "Set
+ * Quick-prayers" - a no-op for bars without one). Vanilla bars never
+ * register a hit (their orbMode check fails) so clicks pass through
+ * untouched.
  *
  * Consumes on BOTH mousePressed and mouseClicked - OSRS's click-to-walk
  * appears to react to the press, not the synthesized "clicked" event, so
@@ -75,7 +79,14 @@ class OrbClickListener implements MouseListener
 		VitalBarOverlay bar = hitOrbBar(event);
 		if (bar != null)
 		{
-			clientThread.invoke(bar::onOrbActivate);
+			if (event.getButton() == MouseEvent.BUTTON1)
+			{
+				clientThread.invoke(bar::onOrbActivate);
+			}
+			else if (event.getButton() == MouseEvent.BUTTON3)
+			{
+				clientThread.invoke(bar::onOrbSecondaryActivate);
+			}
 			event.consume();
 		}
 		return event;

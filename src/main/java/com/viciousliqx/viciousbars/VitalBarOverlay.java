@@ -123,8 +123,13 @@ public abstract class VitalBarOverlay extends Overlay
 	/** VANILLA for bars with no orb (Warmth, Enemy HP). */
 	protected abstract OrbMode getOrbMode();
 
-	/** Called when the icon is clicked while Orb mode is Merged or Mirrored. No-op for bars with no orb. */
+	/** Called when the icon is LEFT-clicked while Orb mode is Merged or Mirrored - the orb's primary action. No-op for bars with no orb. */
 	protected abstract void onOrbActivate();
+
+	/** Called when the icon is RIGHT-clicked while Orb mode is Merged or Mirrored - the orb's secondary action, e.g. Prayer's "Set Quick-prayers". No-op by default; only Prayer overrides it. */
+	protected void onOrbSecondaryActivate()
+	{
+	}
 
 	// Metronome is Prayer-only for now - concrete no-op defaults here rather
 	// than forcing the other 5 bars to override methods they'll never use.

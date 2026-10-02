@@ -59,7 +59,10 @@ default), and Enemy Hitpoints (current target only, off by default).
   bar is doing its job, so the bar is the only thing on screen
 
 Every orb click is wired to the real, captured menu-action parameters for that exact
-widget - none of it is simulated or guessed.
+widget - none of it is simulated or guessed. In Mirrored/Merged mode, LEFT-clicking the
+icon fires the orb's primary action; RIGHT-clicking it fires the orb's secondary action
+if it has one (currently only Prayer's Setup, below) - otherwise right click does
+nothing, same as the real orb.
 
 ### Prayer
 
@@ -69,6 +72,9 @@ widget - none of it is simulated or guessed.
   (self-correcting) interpolated sweep, so the cue that actually matters is never
   subject to drift
 - Dynamic bar color distinguishes active/inactive Quick Prayers
+- Right-clicking the icon in Mirrored/Merged mode opens the quick-prayer selection
+  interface (the real orb's own "Setup" option) - the one thing Merged mode would
+  otherwise take away, since the real orb is hidden
 
 ### Special Attack
 

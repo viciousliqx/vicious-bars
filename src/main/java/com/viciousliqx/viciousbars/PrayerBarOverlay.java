@@ -282,6 +282,17 @@ class PrayerBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected void onOrbSecondaryActivate()
+	{
+		// Exact parameters captured from a real right-click "Setup" on the
+		// vanilla orb via MenuOptionClicked: action=CC_OP id=2 param0=-1
+		// option='Setup' target='Quick-prayers' - opens the quick-prayer
+		// selection interface, the one thing Merged mode would otherwise
+		// take away since the real orb is hidden.
+		client.menuAction(-1, PRAYER_ORB_COMPONENT, MenuAction.CC_OP, 2, -1, "Setup", "Quick-prayers");
+	}
+
+	@Override
 	protected int getOrbWidgetComponent()
 	{
 		return InterfaceID.Orbs.ORB_PRAYER;
