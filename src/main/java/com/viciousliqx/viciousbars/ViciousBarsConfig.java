@@ -37,11 +37,23 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "hpShowHealPreview",
+		name = "Show heal preview",
+		description = "While hovering a food/potion item, previews how much it would heal by showing the extra amount in a lighter shade beyond your current Hitpoints. Requires the Item Stats plugin to be enabled - it's what actually knows how much each item heals.",
+		section = hpSection,
+		position = 1
+	)
+	default boolean hpShowHealPreview()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "hpPlacementMode",
 		name = "Bar type",
 		description = "Docked: docked to a side of the panel. Floating: drag anywhere, like Custom Vital Bars.",
 		section = hpSection,
-		position = 1
+		position = 2
 	)
 	default PlacementMode hpPlacementMode()
 	{
@@ -53,7 +65,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Dock side",
 		description = "Which side of the panel to dock to when Bar type is Docked. Determines orientation: left/right = vertical, top/bottom = horizontal.",
 		section = hpSection,
-		position = 2
+		position = 3
 	)
 	default DockSide hpDockSide()
 	{
@@ -65,7 +77,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Dock slot",
 		description = "Order among other bars docked to the same side. 1 = closest to the panel corner, higher numbers further out.",
 		section = hpSection,
-		position = 3
+		position = 4
 	)
 	@Range(min = 1)
 	default int hpDockSlot()
@@ -78,7 +90,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Dock slot orientation",
 		description = "Where this bar sits along the panel's length when Bar type is Docked. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length, or Clamp slot off) to have them share a slot.",
 		section = hpSection,
-		position = 4
+		position = 5
 	)
 	default Justification hpDockJustification()
 	{
@@ -90,7 +102,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Clamp slot",
 		description = "When on, this bar's Length is overridden to match the panel's own dimension (height for left/right Dock sides, width for top/bottom) instead of using its own Length setting. Leave off to size this bar manually - needed if it shares a Dock slot with another bar via Dock slot orientation.",
 		section = hpSection,
-		position = 5
+		position = 6
 	)
 	default boolean hpClampSlot()
 	{
@@ -102,7 +114,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Floating orientation",
 		description = "Bar orientation when Bar type is Floating.",
 		section = hpSection,
-		position = 6
+		position = 7
 	)
 	default Orientation hpFloatingOrientation()
 	{
@@ -114,7 +126,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Orb mode",
 		description = "How this bar relates to the vanilla Hitpoints orb (Vanilla/Merged/Mirrored).",
 		section = hpSection,
-		position = 7
+		position = 8
 	)
 	default OrbMode hpOrbMode()
 	{
@@ -126,7 +138,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Show icon",
 		description = "Show the Hitpoints orb icon on the bar.",
 		section = hpSection,
-		position = 8
+		position = 9
 	)
 	default boolean hpShowIcon()
 	{
@@ -138,7 +150,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Show counter",
 		description = "Show the current Hitpoints value as text on the bar.",
 		section = hpSection,
-		position = 9
+		position = 10
 	)
 	default boolean hpShowCounter()
 	{
@@ -150,7 +162,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Content justification",
 		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = hpSection,
-		position = 10
+		position = 11
 	)
 	default Justification hpJustification()
 	{
@@ -158,11 +170,23 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "hpContentOffset",
+		name = "Content offset",
+		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
+		section = hpSection,
+		position = 12
+	)
+	default int hpContentOffset()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
 		keyName = "hpThickness",
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = hpSection,
-		position = 11
+		position = 13
 	)
 	@Range(min = 1)
 	default int hpThickness()
@@ -175,7 +199,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = hpSection,
-		position = 12
+		position = 14
 	)
 	@Range(min = 1)
 	default int hpLength()
@@ -188,36 +212,12 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = hpSection,
-		position = 13
+		position = 15
 	)
 	@Range(min = 0, max = 100)
 	default int hpOpacity()
 	{
 		return 100;
-	}
-
-	@ConfigItem(
-		keyName = "hpContentOffset",
-		name = "Content offset",
-		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
-		section = hpSection,
-		position = 14
-	)
-	default int hpContentOffset()
-	{
-		return 0;
-	}
-
-	@ConfigItem(
-		keyName = "hpShowHealPreview",
-		name = "Show heal preview",
-		description = "While hovering a food/potion item, previews how much it would heal by showing the extra amount in a lighter shade beyond your current Hitpoints. Requires the Item Stats plugin to be enabled - it's what actually knows how much each item heals.",
-		section = hpSection,
-		position = 15
-	)
-	default boolean hpShowHealPreview()
-	{
-		return true;
 	}
 
 	// ------------------------------------------------------------------
@@ -245,11 +245,47 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "prayerMetronomeEnabled",
+		name = "Metronome",
+		description = "Shows a small marker sweeping across the bar once per game tick, with the icon flashing each time it completes a lap - a timing aid for prayer flicking.",
+		section = prayerSection,
+		position = 1
+	)
+	default boolean prayerMetronomeEnabled()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "prayerMetronomeOnlyInCombat",
+		name = "Metronome only in combat",
+		description = "Only show the metronome while you're in combat (same combat detection the Spec bar's Threshold glow uses) - hidden the rest of the time even if Metronome is on.",
+		section = prayerSection,
+		position = 2
+	)
+	default boolean prayerMetronomeOnlyInCombat()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "prayerMetronomeReversed",
+		name = "Reverse metronome direction",
+		description = "Sweep the marker from the far end of the bar back toward the near end (e.g. bottom-to-top on a vertical bar) instead of the default near-to-far.",
+		section = prayerSection,
+		position = 3
+	)
+	default boolean prayerMetronomeReversed()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "prayerPlacementMode",
 		name = "Bar type",
 		description = "Docked: docked to a side of the panel. Floating: drag anywhere, like Custom Vital Bars.",
 		section = prayerSection,
-		position = 1
+		position = 4
 	)
 	default PlacementMode prayerPlacementMode()
 	{
@@ -261,7 +297,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Dock side",
 		description = "Which side of the panel to dock to when Bar type is Docked. Determines orientation: left/right = vertical, top/bottom = horizontal.",
 		section = prayerSection,
-		position = 2
+		position = 5
 	)
 	default DockSide prayerDockSide()
 	{
@@ -273,7 +309,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Dock slot",
 		description = "Order among other bars docked to the same side. 1 = closest to the panel corner, higher numbers further out.",
 		section = prayerSection,
-		position = 3
+		position = 6
 	)
 	@Range(min = 1)
 	default int prayerDockSlot()
@@ -286,7 +322,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Dock slot orientation",
 		description = "Where this bar sits along the panel's length when Bar type is Docked. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length, or Clamp slot off) to have them share a slot.",
 		section = prayerSection,
-		position = 4
+		position = 7
 	)
 	default Justification prayerDockJustification()
 	{
@@ -298,7 +334,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Clamp slot",
 		description = "When on, this bar's Length is overridden to match the panel's own dimension (height for left/right Dock sides, width for top/bottom) instead of using its own Length setting. Leave off to size this bar manually - needed if it shares a Dock slot with another bar via Dock slot orientation.",
 		section = prayerSection,
-		position = 5
+		position = 8
 	)
 	default boolean prayerClampSlot()
 	{
@@ -310,7 +346,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Floating orientation",
 		description = "Bar orientation when Bar type is Floating.",
 		section = prayerSection,
-		position = 6
+		position = 9
 	)
 	default Orientation prayerFloatingOrientation()
 	{
@@ -322,7 +358,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Orb mode",
 		description = "How this bar relates to the vanilla Prayer orb (Vanilla/Merged/Mirrored). Merged/Mirrored open quick-prayers on click, same as the orb.",
 		section = prayerSection,
-		position = 7
+		position = 10
 	)
 	default OrbMode prayerOrbMode()
 	{
@@ -334,7 +370,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Show icon",
 		description = "Show the Prayer orb icon on the bar.",
 		section = prayerSection,
-		position = 8
+		position = 11
 	)
 	default boolean prayerShowIcon()
 	{
@@ -346,7 +382,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Show counter",
 		description = "Show the current Prayer value as text on the bar.",
 		section = prayerSection,
-		position = 9
+		position = 12
 	)
 	default boolean prayerShowCounter()
 	{
@@ -358,7 +394,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Content justification",
 		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = prayerSection,
-		position = 10
+		position = 13
 	)
 	default Justification prayerJustification()
 	{
@@ -366,11 +402,23 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "prayerContentOffset",
+		name = "Content offset",
+		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
+		section = prayerSection,
+		position = 14
+	)
+	default int prayerContentOffset()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
 		keyName = "prayerThickness",
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = prayerSection,
-		position = 11
+		position = 15
 	)
 	@Range(min = 1)
 	default int prayerThickness()
@@ -383,7 +431,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = prayerSection,
-		position = 12
+		position = 16
 	)
 	@Range(min = 1)
 	default int prayerLength()
@@ -396,7 +444,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Active color",
 		description = "Bar color while Quick Prayers is active.",
 		section = prayerSection,
-		position = 13
+		position = 17
 	)
 	default Color prayerActiveColor()
 	{
@@ -408,7 +456,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Inactive color",
 		description = "Bar color while Quick Prayers is inactive - matches the orb's own darker navy when off.",
 		section = prayerSection,
-		position = 14
+		position = 18
 	)
 	default Color prayerInactiveColor()
 	{
@@ -420,60 +468,12 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = prayerSection,
-		position = 15
+		position = 19
 	)
 	@Range(min = 0, max = 100)
 	default int prayerOpacity()
 	{
 		return 100;
-	}
-
-	@ConfigItem(
-		keyName = "prayerMetronomeEnabled",
-		name = "Metronome",
-		description = "Shows a small marker sweeping across the bar once per game tick, with the icon flashing each time it completes a lap - a timing aid for prayer flicking.",
-		section = prayerSection,
-		position = 16
-	)
-	default boolean prayerMetronomeEnabled()
-	{
-		return false;
-	}
-
-	@ConfigItem(
-		keyName = "prayerMetronomeOnlyInCombat",
-		name = "Metronome only in combat",
-		description = "Only show the metronome while you're in combat (same combat detection the Spec bar's Threshold glow uses) - hidden the rest of the time even if Metronome is on.",
-		section = prayerSection,
-		position = 17
-	)
-	default boolean prayerMetronomeOnlyInCombat()
-	{
-		return false;
-	}
-
-	@ConfigItem(
-		keyName = "prayerMetronomeReversed",
-		name = "Reverse metronome direction",
-		description = "Sweep the marker from the far end of the bar back toward the near end (e.g. bottom-to-top on a vertical bar) instead of the default near-to-far.",
-		section = prayerSection,
-		position = 18
-	)
-	default boolean prayerMetronomeReversed()
-	{
-		return false;
-	}
-
-	@ConfigItem(
-		keyName = "prayerContentOffset",
-		name = "Content offset",
-		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
-		section = prayerSection,
-		position = 19
-	)
-	default int prayerContentOffset()
-	{
-		return 0;
 	}
 
 	// ------------------------------------------------------------------
@@ -501,11 +501,24 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "specThreshold",
+		name = "Threshold",
+		description = "When Special Attack reaches this percentage, the icon lights up - only while you're in combat.",
+		section = specSection,
+		position = 1
+	)
+	@Range(min = 0, max = 100)
+	default int specThreshold()
+	{
+		return 50;
+	}
+
+	@ConfigItem(
 		keyName = "specPlacementMode",
 		name = "Bar type",
 		description = "Docked: docked to a side of the panel. Floating: drag anywhere, like Custom Vital Bars.",
 		section = specSection,
-		position = 1
+		position = 2
 	)
 	default PlacementMode specPlacementMode()
 	{
@@ -517,7 +530,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Dock side",
 		description = "Which side of the panel to dock to when Bar type is Docked. Determines orientation: left/right = vertical, top/bottom = horizontal.",
 		section = specSection,
-		position = 2
+		position = 3
 	)
 	default DockSide specDockSide()
 	{
@@ -529,7 +542,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Dock slot",
 		description = "Order among other bars docked to the same side. 1 = closest to the panel corner, higher numbers further out.",
 		section = specSection,
-		position = 3
+		position = 4
 	)
 	@Range(min = 1)
 	default int specDockSlot()
@@ -542,7 +555,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Dock slot orientation",
 		description = "Where this bar sits along the panel's length when Bar type is Docked. Start (default) = flush with the panel's top/left corner, today's behavior. End = flush with the bottom/right corner. Center = centered. Give two bars the same Dock side + Dock slot with Start/End (and a Length under half the panel's own length, or Clamp slot off) to have them share a slot.",
 		section = specSection,
-		position = 4
+		position = 5
 	)
 	default Justification specDockJustification()
 	{
@@ -554,7 +567,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Clamp slot",
 		description = "When on, this bar's Length is overridden to match the panel's own dimension (height for left/right Dock sides, width for top/bottom) instead of using its own Length setting. Leave off to size this bar manually - needed if it shares a Dock slot with another bar via Dock slot orientation.",
 		section = specSection,
-		position = 5
+		position = 6
 	)
 	default boolean specClampSlot()
 	{
@@ -566,7 +579,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Floating orientation",
 		description = "Bar orientation when Bar type is Floating.",
 		section = specSection,
-		position = 6
+		position = 7
 	)
 	default Orientation specFloatingOrientation()
 	{
@@ -578,7 +591,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Orb mode",
 		description = "How this bar relates to the vanilla Special Attack orb (Vanilla/Merged/Mirrored). Merged/Mirrored activate special attack on click, same as the orb.",
 		section = specSection,
-		position = 7
+		position = 8
 	)
 	default OrbMode specOrbMode()
 	{
@@ -590,7 +603,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Show icon",
 		description = "Show the Special Attack orb icon on the bar.",
 		section = specSection,
-		position = 8
+		position = 9
 	)
 	default boolean specShowIcon()
 	{
@@ -602,7 +615,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Show counter",
 		description = "Show the current Special Attack value as text on the bar.",
 		section = specSection,
-		position = 9
+		position = 10
 	)
 	default boolean specShowCounter()
 	{
@@ -614,7 +627,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Content justification",
 		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = specSection,
-		position = 10
+		position = 11
 	)
 	default Justification specJustification()
 	{
@@ -622,11 +635,23 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "specContentOffset",
+		name = "Content offset",
+		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
+		section = specSection,
+		position = 12
+	)
+	default int specContentOffset()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
 		keyName = "specThickness",
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = specSection,
-		position = 11
+		position = 13
 	)
 	@Range(min = 1)
 	default int specThickness()
@@ -639,7 +664,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = specSection,
-		position = 12
+		position = 14
 	)
 	@Range(min = 1)
 	default int specLength()
@@ -652,7 +677,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Bar color",
 		description = "Bar color when Special Attack isn't queued.",
 		section = specSection,
-		position = 13
+		position = 15
 	)
 	default Color specBarColor()
 	{
@@ -664,7 +689,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Attack queued color",
 		description = "Bar color when Special Attack is queued (armed for your next hit) - matches the orb's own color change when selected.",
 		section = specSection,
-		position = 14
+		position = 16
 	)
 	default Color specQueuedColor()
 	{
@@ -676,37 +701,12 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = specSection,
-		position = 15
+		position = 17
 	)
 	@Range(min = 0, max = 100)
 	default int specOpacity()
 	{
 		return 100;
-	}
-
-	@ConfigItem(
-		keyName = "specThreshold",
-		name = "Threshold",
-		description = "When Special Attack reaches this percentage, the icon lights up - only while you're in combat.",
-		section = specSection,
-		position = 16
-	)
-	@Range(min = 0, max = 100)
-	default int specThreshold()
-	{
-		return 50;
-	}
-
-	@ConfigItem(
-		keyName = "specContentOffset",
-		name = "Content offset",
-		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
-		section = specSection,
-		position = 17
-	)
-	default int specContentOffset()
-	{
-		return 0;
 	}
 
 	// ------------------------------------------------------------------
@@ -855,11 +855,23 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "runContentOffset",
+		name = "Content offset",
+		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
+		section = runSection,
+		position = 11
+	)
+	default int runContentOffset()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
 		keyName = "runThickness",
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = runSection,
-		position = 11
+		position = 12
 	)
 	@Range(min = 1)
 	default int runThickness()
@@ -872,7 +884,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = runSection,
-		position = 12
+		position = 13
 	)
 	@Range(min = 1)
 	default int runLength()
@@ -885,7 +897,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Active color",
 		description = "Bar color while Run is toggled on - defaults to the gold/yellow of the vanilla run orb.",
 		section = runSection,
-		position = 13
+		position = 14
 	)
 	default Color runActiveColor()
 	{
@@ -897,7 +909,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Inactive color",
 		description = "Bar color while Run is toggled off.",
 		section = runSection,
-		position = 14
+		position = 15
 	)
 	default Color runInactiveColor()
 	{
@@ -909,24 +921,12 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = runSection,
-		position = 15
+		position = 16
 	)
 	@Range(min = 0, max = 100)
 	default int runOpacity()
 	{
 		return 100;
-	}
-
-	@ConfigItem(
-		keyName = "runContentOffset",
-		name = "Content offset",
-		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
-		section = runSection,
-		position = 16
-	)
-	default int runContentOffset()
-	{
-		return 0;
 	}
 
 	// ------------------------------------------------------------------
@@ -1075,11 +1075,23 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "warmthContentOffset",
+		name = "Content offset",
+		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
+		section = warmthSection,
+		position = 11
+	)
+	default int warmthContentOffset()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
 		keyName = "warmthThickness",
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = warmthSection,
-		position = 11
+		position = 12
 	)
 	@Range(min = 1)
 	default int warmthThickness()
@@ -1092,7 +1104,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = warmthSection,
-		position = 12
+		position = 13
 	)
 	@Range(min = 1)
 	default int warmthLength()
@@ -1105,24 +1117,12 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = warmthSection,
-		position = 13
+		position = 14
 	)
 	@Range(min = 0, max = 100)
 	default int warmthOpacity()
 	{
 		return 100;
-	}
-
-	@ConfigItem(
-		keyName = "warmthContentOffset",
-		name = "Content offset",
-		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
-		section = warmthSection,
-		position = 14
-	)
-	default int warmthContentOffset()
-	{
-		return 0;
 	}
 
 	// ------------------------------------------------------------------
@@ -1259,11 +1259,23 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "enemyHpContentOffset",
+		name = "Content offset",
+		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
+		section = enemyHpSection,
+		position = 10
+	)
+	default int enemyHpContentOffset()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
 		keyName = "enemyHpThickness",
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = enemyHpSection,
-		position = 10
+		position = 11
 	)
 	@Range(min = 1)
 	default int enemyHpThickness()
@@ -1276,7 +1288,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = enemyHpSection,
-		position = 11
+		position = 12
 	)
 	@Range(min = 1)
 	default int enemyHpLength()
@@ -1289,24 +1301,12 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = enemyHpSection,
-		position = 12
+		position = 13
 	)
 	@Range(min = 0, max = 100)
 	default int enemyHpOpacity()
 	{
 		return 100;
-	}
-
-	@ConfigItem(
-		keyName = "enemyHpContentOffset",
-		name = "Content offset",
-		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
-		section = enemyHpSection,
-		position = 13
-	)
-	default int enemyHpContentOffset()
-	{
-		return 0;
 	}
 
 	// ------------------------------------------------------------------
