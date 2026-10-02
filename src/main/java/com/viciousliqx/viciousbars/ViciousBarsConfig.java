@@ -182,11 +182,23 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "hpReverseContent",
+		name = "Reverse content order",
+		description = "Draw the counter before the icon (counter above icon on a vertical bar, counter left of icon on a horizontal bar) instead of the default icon-then-counter.",
+		section = hpSection,
+		position = 13
+	)
+	default boolean hpReverseContent()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "hpThickness",
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = hpSection,
-		position = 13
+		position = 14
 	)
 	@Range(min = 1)
 	default int hpThickness()
@@ -199,7 +211,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = hpSection,
-		position = 14
+		position = 15
 	)
 	@Range(min = 1)
 	default int hpLength()
@@ -212,7 +224,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = hpSection,
-		position = 15
+		position = 16
 	)
 	@Range(min = 0, max = 100)
 	default int hpOpacity()
@@ -414,11 +426,23 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "prayerReverseContent",
+		name = "Reverse content order",
+		description = "Draw the counter before the icon (counter above icon on a vertical bar, counter left of icon on a horizontal bar) instead of the default icon-then-counter.",
+		section = prayerSection,
+		position = 15
+	)
+	default boolean prayerReverseContent()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "prayerThickness",
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = prayerSection,
-		position = 15
+		position = 16
 	)
 	@Range(min = 1)
 	default int prayerThickness()
@@ -431,7 +455,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = prayerSection,
-		position = 16
+		position = 17
 	)
 	@Range(min = 1)
 	default int prayerLength()
@@ -444,7 +468,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Active color",
 		description = "Bar color while Quick Prayers is active.",
 		section = prayerSection,
-		position = 17
+		position = 18
 	)
 	default Color prayerActiveColor()
 	{
@@ -456,7 +480,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Inactive color",
 		description = "Bar color while Quick Prayers is inactive - matches the orb's own darker navy when off.",
 		section = prayerSection,
-		position = 18
+		position = 19
 	)
 	default Color prayerInactiveColor()
 	{
@@ -468,7 +492,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = prayerSection,
-		position = 19
+		position = 20
 	)
 	@Range(min = 0, max = 100)
 	default int prayerOpacity()
@@ -647,11 +671,23 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "specReverseContent",
+		name = "Reverse content order",
+		description = "Draw the counter before the icon (counter above icon on a vertical bar, counter left of icon on a horizontal bar) instead of the default icon-then-counter.",
+		section = specSection,
+		position = 13
+	)
+	default boolean specReverseContent()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "specThickness",
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = specSection,
-		position = 13
+		position = 14
 	)
 	@Range(min = 1)
 	default int specThickness()
@@ -664,7 +700,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = specSection,
-		position = 14
+		position = 15
 	)
 	@Range(min = 1)
 	default int specLength()
@@ -677,7 +713,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Bar color",
 		description = "Bar color when Special Attack isn't queued.",
 		section = specSection,
-		position = 15
+		position = 16
 	)
 	default Color specBarColor()
 	{
@@ -689,7 +725,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Attack queued color",
 		description = "Bar color when Special Attack is queued (armed for your next hit) - matches the orb's own color change when selected.",
 		section = specSection,
-		position = 16
+		position = 17
 	)
 	default Color specQueuedColor()
 	{
@@ -701,7 +737,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = specSection,
-		position = 17
+		position = 18
 	)
 	@Range(min = 0, max = 100)
 	default int specOpacity()
@@ -867,11 +903,23 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "runReverseContent",
+		name = "Reverse content order",
+		description = "Draw the counter before the icon (counter above icon on a vertical bar, counter left of icon on a horizontal bar) instead of the default icon-then-counter.",
+		section = runSection,
+		position = 12
+	)
+	default boolean runReverseContent()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "runThickness",
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = runSection,
-		position = 12
+		position = 13
 	)
 	@Range(min = 1)
 	default int runThickness()
@@ -884,7 +932,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = runSection,
-		position = 13
+		position = 14
 	)
 	@Range(min = 1)
 	default int runLength()
@@ -897,7 +945,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Active color",
 		description = "Bar color while Run is toggled on - defaults to the gold/yellow of the vanilla run orb.",
 		section = runSection,
-		position = 14
+		position = 15
 	)
 	default Color runActiveColor()
 	{
@@ -909,7 +957,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Inactive color",
 		description = "Bar color while Run is toggled off.",
 		section = runSection,
-		position = 15
+		position = 16
 	)
 	default Color runInactiveColor()
 	{
@@ -921,7 +969,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = runSection,
-		position = 16
+		position = 17
 	)
 	@Range(min = 0, max = 100)
 	default int runOpacity()
@@ -1087,11 +1135,23 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "warmthReverseContent",
+		name = "Reverse content order",
+		description = "Draw the counter before the icon (counter above icon on a vertical bar, counter left of icon on a horizontal bar) instead of the default icon-then-counter.",
+		section = warmthSection,
+		position = 12
+	)
+	default boolean warmthReverseContent()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "warmthThickness",
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = warmthSection,
-		position = 12
+		position = 13
 	)
 	@Range(min = 1)
 	default int warmthThickness()
@@ -1104,7 +1164,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = warmthSection,
-		position = 13
+		position = 14
 	)
 	@Range(min = 1)
 	default int warmthLength()
@@ -1117,7 +1177,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = warmthSection,
-		position = 14
+		position = 15
 	)
 	@Range(min = 0, max = 100)
 	default int warmthOpacity()
@@ -1247,11 +1307,23 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "enemyHpCounterFormat",
+		name = "Counter format",
+		description = "Fraction: the bare ratio the game actually sends (e.g. 27/30 - never a real HP number for most monsters). Percentage: that same ratio converted to a rounded percent.",
+		section = enemyHpSection,
+		position = 9
+	)
+	default CounterFormat enemyHpCounterFormat()
+	{
+		return CounterFormat.FRACTION;
+	}
+
+	@ConfigItem(
 		keyName = "enemyHpJustification",
 		name = "Content justification",
 		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = enemyHpSection,
-		position = 9
+		position = 10
 	)
 	default Justification enemyHpJustification()
 	{
@@ -1263,7 +1335,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Content offset",
 		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
 		section = enemyHpSection,
-		position = 10
+		position = 11
 	)
 	default int enemyHpContentOffset()
 	{
@@ -1271,11 +1343,23 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "enemyHpReverseContent",
+		name = "Reverse content order",
+		description = "Draw the counter before the icon (counter above icon on a vertical bar, counter left of icon on a horizontal bar) instead of the default icon-then-counter.",
+		section = enemyHpSection,
+		position = 12
+	)
+	default boolean enemyHpReverseContent()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "enemyHpThickness",
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = enemyHpSection,
-		position = 11
+		position = 13
 	)
 	@Range(min = 1)
 	default int enemyHpThickness()
@@ -1288,7 +1372,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = enemyHpSection,
-		position = 12
+		position = 14
 	)
 	@Range(min = 1)
 	default int enemyHpLength()
@@ -1301,7 +1385,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = enemyHpSection,
-		position = 13
+		position = 15
 	)
 	@Range(min = 0, max = 100)
 	default int enemyHpOpacity()

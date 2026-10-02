@@ -197,6 +197,12 @@ class PrayerBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected boolean isReverseContent()
+	{
+		return config.prayerReverseContent();
+	}
+
+	@Override
 	protected Orientation getOrientation()
 	{
 		return config.prayerFloatingOrientation();

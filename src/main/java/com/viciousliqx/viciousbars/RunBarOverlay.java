@@ -135,6 +135,12 @@ class RunBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected boolean isReverseContent()
+	{
+		return config.runReverseContent();
+	}
+
+	@Override
 	protected Orientation getOrientation()
 	{
 		return config.runFloatingOrientation();

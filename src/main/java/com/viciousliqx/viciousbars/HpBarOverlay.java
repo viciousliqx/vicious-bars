@@ -158,6 +158,12 @@ class HpBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected boolean isReverseContent()
+	{
+		return config.hpReverseContent();
+	}
+
+	@Override
 	protected Orientation getOrientation()
 	{
 		return config.hpFloatingOrientation();

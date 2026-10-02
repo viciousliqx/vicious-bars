@@ -145,6 +145,12 @@ class SpecBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected boolean isReverseContent()
+	{
+		return config.specReverseContent();
+	}
+
+	@Override
 	protected Orientation getOrientation()
 	{
 		return config.specFloatingOrientation();

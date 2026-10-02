@@ -146,6 +146,12 @@ class WarmthBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected boolean isReverseContent()
+	{
+		return config.warmthReverseContent();
+	}
+
+	@Override
 	protected Orientation getOrientation()
 	{
 		return config.warmthFloatingOrientation();

@@ -141,6 +141,22 @@ class EnemyHpBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected boolean isReverseContent()
+	{
+		return config.enemyHpReverseContent();
+	}
+
+	@Override
+	protected String formatCounter(int current, int max)
+	{
+		if (config.enemyHpCounterFormat() == CounterFormat.PERCENTAGE)
+		{
+			return Math.round(100f * current / max) + "%";
+		}
+		return current + "/" + max;
+	}
+
+	@Override
 	protected Orientation getOrientation()
 	{
 		return config.enemyHpFloatingOrientation();

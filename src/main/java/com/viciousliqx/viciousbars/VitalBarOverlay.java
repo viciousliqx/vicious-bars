@@ -98,6 +98,9 @@ public abstract class VitalBarOverlay extends Overlay
 	/** Nudges the icon/counter cluster along the bar by this many pixels - positive toward the far end, negative toward the near end. */
 	protected abstract int getContentOffset();
 
+	/** True to draw the counter before the icon (reversed stacking order) instead of the default icon-then-counter. */
+	protected abstract boolean isReverseContent();
+
 	protected abstract Orientation getOrientation();
 
 	protected abstract int getThickness();
@@ -153,6 +156,12 @@ public abstract class VitalBarOverlay extends Overlay
 	protected int getPreviewAmount()
 	{
 		return 0;
+	}
+
+	/** How the counter text is formatted from the raw current/max values. Plain current value by default - e.g. Enemy HP overrides this for its fraction/percentage choice. */
+	protected String formatCounter(int current, int max)
+	{
+		return Integer.toString(current);
 	}
 
 	/** Current on-screen icon rectangle, or null if no icon is currently drawn. Used by {@link OrbClickListener}. */
@@ -256,9 +265,10 @@ public abstract class VitalBarOverlay extends Overlay
 		// assembly, same as a real orb's icon sitting on its meter, not
 		// squeezed inside the fill. Same returned Dimension either way, so
 		// PanelDock and dock-slot stacking never see a difference.
-		int current = Math.max(0, Math.min(getCurrent(), Math.max(getMax(), 1)));
+		int max = Math.max(getMax(), 1);
+		int current = Math.max(0, Math.min(getCurrent(), max));
 		Color iconHighlight = resolveIconHighlight();
-		Point iconLocal = drawIconAndCounter(graphics, width, height, orientation, current, iconHighlight);
+		Point iconLocal = drawIconAndCounter(graphics, width, height, orientation, current, max, iconHighlight);
 		iconBounds = iconLocal != null
 			? new Rectangle(origin.x + iconLocal.x, origin.y + iconLocal.y, ICON_SIZE, ICON_SIZE)
 			: null;
@@ -399,7 +409,7 @@ public abstract class VitalBarOverlay extends Overlay
 	}
 
 	/** Returns the icon's local (bar-relative) top-left position, or null if no icon was drawn. */
-	private Point drawIconAndCounter(Graphics2D graphics, int width, int height, Orientation orientation, int current,
+	private Point drawIconAndCounter(Graphics2D graphics, int width, int height, Orientation orientation, int current, int max,
 		Color iconHighlight)
 	{
 		OrbMode orbMode = getOrbMode();
@@ -414,7 +424,7 @@ public abstract class VitalBarOverlay extends Overlay
 			return null;
 		}
 
-		String counterText = showCounter ? Integer.toString(current) : null;
+		String counterText = showCounter ? formatCounter(current, max) : null;
 		graphics.setFont(FontManager.getRunescapeSmallFont());
 		int textWidth = counterText != null ? graphics.getFontMetrics().stringWidth(counterText) : 0;
 		int textHeight = counterText != null ? graphics.getFontMetrics().getHeight() : 0;
@@ -433,11 +443,18 @@ public abstract class VitalBarOverlay extends Overlay
 		// positive toward the far end - lets a specific bar's icon be
 		// fine-tuned a few px without touching Content justification itself.
 		int along = along(getJustification(), orientation == Orientation.VERTICAL ? height : width, clusterLength) + getContentOffset();
+		boolean reverse = isReverseContent();
 		Point iconLocal = null;
 
 		if (orientation == Orientation.VERTICAL)
 		{
 			int y = along;
+			if (reverse && counterText != null)
+			{
+				graphics.setColor(Color.WHITE);
+				graphics.drawString(counterText, (width - textWidth) / 2, y + textHeight - graphics.getFontMetrics().getDescent());
+				y += textHeight + PADDING;
+			}
 			if (icon != null)
 			{
 				int iconX = (width - ICON_SIZE) / 2;
@@ -452,7 +469,7 @@ public abstract class VitalBarOverlay extends Overlay
 				iconLocal = new Point(iconX, y);
 				y += ICON_SIZE + PADDING;
 			}
-			if (counterText != null)
+			if (!reverse && counterText != null)
 			{
 				graphics.setColor(Color.WHITE);
 				graphics.drawString(counterText, (width - textWidth) / 2, y + textHeight - graphics.getFontMetrics().getDescent());
@@ -461,6 +478,13 @@ public abstract class VitalBarOverlay extends Overlay
 		else
 		{
 			int x = along;
+			if (reverse && counterText != null)
+			{
+				graphics.setColor(Color.WHITE);
+				int textY = (height - textHeight) / 2 + textHeight - graphics.getFontMetrics().getDescent();
+				graphics.drawString(counterText, x, textY);
+				x += textWidth + PADDING;
+			}
 			if (icon != null)
 			{
 				int iconY = (height - ICON_SIZE) / 2;
@@ -475,7 +499,7 @@ public abstract class VitalBarOverlay extends Overlay
 				iconLocal = new Point(x, iconY);
 				x += ICON_SIZE + PADDING;
 			}
-			if (counterText != null)
+			if (!reverse && counterText != null)
 			{
 				graphics.setColor(Color.WHITE);
 				int textY = (height - textHeight) / 2 + textHeight - graphics.getFontMetrics().getDescent();
