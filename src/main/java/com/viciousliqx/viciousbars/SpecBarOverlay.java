@@ -35,7 +35,7 @@ class SpecBarOverlay extends VitalBarOverlay
 	@Inject
 	private SpecBarOverlay(Client client, ViciousBarsConfig config, SpriteManager spriteManager, OpponentTracker opponentTracker)
 	{
-		super(client, spriteManager);
+		super(client);
 		this.client = client;
 		this.config = config;
 		this.spriteManager = spriteManager;

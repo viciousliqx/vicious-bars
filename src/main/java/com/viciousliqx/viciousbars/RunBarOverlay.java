@@ -29,7 +29,7 @@ class RunBarOverlay extends VitalBarOverlay
 	@Inject
 	private RunBarOverlay(Client client, ViciousBarsConfig config, SpriteManager spriteManager)
 	{
-		super(client, spriteManager);
+		super(client);
 		this.client = client;
 		this.config = config;
 		this.spriteManager = spriteManager;
