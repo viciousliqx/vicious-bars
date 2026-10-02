@@ -176,14 +176,16 @@ public abstract class VitalBarOverlay extends Overlay
 		{
 			// RuneLite's OverlayRenderer pre-translates the graphics we're
 			// given by the overlay's stored preferred location (set by
-			// dragging it while Floating) BEFORE calling render() - that
-			// stays stored even after setMovable(false), so without this
-			// our own graphics.translate(pos.x, pos.y) below compounds on
-			// top of wherever it was last dragged, landing the bar
-			// somewhere else entirely (confirmed via real log: our own pos
-			// computation was correct every time, the overlay just never
-			// visually appeared there because of this leftover offset).
+			// dragging it while Floating) BEFORE calling render(). Clearing
+			// preferredLocation alone isn't enough though - when it's null,
+			// the renderer falls back to the overlay's own getBounds() x/y
+			// instead, and that Rectangle gets permanently written with the
+			// dragged position every frame while movable (the renderer does
+			// it itself: overlay.getBounds().setLocation(point)), so it just
+			// keeps perpetuating the same stale value forever otherwise.
+			// Resetting both is what actually breaks the loop.
 			setPreferredLocation(null);
+			getBounds().setLocation(0, 0);
 		}
 
 		Orientation orientation;
