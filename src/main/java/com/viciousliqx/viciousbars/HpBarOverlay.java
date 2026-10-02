@@ -222,6 +222,30 @@ class HpBarOverlay extends VitalBarOverlay
 		return getRestoreValue(Skill.HITPOINTS.getName());
 	}
 
+	@Override
+	protected boolean isWarningEnabled()
+	{
+		return config.hpWarningEnabled();
+	}
+
+	@Override
+	protected int getWarningThreshold()
+	{
+		return config.hpWarningThreshold();
+	}
+
+	@Override
+	protected Color getWarningColor()
+	{
+		return config.hpWarningColor();
+	}
+
+	@Override
+	protected int getWarningOpacity()
+	{
+		return config.hpWarningOpacity();
+	}
+
 	// Verbatim logic from RuneLite core's own StatusBarsOverlay.getRestoreValue()
 	// - same menu-entry/widget sniffing approach used to detect which
 	// inventory item is currently hovered, same ItemStatChangesService call

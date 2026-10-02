@@ -44,6 +44,30 @@ class RunBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected boolean isWarningEnabled()
+	{
+		return config.runWarningEnabled();
+	}
+
+	@Override
+	protected int getWarningThreshold()
+	{
+		return config.runWarningThreshold();
+	}
+
+	@Override
+	protected Color getWarningColor()
+	{
+		return config.runWarningColor();
+	}
+
+	@Override
+	protected int getWarningOpacity()
+	{
+		return config.runWarningOpacity();
+	}
+
+	@Override
 	protected PlacementMode getPlacementMode()
 	{
 		return config.runPlacementMode();

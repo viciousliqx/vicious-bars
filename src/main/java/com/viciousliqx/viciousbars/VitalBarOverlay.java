@@ -52,6 +52,10 @@ public abstract class VitalBarOverlay extends Overlay
 	// semicircle-ended shape) per feedback that full capsule ends were too
 	// round.
 	private static final float INNER_ARC_FRACTION = 0.75f;
+	// One full breathe (0 -> peak -> 0) per period - purely wall-clock driven,
+	// so the Warning pulse needs no stored animation state and every bar's
+	// pulse free-runs independently in sync with real time.
+	private static final long WARNING_PULSE_PERIOD_MS = 1200;
 
 	private final Client client;
 	// Written on the client/render thread, read from the AWT event thread by
@@ -155,6 +159,30 @@ public abstract class VitalBarOverlay extends Overlay
 
 	/** Extra amount to preview-fill beyond the current value - e.g. HP's heal-on-hover preview. 0 for bars without one. */
 	protected int getPreviewAmount()
+	{
+		return 0;
+	}
+
+	/** True only while this bar's Warning pulse is turned on. No-op (always false) for bars that haven't opted in. */
+	protected boolean isWarningEnabled()
+	{
+		return false;
+	}
+
+	/** 0-100. The pulse activates once current/max drops to or below this percentage. Only meaningful when {@link #isWarningEnabled()}. */
+	protected int getWarningThreshold()
+	{
+		return 0;
+	}
+
+	/** Color the empty part of the vial pulses while the Warning threshold is active. */
+	protected Color getWarningColor()
+	{
+		return Color.RED;
+	}
+
+	/** 0-100, the pulse's peak opacity - it breathes between 0 and this value over {@link #WARNING_PULSE_PERIOD_MS}, not a flat level like the bar's own Opacity. */
+	protected int getWarningOpacity()
 	{
 		return 0;
 	}
@@ -381,6 +409,19 @@ public abstract class VitalBarOverlay extends Overlay
 		double ratio = (double) current / max;
 		Color fillColor = getColor();
 
+		// Warning pulse draws across the FULL vial, before anything else -
+		// the preview and normal fill below both draw solid colors on top of
+		// it up to their own extent, so the pulse only ever actually shows
+		// through in whatever's left empty, with no separate clipping needed.
+		if (isWarningEnabled() && isWarningActive(current, max))
+		{
+			Color warningColor = getWarningColor();
+			float pulseAlpha = warningPulseAlpha(getWarningOpacity());
+			vialGraphics.setColor(new Color(warningColor.getRed(), warningColor.getGreen(), warningColor.getBlue(),
+				Math.round(255 * pulseAlpha * opacityFraction)));
+			vialGraphics.fillRect(0, 0, innerWidth, innerHeight);
+		}
+
 		// Preview fill draws FIRST, to the full current+preview extent, in a
 		// lightened shade - then the normal fill draws over it up to just
 		// current, so the lightened shade only ever shows in the extra
@@ -424,6 +465,19 @@ public abstract class VitalBarOverlay extends Overlay
 		}
 
 		vialGraphics.dispose();
+	}
+
+	private boolean isWarningActive(int current, int max)
+	{
+		return max > 0 && (100.0 * current / max) <= getWarningThreshold();
+	}
+
+	/** Breathes 0 -> peak -> 0 once per {@link #WARNING_PULSE_PERIOD_MS}, driven purely by wall-clock time. */
+	private float warningPulseAlpha(int peakOpacity)
+	{
+		double phase = (System.currentTimeMillis() % WARNING_PULSE_PERIOD_MS) / (double) WARNING_PULSE_PERIOD_MS;
+		double pulse = (1 - Math.cos(phase * 2 * Math.PI)) / 2;
+		return (float) (pulse * Math.max(0, Math.min(peakOpacity, 100)) / 100f);
 	}
 
 	/** Sweeps a thin marker along the bar's length, position driven by how far through the current tick we are. */

@@ -47,6 +47,30 @@ class EnemyHpBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected boolean isWarningEnabled()
+	{
+		return config.enemyHpWarningEnabled();
+	}
+
+	@Override
+	protected int getWarningThreshold()
+	{
+		return config.enemyHpWarningThreshold();
+	}
+
+	@Override
+	protected Color getWarningColor()
+	{
+		return config.enemyHpWarningColor();
+	}
+
+	@Override
+	protected int getWarningOpacity()
+	{
+		return config.enemyHpWarningOpacity();
+	}
+
+	@Override
 	protected PlacementMode getPlacementMode()
 	{
 		return config.enemyHpPlacementMode();

@@ -103,6 +103,30 @@ class PrayerBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected boolean isWarningEnabled()
+	{
+		return config.prayerWarningEnabled();
+	}
+
+	@Override
+	protected int getWarningThreshold()
+	{
+		return config.prayerWarningThreshold();
+	}
+
+	@Override
+	protected Color getWarningColor()
+	{
+		return config.prayerWarningColor();
+	}
+
+	@Override
+	protected int getWarningOpacity()
+	{
+		return config.prayerWarningOpacity();
+	}
+
+	@Override
 	protected PlacementMode getPlacementMode()
 	{
 		return config.prayerPlacementMode();

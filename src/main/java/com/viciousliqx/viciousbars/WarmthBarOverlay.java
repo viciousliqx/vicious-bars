@@ -53,6 +53,30 @@ class WarmthBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected boolean isWarningEnabled()
+	{
+		return config.warmthWarningEnabled();
+	}
+
+	@Override
+	protected int getWarningThreshold()
+	{
+		return config.warmthWarningThreshold();
+	}
+
+	@Override
+	protected Color getWarningColor()
+	{
+		return config.warmthWarningColor();
+	}
+
+	@Override
+	protected int getWarningOpacity()
+	{
+		return config.warmthWarningOpacity();
+	}
+
+	@Override
 	protected PlacementMode getPlacementMode()
 	{
 		return config.warmthPlacementMode();

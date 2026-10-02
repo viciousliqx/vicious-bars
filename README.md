@@ -43,6 +43,11 @@ default), and Enemy Hitpoints (current target only, off by default).
 - A rounded stone-toned frame drawn around every bar, independent of the bar's own
   Opacity
 - Content justification plus Content offset (a per-pixel nudge) for the icon/counter
+- **Warning pulse** (every bar) - once a bar's value drops to or below its own
+  configurable Warning threshold, the empty part of the vial pulses in a configurable
+  color and peak opacity. It's drawn full-width behind the normal fill, so the pulse
+  only ever actually shows through wherever the bar is empty - no separate clipping or
+  geometry to configure, and Docked/Floating look identical
 
 ### Orb modes (Hitpoints, Prayer, Special Attack, Run Energy)
 
@@ -67,8 +72,9 @@ widget - none of it is simulated or guessed.
 
 ### Special Attack
 
-- **Threshold** - the icon glows gold once Special Attack reaches a configurable
-  percentage, but only while in combat
+- **Activation threshold** - the icon glows gold once Special Attack reaches a
+  configurable percentage, but only while in combat. Separate from the Warning pulse
+  above, which fires on a LOW charge instead
 - Dynamic bar color distinguishes queued (armed) vs. normal
 
 ### Run Energy
@@ -93,6 +99,7 @@ widget - none of it is simulated or guessed.
 
 - Layout concept inspired by RuneLite's own **Status Bars** plugin and **Custom Vital
   Bars** for its customizability
+- The Warning pulse is our own take on Custom Vital Bars' low-value flash idea
 - The Hitpoints heal preview is adapted directly from Status Bars' own
   `StatusBarsOverlay.getRestoreValue()` - same menu-entry detection, same
   `ItemStatChangesService` call

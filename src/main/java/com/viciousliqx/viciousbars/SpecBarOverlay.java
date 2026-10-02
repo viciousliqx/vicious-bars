@@ -191,7 +191,31 @@ class SpecBarOverlay extends VitalBarOverlay
 	@Override
 	protected boolean isIconLit()
 	{
-		return opponentTracker.isInCombat() && getCurrent() >= config.specThreshold();
+		return opponentTracker.isInCombat() && getCurrent() >= config.specActivationThreshold();
+	}
+
+	@Override
+	protected boolean isWarningEnabled()
+	{
+		return config.specWarningEnabled();
+	}
+
+	@Override
+	protected int getWarningThreshold()
+	{
+		return config.specWarningThreshold();
+	}
+
+	@Override
+	protected Color getWarningColor()
+	{
+		return config.specWarningColor();
+	}
+
+	@Override
+	protected int getWarningOpacity()
+	{
+		return config.specWarningOpacity();
 	}
 
 	@Override
