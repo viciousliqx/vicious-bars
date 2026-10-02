@@ -172,6 +172,19 @@ public abstract class VitalBarOverlay extends Overlay
 
 		PlacementMode placementMode = getPlacementMode();
 		setMovable(placementMode == PlacementMode.FLOATING);
+		if (placementMode == PlacementMode.FIXED)
+		{
+			// RuneLite's OverlayRenderer pre-translates the graphics we're
+			// given by the overlay's stored preferred location (set by
+			// dragging it while Floating) BEFORE calling render() - that
+			// stays stored even after setMovable(false), so without this
+			// our own graphics.translate(pos.x, pos.y) below compounds on
+			// top of wherever it was last dragged, landing the bar
+			// somewhere else entirely (confirmed via real log: our own pos
+			// computation was correct every time, the overlay just never
+			// visually appeared there because of this leftover offset).
+			setPreferredLocation(null);
+		}
 
 		Orientation orientation;
 		Point origin;
