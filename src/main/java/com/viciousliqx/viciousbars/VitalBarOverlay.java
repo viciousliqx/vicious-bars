@@ -239,8 +239,14 @@ public abstract class VitalBarOverlay extends Overlay
 		// know about the one below it - the frame doesn't know the vial's
 		// Opacity, the vial doesn't know the icon exists at all.
 		drawFrame(graphics, width, height, borderWidth, innerWidth, innerHeight, innerArc);
-		drawCornerAccents(graphics, width, height);
 		drawVial(graphics, orientation, borderWidth, innerWidth, innerHeight, innerArc);
+		// Corner accents draw AFTER the vial, not between frame and vial -
+		// their 10x12 footprint reaches past the frame's own border width
+		// into the vial's own area, so drawing them first just meant the
+		// vial's background painted over the part that overlapped,
+		// looking like the accent was sitting underneath the bar instead
+		// of decorating its corner.
+		drawCornerAccents(graphics, width, height);
 
 		// Icon + counter draw last, on top of the frame AND the vial, sized
 		// against the bar's full outer footprint rather than the vial's
