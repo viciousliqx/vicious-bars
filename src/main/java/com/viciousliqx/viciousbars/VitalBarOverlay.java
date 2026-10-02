@@ -29,7 +29,6 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 public abstract class VitalBarOverlay extends Overlay
 {
 	private static final int BACKGROUND_BASE_ALPHA = 150;
-	private static final int ICON_SIZE = 18;
 	private static final int PADDING = 3;
 	private static final Color METRONOME_MARKER_COLOR = new Color(255, 255, 255, 200);
 	private static final int METRONOME_MARKER_THICKNESS = 3;
@@ -95,6 +94,9 @@ public abstract class VitalBarOverlay extends Overlay
 
 	/** Null if disabled, unavailable, or not yet loaded. */
 	protected abstract BufferedImage getIcon();
+
+	/** Pixel size (width and height) the icon is drawn at. */
+	protected abstract int getIconSize();
 
 	protected abstract boolean isShowCounter();
 
@@ -337,7 +339,7 @@ public abstract class VitalBarOverlay extends Overlay
 		Color iconHighlight = resolveIconHighlight();
 		Point iconLocal = drawIconAndCounter(graphics, width, height, orientation, current, max, iconHighlight);
 		iconBounds = iconLocal != null
-			? new Rectangle(origin.x + iconLocal.x, origin.y + iconLocal.y, ICON_SIZE, ICON_SIZE)
+			? new Rectangle(origin.x + iconLocal.x, origin.y + iconLocal.y, getIconSize(), getIconSize())
 			: null;
 
 		return new Dimension(width, height);
@@ -517,12 +519,13 @@ public abstract class VitalBarOverlay extends Overlay
 			return null;
 		}
 
+		int iconSize = getIconSize();
 		String counterText = showCounter ? formatCounter(current, max) : null;
 		graphics.setFont(FontManager.getRunescapeSmallFont());
 		int textWidth = counterText != null ? graphics.getFontMetrics().stringWidth(counterText) : 0;
 		int textHeight = counterText != null ? graphics.getFontMetrics().getHeight() : 0;
 
-		int clusterLength = icon != null ? ICON_SIZE : 0;
+		int clusterLength = icon != null ? iconSize : 0;
 		if (counterText != null)
 		{
 			clusterLength += (icon != null ? PADDING : 0) + (orientation == Orientation.VERTICAL ? textHeight : textWidth);
@@ -550,17 +553,17 @@ public abstract class VitalBarOverlay extends Overlay
 			}
 			if (icon != null)
 			{
-				int iconX = (width - ICON_SIZE) / 2;
+				int iconX = (width - iconSize) / 2;
 				if (iconHighlight != null)
 				{
 					graphics.setColor(iconHighlight);
 					graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 					graphics.fillOval(iconX - ICON_GLOW_MARGIN, y - ICON_GLOW_MARGIN,
-						ICON_SIZE + 2 * ICON_GLOW_MARGIN, ICON_SIZE + 2 * ICON_GLOW_MARGIN);
+						iconSize + 2 * ICON_GLOW_MARGIN, iconSize + 2 * ICON_GLOW_MARGIN);
 				}
-				graphics.drawImage(icon, iconX, y, ICON_SIZE, ICON_SIZE, null);
+				graphics.drawImage(icon, iconX, y, iconSize, iconSize, null);
 				iconLocal = new Point(iconX, y);
-				y += ICON_SIZE + PADDING;
+				y += iconSize + PADDING;
 			}
 			if (!reverse && counterText != null)
 			{
@@ -580,17 +583,17 @@ public abstract class VitalBarOverlay extends Overlay
 			}
 			if (icon != null)
 			{
-				int iconY = (height - ICON_SIZE) / 2;
+				int iconY = (height - iconSize) / 2;
 				if (iconHighlight != null)
 				{
 					graphics.setColor(iconHighlight);
 					graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 					graphics.fillOval(x - ICON_GLOW_MARGIN, iconY - ICON_GLOW_MARGIN,
-						ICON_SIZE + 2 * ICON_GLOW_MARGIN, ICON_SIZE + 2 * ICON_GLOW_MARGIN);
+						iconSize + 2 * ICON_GLOW_MARGIN, iconSize + 2 * ICON_GLOW_MARGIN);
 				}
-				graphics.drawImage(icon, x, iconY, ICON_SIZE, ICON_SIZE, null);
+				graphics.drawImage(icon, x, iconY, iconSize, iconSize, null);
 				iconLocal = new Point(x, iconY);
-				x += ICON_SIZE + PADDING;
+				x += iconSize + PADDING;
 			}
 			if (!reverse && counterText != null)
 			{

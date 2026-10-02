@@ -143,6 +143,12 @@ class RunBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getIconSize()
+	{
+		return config.runIconSize();
+	}
+
+	@Override
 	protected boolean isShowCounter()
 	{
 		return config.runShowCounter();

@@ -141,6 +141,12 @@ class HpBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getIconSize()
+	{
+		return config.hpIconSize();
+	}
+
+	@Override
 	protected boolean isShowCounter()
 	{
 		return config.hpShowCounter();

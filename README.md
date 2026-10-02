@@ -39,7 +39,7 @@ default), and Enemy Hitpoints (current target only, off by default).
 
 ### Appearance
 
-- Thickness, Length, and Opacity (0-100) per bar
+- Thickness, Length, Opacity (0-100), and Icon size per bar
 - A rounded stone-toned frame drawn around every bar, independent of the bar's own
   Opacity
 - Content justification plus Content offset (a per-pixel nudge) for the icon/counter

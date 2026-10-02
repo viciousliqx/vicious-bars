@@ -206,6 +206,12 @@ class PrayerBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getIconSize()
+	{
+		return config.prayerIconSize();
+	}
+
+	@Override
 	protected boolean isShowCounter()
 	{
 		return config.prayerShowCounter();

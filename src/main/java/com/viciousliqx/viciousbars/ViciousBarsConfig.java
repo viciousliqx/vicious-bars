@@ -196,11 +196,24 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "hpIconSize",
+		name = "Icon size",
+		description = "Pixel size (width and height) of the icon on the bar.",
+		section = hpSection,
+		position = 14
+	)
+	@Range(min = 1)
+	default int hpIconSize()
+	{
+		return 18;
+	}
+
+	@ConfigItem(
 		keyName = "hpShowCounter",
 		name = "Show counter",
 		description = "Show the current Hitpoints value as text on the bar.",
 		section = hpSection,
-		position = 14
+		position = 15
 	)
 	default boolean hpShowCounter()
 	{
@@ -212,7 +225,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Content justification",
 		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = hpSection,
-		position = 15
+		position = 16
 	)
 	default Justification hpJustification()
 	{
@@ -224,7 +237,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Content offset",
 		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
 		section = hpSection,
-		position = 16
+		position = 17
 	)
 	default int hpContentOffset()
 	{
@@ -236,7 +249,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Reverse content order",
 		description = "Draw the counter before the icon (counter above icon on a vertical bar, counter left of icon on a horizontal bar) instead of the default icon-then-counter.",
 		section = hpSection,
-		position = 17
+		position = 18
 	)
 	default boolean hpReverseContent()
 	{
@@ -248,7 +261,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = hpSection,
-		position = 18
+		position = 19
 	)
 	@Range(min = 1)
 	default int hpThickness()
@@ -261,7 +274,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = hpSection,
-		position = 19
+		position = 20
 	)
 	@Range(min = 1)
 	default int hpLength()
@@ -274,7 +287,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = hpSection,
-		position = 20
+		position = 21
 	)
 	@Range(min = 0, max = 100)
 	default int hpOpacity()
@@ -490,11 +503,24 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "prayerIconSize",
+		name = "Icon size",
+		description = "Pixel size (width and height) of the icon on the bar.",
+		section = prayerSection,
+		position = 16
+	)
+	@Range(min = 1)
+	default int prayerIconSize()
+	{
+		return 18;
+	}
+
+	@ConfigItem(
 		keyName = "prayerShowCounter",
 		name = "Show counter",
 		description = "Show the current Prayer value as text on the bar.",
 		section = prayerSection,
-		position = 16
+		position = 17
 	)
 	default boolean prayerShowCounter()
 	{
@@ -506,7 +532,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Content justification",
 		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = prayerSection,
-		position = 17
+		position = 18
 	)
 	default Justification prayerJustification()
 	{
@@ -518,7 +544,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Content offset",
 		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
 		section = prayerSection,
-		position = 18
+		position = 19
 	)
 	default int prayerContentOffset()
 	{
@@ -530,7 +556,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Reverse content order",
 		description = "Draw the counter before the icon (counter above icon on a vertical bar, counter left of icon on a horizontal bar) instead of the default icon-then-counter.",
 		section = prayerSection,
-		position = 19
+		position = 20
 	)
 	default boolean prayerReverseContent()
 	{
@@ -542,7 +568,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = prayerSection,
-		position = 20
+		position = 21
 	)
 	@Range(min = 1)
 	default int prayerThickness()
@@ -555,7 +581,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = prayerSection,
-		position = 21
+		position = 22
 	)
 	@Range(min = 1)
 	default int prayerLength()
@@ -568,7 +594,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Active color",
 		description = "Bar color while Quick Prayers is active.",
 		section = prayerSection,
-		position = 22
+		position = 23
 	)
 	default Color prayerActiveColor()
 	{
@@ -580,7 +606,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Inactive color",
 		description = "Bar color while Quick Prayers is inactive - matches the orb's own darker navy when off.",
 		section = prayerSection,
-		position = 23
+		position = 24
 	)
 	default Color prayerInactiveColor()
 	{
@@ -592,7 +618,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = prayerSection,
-		position = 24
+		position = 25
 	)
 	@Range(min = 0, max = 100)
 	default int prayerOpacity()
@@ -785,11 +811,24 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "specIconSize",
+		name = "Icon size",
+		description = "Pixel size (width and height) of the icon on the bar.",
+		section = specSection,
+		position = 14
+	)
+	@Range(min = 1)
+	default int specIconSize()
+	{
+		return 18;
+	}
+
+	@ConfigItem(
 		keyName = "specShowCounter",
 		name = "Show counter",
 		description = "Show the current Special Attack value as text on the bar.",
 		section = specSection,
-		position = 14
+		position = 15
 	)
 	default boolean specShowCounter()
 	{
@@ -801,7 +840,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Content justification",
 		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = specSection,
-		position = 15
+		position = 16
 	)
 	default Justification specJustification()
 	{
@@ -813,7 +852,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Content offset",
 		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
 		section = specSection,
-		position = 16
+		position = 17
 	)
 	default int specContentOffset()
 	{
@@ -825,7 +864,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Reverse content order",
 		description = "Draw the counter before the icon (counter above icon on a vertical bar, counter left of icon on a horizontal bar) instead of the default icon-then-counter.",
 		section = specSection,
-		position = 17
+		position = 18
 	)
 	default boolean specReverseContent()
 	{
@@ -837,7 +876,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = specSection,
-		position = 18
+		position = 19
 	)
 	@Range(min = 1)
 	default int specThickness()
@@ -850,7 +889,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = specSection,
-		position = 19
+		position = 20
 	)
 	@Range(min = 1)
 	default int specLength()
@@ -863,7 +902,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Bar color",
 		description = "Bar color when Special Attack isn't queued.",
 		section = specSection,
-		position = 20
+		position = 21
 	)
 	default Color specBarColor()
 	{
@@ -875,7 +914,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Attack queued color",
 		description = "Bar color when Special Attack is queued (armed for your next hit) - matches the orb's own color change when selected.",
 		section = specSection,
-		position = 21
+		position = 22
 	)
 	default Color specQueuedColor()
 	{
@@ -887,7 +926,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = specSection,
-		position = 22
+		position = 23
 	)
 	@Range(min = 0, max = 100)
 	default int specOpacity()
@@ -1067,11 +1106,24 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "runIconSize",
+		name = "Icon size",
+		description = "Pixel size (width and height) of the icon on the bar.",
+		section = runSection,
+		position = 13
+	)
+	@Range(min = 1)
+	default int runIconSize()
+	{
+		return 18;
+	}
+
+	@ConfigItem(
 		keyName = "runShowCounter",
 		name = "Show counter",
 		description = "Show the current Run Energy value as text on the bar.",
 		section = runSection,
-		position = 13
+		position = 14
 	)
 	default boolean runShowCounter()
 	{
@@ -1083,7 +1135,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Content justification",
 		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = runSection,
-		position = 14
+		position = 15
 	)
 	default Justification runJustification()
 	{
@@ -1095,7 +1147,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Content offset",
 		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
 		section = runSection,
-		position = 15
+		position = 16
 	)
 	default int runContentOffset()
 	{
@@ -1107,7 +1159,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Reverse content order",
 		description = "Draw the counter before the icon (counter above icon on a vertical bar, counter left of icon on a horizontal bar) instead of the default icon-then-counter.",
 		section = runSection,
-		position = 16
+		position = 17
 	)
 	default boolean runReverseContent()
 	{
@@ -1119,7 +1171,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = runSection,
-		position = 17
+		position = 18
 	)
 	@Range(min = 1)
 	default int runThickness()
@@ -1132,7 +1184,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = runSection,
-		position = 18
+		position = 19
 	)
 	@Range(min = 1)
 	default int runLength()
@@ -1145,7 +1197,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Active color",
 		description = "Bar color while Run is toggled on - defaults to the gold/yellow of the vanilla run orb.",
 		section = runSection,
-		position = 19
+		position = 20
 	)
 	default Color runActiveColor()
 	{
@@ -1157,7 +1209,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Inactive color",
 		description = "Bar color while Run is toggled off.",
 		section = runSection,
-		position = 20
+		position = 21
 	)
 	default Color runInactiveColor()
 	{
@@ -1169,7 +1221,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = runSection,
-		position = 21
+		position = 22
 	)
 	@Range(min = 0, max = 100)
 	default int runOpacity()
@@ -1349,11 +1401,24 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "warmthIconSize",
+		name = "Icon size",
+		description = "Pixel size (width and height) of the icon on the bar.",
+		section = warmthSection,
+		position = 13
+	)
+	@Range(min = 1)
+	default int warmthIconSize()
+	{
+		return 18;
+	}
+
+	@ConfigItem(
 		keyName = "warmthShowCounter",
 		name = "Show counter",
 		description = "Show the current Warmth percentage as text on the bar.",
 		section = warmthSection,
-		position = 13
+		position = 14
 	)
 	default boolean warmthShowCounter()
 	{
@@ -1365,7 +1430,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Content justification",
 		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = warmthSection,
-		position = 14
+		position = 15
 	)
 	default Justification warmthJustification()
 	{
@@ -1377,7 +1442,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Content offset",
 		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
 		section = warmthSection,
-		position = 15
+		position = 16
 	)
 	default int warmthContentOffset()
 	{
@@ -1389,7 +1454,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Reverse content order",
 		description = "Draw the counter before the icon (counter above icon on a vertical bar, counter left of icon on a horizontal bar) instead of the default icon-then-counter.",
 		section = warmthSection,
-		position = 16
+		position = 17
 	)
 	default boolean warmthReverseContent()
 	{
@@ -1401,7 +1466,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = warmthSection,
-		position = 17
+		position = 18
 	)
 	@Range(min = 1)
 	default int warmthThickness()
@@ -1414,7 +1479,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = warmthSection,
-		position = 18
+		position = 19
 	)
 	@Range(min = 1)
 	default int warmthLength()
@@ -1427,7 +1492,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = warmthSection,
-		position = 19
+		position = 20
 	)
 	@Range(min = 0, max = 100)
 	default int warmthOpacity()
@@ -1595,11 +1660,24 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "enemyHpIconSize",
+		name = "Icon size",
+		description = "Pixel size (width and height) of the icon on the bar.",
+		section = enemyHpSection,
+		position = 12
+	)
+	@Range(min = 1)
+	default int enemyHpIconSize()
+	{
+		return 18;
+	}
+
+	@ConfigItem(
 		keyName = "enemyHpShowCounter",
 		name = "Show counter",
 		description = "Show the target's current Hitpoints value as text on the bar.",
 		section = enemyHpSection,
-		position = 12
+		position = 13
 	)
 	default boolean enemyHpShowCounter()
 	{
@@ -1611,7 +1689,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Counter format",
 		description = "Fraction: the bare ratio the game actually sends (e.g. 27/30 - never a real HP number for most monsters). Percentage: that same ratio converted to a rounded percent.",
 		section = enemyHpSection,
-		position = 13
+		position = 14
 	)
 	default CounterFormat enemyHpCounterFormat()
 	{
@@ -1623,7 +1701,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Content justification",
 		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = enemyHpSection,
-		position = 14
+		position = 15
 	)
 	default Justification enemyHpJustification()
 	{
@@ -1635,7 +1713,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Content offset",
 		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
 		section = enemyHpSection,
-		position = 15
+		position = 16
 	)
 	default int enemyHpContentOffset()
 	{
@@ -1647,7 +1725,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Reverse content order",
 		description = "Draw the counter before the icon (counter above icon on a vertical bar, counter left of icon on a horizontal bar) instead of the default icon-then-counter.",
 		section = enemyHpSection,
-		position = 16
+		position = 17
 	)
 	default boolean enemyHpReverseContent()
 	{
@@ -1659,7 +1737,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Thickness",
 		description = "The bar's short dimension in pixels (width if vertical, height if horizontal).",
 		section = enemyHpSection,
-		position = 17
+		position = 18
 	)
 	@Range(min = 1)
 	default int enemyHpThickness()
@@ -1672,7 +1750,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Length",
 		description = "The bar's long dimension in pixels (height if vertical, width if horizontal).",
 		section = enemyHpSection,
-		position = 18
+		position = 19
 	)
 	@Range(min = 1)
 	default int enemyHpLength()
@@ -1685,7 +1763,7 @@ public interface ViciousBarsConfig extends Config
 		name = "Opacity",
 		description = "0 = fully transparent, 100 = fully opaque. Scales both the background and the fill color.",
 		section = enemyHpSection,
-		position = 19
+		position = 20
 	)
 	@Range(min = 0, max = 100)
 	default int enemyHpOpacity()

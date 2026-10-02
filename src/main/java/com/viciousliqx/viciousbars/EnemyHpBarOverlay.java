@@ -147,6 +147,12 @@ class EnemyHpBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getIconSize()
+	{
+		return config.enemyHpIconSize();
+	}
+
+	@Override
 	protected boolean isShowCounter()
 	{
 		return config.enemyHpShowCounter();

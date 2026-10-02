@@ -152,6 +152,12 @@ class WarmthBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getIconSize()
+	{
+		return config.warmthIconSize();
+	}
+
+	@Override
 	protected boolean isShowCounter()
 	{
 		return config.warmthShowCounter();

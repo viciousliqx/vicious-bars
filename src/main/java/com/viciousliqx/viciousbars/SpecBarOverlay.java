@@ -129,6 +129,12 @@ class SpecBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getIconSize()
+	{
+		return config.specIconSize();
+	}
+
+	@Override
 	protected boolean isShowCounter()
 	{
 		return config.specShowCounter();
