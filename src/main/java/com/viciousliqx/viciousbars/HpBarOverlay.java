@@ -6,10 +6,16 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.MenuAction;
+import net.runelite.api.MenuEntry;
 import net.runelite.api.Skill;
 import net.runelite.api.VarPlayer;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.SpriteID;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.game.SpriteManager;
+import net.runelite.client.plugins.itemstats.Effect;
+import net.runelite.client.plugins.itemstats.ItemStatChangesService;
+import net.runelite.client.plugins.itemstats.StatChange;
 
 @Singleton
 class HpBarOverlay extends VitalBarOverlay
@@ -30,14 +36,16 @@ class HpBarOverlay extends VitalBarOverlay
 	private final Client client;
 	private final ViciousBarsConfig config;
 	private final SpriteManager spriteManager;
+	private final ItemStatChangesService itemStatService;
 
 	@Inject
-	private HpBarOverlay(Client client, ViciousBarsConfig config, SpriteManager spriteManager)
+	private HpBarOverlay(Client client, ViciousBarsConfig config, SpriteManager spriteManager, ItemStatChangesService itemStatService)
 	{
 		super(client);
 		this.client = client;
 		this.config = config;
 		this.spriteManager = spriteManager;
+		this.itemStatService = itemStatService;
 	}
 
 	@Override
@@ -189,5 +197,54 @@ class HpBarOverlay extends VitalBarOverlay
 	protected void onOrbActivate()
 	{
 		client.menuAction(-1, HP_ORB_COMPONENT, MenuAction.CC_OP, 1, -1, "Cure", "");
+	}
+
+	@Override
+	protected int getPreviewAmount()
+	{
+		if (!config.hpShowHealPreview())
+		{
+			return 0;
+		}
+		return getRestoreValue(Skill.HITPOINTS.getName());
+	}
+
+	// Verbatim logic from RuneLite core's own StatusBarsOverlay.getRestoreValue()
+	// - same menu-entry/widget sniffing approach used to detect which
+	// inventory item is currently hovered, same ItemStatChangesService call
+	// to get its real computed stat change. Not guessed or approximated -
+	// this is the exact mechanism the feature we're replicating already uses.
+	private int getRestoreValue(String skill)
+	{
+		MenuEntry[] menu = client.getMenuEntries();
+		int menuSize = menu.length;
+		if (menuSize == 0)
+		{
+			return 0;
+		}
+
+		MenuEntry entry = menu[menuSize - 1];
+		Widget widget = entry.getWidget();
+		int restoreValue = 0;
+
+		if (widget != null && widget.getId() == InterfaceID.Inventory.ITEMS)
+		{
+			Effect change = itemStatService.getItemStatChanges(widget.getItemId());
+
+			if (change != null)
+			{
+				for (StatChange c : change.calculate(client).getStatChanges())
+				{
+					int value = c.getTheoretical();
+
+					if (value != 0 && c.getStat().getName().equals(skill))
+					{
+						restoreValue = value;
+					}
+				}
+			}
+		}
+
+		return restoreValue;
 	}
 }

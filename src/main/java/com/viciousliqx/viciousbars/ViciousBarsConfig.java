@@ -208,6 +208,18 @@ public interface ViciousBarsConfig extends Config
 		return 0;
 	}
 
+	@ConfigItem(
+		keyName = "hpShowHealPreview",
+		name = "Show heal preview",
+		description = "While hovering a food/potion item, previews how much it would heal by showing the extra amount in a lighter shade beyond your current Hitpoints. Requires the Item Stats plugin to be enabled - it's what actually knows how much each item heals.",
+		section = hpSection,
+		position = 15
+	)
+	default boolean hpShowHealPreview()
+	{
+		return true;
+	}
+
 	// ------------------------------------------------------------------
 	// Prayer
 	// ------------------------------------------------------------------

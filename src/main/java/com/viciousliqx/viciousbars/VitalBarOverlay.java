@@ -149,6 +149,12 @@ public abstract class VitalBarOverlay extends Overlay
 		return false;
 	}
 
+	/** Extra amount to preview-fill beyond the current value - e.g. HP's heal-on-hover preview. 0 for bars without one. */
+	protected int getPreviewAmount()
+	{
+		return 0;
+	}
+
 	/** Current on-screen icon rectangle, or null if no icon is currently drawn. Used by {@link OrbClickListener}. */
 	Rectangle getIconBounds()
 	{
@@ -309,8 +315,32 @@ public abstract class VitalBarOverlay extends Overlay
 		int max = Math.max(getMax(), 1);
 		int current = Math.max(0, Math.min(getCurrent(), max));
 		double ratio = (double) current / max;
-
 		Color fillColor = getColor();
+
+		// Preview fill draws FIRST, to the full current+preview extent, in a
+		// lightened shade - then the normal fill draws over it up to just
+		// current, so the lightened shade only ever shows in the extra
+		// region beyond what you actually have right now. 0 for every bar
+		// except HP (hovering a food item), so this is a no-op everywhere else.
+		int previewAmount = Math.max(0, getPreviewAmount());
+		if (previewAmount > 0)
+		{
+			double previewRatio = (double) Math.min(max, current + previewAmount) / max;
+			Color previewColor = lighten(fillColor, 0.55f);
+			vialGraphics.setColor(new Color(previewColor.getRed(), previewColor.getGreen(), previewColor.getBlue(),
+				Math.round(255 * opacityFraction)));
+			if (orientation == Orientation.VERTICAL)
+			{
+				int previewHeight = (int) Math.round(previewRatio * innerHeight);
+				vialGraphics.fillRect(0, innerHeight - previewHeight, innerWidth, previewHeight);
+			}
+			else
+			{
+				int previewWidth = (int) Math.round(previewRatio * innerWidth);
+				vialGraphics.fillRect(0, 0, previewWidth, innerHeight);
+			}
+		}
+
 		vialGraphics.setColor(new Color(fillColor.getRed(), fillColor.getGreen(), fillColor.getBlue(),
 			Math.round(255 * opacityFraction)));
 		if (orientation == Orientation.VERTICAL)
@@ -453,5 +483,13 @@ public abstract class VitalBarOverlay extends Overlay
 			default:
 				return (totalLength - clusterLength) / 2;
 		}
+	}
+
+	private static Color lighten(Color color, float fraction)
+	{
+		int r = color.getRed() + Math.round((255 - color.getRed()) * fraction);
+		int g = color.getGreen() + Math.round((255 - color.getGreen()) * fraction);
+		int b = color.getBlue() + Math.round((255 - color.getBlue()) * fraction);
+		return new Color(r, g, b, color.getAlpha());
 	}
 }

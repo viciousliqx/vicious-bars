@@ -7,13 +7,21 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.input.MouseManager;
 import net.runelite.client.plugins.Plugin;
+import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.itemstats.ItemStatPlugin;
 import net.runelite.client.ui.overlay.OverlayManager;
 
 @Slf4j
 @PluginDescriptor(
 	name = "Vicious Bars"
 )
+// Same dependency core Status Bars itself declares for its own heal-restore
+// preview - ItemStatChangesService (the thing that actually computes "this
+// food heals X Hitpoints") is only bound/available via Guice while this
+// plugin is enabled, so the HP bar's preview simply has nothing to show if
+// the user doesn't have Item Stats turned on.
+@PluginDependency(ItemStatPlugin.class)
 public class ViciousBarsPlugin extends Plugin
 {
 	@Inject
