@@ -10,6 +10,7 @@ import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import net.runelite.api.Client;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -164,15 +165,53 @@ public abstract class VitalBarOverlay extends Overlay
 		return Integer.toString(current);
 	}
 
+	/** The real orb's own container widget (the whole visual orb, not the clickable sub-widget {@link #onOrbActivate()} uses) - hidden while Orb mode is Merged. -1 for bars with no orb. */
+	protected int getOrbWidgetComponent()
+	{
+		return -1;
+	}
+
 	/** Current on-screen icon rectangle, or null if no icon is currently drawn. Used by {@link OrbClickListener}. */
 	Rectangle getIconBounds()
 	{
 		return iconBounds;
 	}
 
+	/** Unconditionally un-hides the real orb, regardless of Orb mode - called on plugin shutdown so we never leave a vanilla orb hidden behind us. No-op for bars with no orb. */
+	void unhideRealOrb()
+	{
+		int component = getOrbWidgetComponent();
+		if (component < 0)
+		{
+			return;
+		}
+		Widget orb = client.getWidget(component);
+		if (orb != null)
+		{
+			orb.setHidden(false);
+		}
+	}
+
+	/** Hides the real orb while this bar is actually rendering with Orb mode Merged; shown otherwise. No-op for bars with no orb. */
+	private void syncRealOrbVisibility()
+	{
+		int component = getOrbWidgetComponent();
+		if (component < 0)
+		{
+			return;
+		}
+		Widget orb = client.getWidget(component);
+		if (orb != null)
+		{
+			orb.setHidden(shouldRender() && getOrbMode() == OrbMode.MERGED);
+		}
+	}
+
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
+		syncRealOrbVisibility();
+
 		if (!shouldRender())
 		{
 			iconBounds = null;

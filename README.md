@@ -50,8 +50,8 @@ default), and Enemy Hitpoints (current target only, off by default).
 - **Mirrored** - the bar's own icon becomes a second, independent click target for the
   same action the orb performs (quick-prayers, special attack, toggle run, cure
   poison); the real orb keeps working too
-- **Merged** - not yet distinct from Mirrored. Hiding the real orb hasn't been
-  implemented, so selecting Merged currently behaves identically to Mirrored
+- **Merged** - same click-through as Mirrored, but the real orb is hidden while this
+  bar is doing its job, so the bar is the only thing on screen
 
 Every orb click is wired to the real, captured menu-action parameters for that exact
 widget - none of it is simulated or guessed.
@@ -85,7 +85,6 @@ widget - none of it is simulated or guessed.
 
 ## Known limitations
 
-- Merged orb mode doesn't yet hide the real orb - see Orb modes above
 - Enemy Hitpoints' counter shows the game's own coarse health ratio (not a real HP
   number) for most monsters - a hard game-data limitation, not a bug
 - Only verified under Resizable/Modern - see Requirements

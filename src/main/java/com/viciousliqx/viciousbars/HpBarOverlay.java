@@ -25,13 +25,14 @@ class HpBarOverlay extends VitalBarOverlay
 	private static final Color ENVENOMED = new Color(60, 120, 40);
 	private static final Color DISEASED = new Color(150, 110, 40);
 
-	// Captured via a real MenuOptionClicked event from manually clicking the
-	// vanilla orb while poisoned: action=CC_OP id=1 param0=-1 option='Cure'
-	// target=''. The orb has no click action at all while not poisoned -
-	// that's real vanilla behavior (not something we gate ourselves), so
-	// firing this when not poisoned relies on the game's own script behind
-	// this component being a no-op, same as every other orb we've wired up.
-	private static final int HP_ORB_COMPONENT = (160 << 16) | 9;
+	// InterfaceID.Orbs.HEALTHBUTTON - confirmed by decompiling the real
+	// runelite-api jar to match exactly the component captured from a real
+	// MenuOptionClicked event while poisoned: action=CC_OP id=1 param0=-1
+	// option='Cure' target=''. The orb has no click action at all while not
+	// poisoned - that's real vanilla behavior (not something we gate
+	// ourselves), so firing this when not poisoned relies on the game's own
+	// script behind this component being a no-op, same as every other orb.
+	private static final int HP_ORB_COMPONENT = InterfaceID.Orbs.HEALTHBUTTON;
 
 	private final Client client;
 	private final ViciousBarsConfig config;
@@ -203,6 +204,12 @@ class HpBarOverlay extends VitalBarOverlay
 	protected void onOrbActivate()
 	{
 		client.menuAction(-1, HP_ORB_COMPONENT, MenuAction.CC_OP, 1, -1, "Cure", "");
+	}
+
+	@Override
+	protected int getOrbWidgetComponent()
+	{
+		return InterfaceID.Orbs.ORB_HEALTH;
 	}
 
 	@Override

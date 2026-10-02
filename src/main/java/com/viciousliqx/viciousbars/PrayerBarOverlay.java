@@ -9,16 +9,19 @@ import net.runelite.api.MenuAction;
 import net.runelite.api.Skill;
 import net.runelite.api.Varbits;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.SkillIconManager;
 
 @Singleton
 class PrayerBarOverlay extends VitalBarOverlay
 {
-	// Captured via a real MenuOptionClicked event from manually clicking the
-	// vanilla orb - NOT (160<<16)|18 from Movable Orbs, which turned out to be
-	// the orb's container, not the actual clickable sub-widget.
-	private static final int PRAYER_ORB_COMPONENT = (160 << 16) | 20;
+	// InterfaceID.Orbs.PRAYERBUTTON - confirmed by decompiling the real
+	// runelite-api jar. NOT InterfaceID.Orbs.ORB_PRAYER (the orb's container,
+	// used for Merged mode's orb-hiding below) - that one turned out to be
+	// Movable Orbs' (160<<16)|18, the right widget for a different purpose
+	// than the clickable sub-widget we need here.
+	private static final int PRAYER_ORB_COMPONENT = InterfaceID.Orbs.PRAYERBUTTON;
 
 	// Sane fallback before we've observed a real tick's length, and a ceiling
 	// on how long an observed gap can be before we distrust it (e.g. logging
@@ -246,5 +249,11 @@ class PrayerBarOverlay extends VitalBarOverlay
 		// Deactivate target=Quick-prayers.
 		String option = isActive() ? "Deactivate" : "Activate";
 		client.menuAction(-1, PRAYER_ORB_COMPONENT, MenuAction.CC_OP, 1, -1, option, "Quick-prayers");
+	}
+
+	@Override
+	protected int getOrbWidgetComponent()
+	{
+		return InterfaceID.Orbs.ORB_PRAYER;
 	}
 }
