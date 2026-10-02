@@ -40,9 +40,6 @@ public class ViciousBarsPlugin extends Plugin
 	private OpponentTracker opponentTracker;
 
 	@Inject
-	private MenuActionSniffer menuActionSniffer;
-
-	@Inject
 	private OrbClickListener orbClickListener;
 
 	@Inject
@@ -67,7 +64,6 @@ public class ViciousBarsPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		eventBus.register(opponentTracker);
-		eventBus.register(menuActionSniffer);
 		eventBus.register(prayerBarOverlay);
 		mouseManager.registerMouseListener(orbClickListener);
 
@@ -93,7 +89,6 @@ public class ViciousBarsPlugin extends Plugin
 
 		mouseManager.unregisterMouseListener(orbClickListener);
 		eventBus.unregister(prayerBarOverlay);
-		eventBus.unregister(menuActionSniffer);
 		eventBus.unregister(opponentTracker);
 		opponentTracker.reset();
 
