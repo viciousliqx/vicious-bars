@@ -53,6 +53,12 @@ public class ViciousBarsPlugin extends Plugin
 	@Inject
 	private EnemyHpBarOverlay enemyHpBarOverlay;
 
+	// TEMPORARY - diagnostic only, see DebugWidgetBoundsOverlay's javadoc.
+	// Rip both this field and the overlay/add/remove lines out once the
+	// minimap work is sorted.
+	@Inject
+	private DebugWidgetBoundsOverlay debugWidgetBoundsOverlay;
+
 	@Override
 	protected void startUp() throws Exception
 	{
@@ -65,6 +71,7 @@ public class ViciousBarsPlugin extends Plugin
 		overlayManager.add(runBarOverlay);
 		overlayManager.add(warmthBarOverlay);
 		overlayManager.add(enemyHpBarOverlay);
+		overlayManager.add(debugWidgetBoundsOverlay);
 
 		log.debug("Vicious Bars started!");
 	}
@@ -78,6 +85,7 @@ public class ViciousBarsPlugin extends Plugin
 		overlayManager.remove(runBarOverlay);
 		overlayManager.remove(warmthBarOverlay);
 		overlayManager.remove(enemyHpBarOverlay);
+		overlayManager.remove(debugWidgetBoundsOverlay);
 
 		eventBus.unregister(prayerBarOverlay);
 		eventBus.unregister(opponentTracker);
