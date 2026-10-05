@@ -8,7 +8,6 @@ import net.runelite.api.Client;
 import net.runelite.api.events.BeforeRender;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
-import net.runelite.api.widgets.WidgetPositionMode;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
@@ -67,13 +66,8 @@ public class ViciousBarsPlugin extends Plugin
 	@Inject
 	private DebugWidgetBoundsOverlay debugWidgetBoundsOverlay;
 
-	// Experimental - see onBeforeRender()'s javadoc. Saved once, lazily, the
-	// first time the container actually gets moved.
+	// Experimental - see onBeforeRender()'s javadoc.
 	private boolean mapContainerMoved;
-	private int savedMapContainerX;
-	private int savedMapContainerY;
-	private int savedMapContainerXMode;
-	private int savedMapContainerYMode;
 
 	@Override
 	protected void startUp() throws Exception
@@ -125,19 +119,22 @@ public class ViciousBarsPlugin extends Plugin
 	 * Experimental - single-purpose: dock the real MAP_CONTAINER widget
 	 * (minimap, compass, and orbs together) to the panel, using the exact
 	 * same {@link PanelDock} math a bar uses, via the Minimap dock
-	 * side/offset config. Forces both position modes to ABSOLUTE first -
-	 * without that, the written X/Y didn't reliably take visual effect on
-	 * its own. No resizing, no per-orb logic - just a position, same as a
-	 * bar gets. Untested yet whether this also carries the minimized
-	 * (no-map) orb-only state along with it, or whether that turns out to
-	 * need its own separate handling - that's the next thing to check.
+	 * side/offset config. Uses {@code setForcedPosition()} rather than
+	 * {@code setOriginalX/Y()+revalidate()} - this is the same real API
+	 * RuneLite's own Compact Orbs uses for its minimap overlay, and almost
+	 * certainly what backs the vanilla client's own "hold Alt and drag to
+	 * reposition an interface" feature: an explicit override meant to
+	 * survive whatever native layout pass runs afterward, rather than a
+	 * plain position write that pass might just recompute over. No
+	 * resizing, no per-orb logic - just a position, same as a bar gets.
+	 * Untested yet whether this also carries the minimized (no-map)
+	 * orb-only state along with it, or whether that needs its own separate
+	 * handling - that's the next thing to check.
 	 */
 	@Subscribe
 	public void onBeforeRender(BeforeRender event)
 	{
 		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
-
-		log.debug("minimap dock check: enabled={} mapContainer={}", config.minimapDockEnabled(), mapContainer);
 
 		if (!config.minimapDockEnabled() || mapContainer == null)
 		{
@@ -145,36 +142,17 @@ public class ViciousBarsPlugin extends Plugin
 			return;
 		}
 
-		if (!mapContainerMoved)
-		{
-			savedMapContainerX = mapContainer.getOriginalX();
-			savedMapContainerY = mapContainer.getOriginalY();
-			savedMapContainerXMode = mapContainer.getXPositionMode();
-			savedMapContainerYMode = mapContainer.getYPositionMode();
-			mapContainerMoved = true;
-		}
+		mapContainerMoved = true;
 
 		Point dockPos = PanelDock.position(client, config.minimapDockSide(), 1,
 			mapContainer.getOriginalWidth(), config.dockPadding(), config.minimapDockOffset(),
 			mapContainer.getOriginalHeight(), Justification.START);
-
-		log.debug("minimap dock: dockPos={} originalX={} originalY={} parent={}",
-			dockPos, mapContainer.getOriginalX(), mapContainer.getOriginalY(), mapContainer.getParent());
 
 		if (dockPos == null)
 		{
 			// Panel not present (wrong layout, not logged in yet) - nothing to dock to.
 			restoreMapContainer();
 			return;
-		}
-
-		if (mapContainer.getXPositionMode() != WidgetPositionMode.ABSOLUTE_LEFT)
-		{
-			mapContainer.setXPositionMode(WidgetPositionMode.ABSOLUTE_LEFT);
-		}
-		if (mapContainer.getYPositionMode() != WidgetPositionMode.ABSOLUTE_TOP)
-		{
-			mapContainer.setYPositionMode(WidgetPositionMode.ABSOLUTE_TOP);
 		}
 
 		Widget mapParent = mapContainer.getParent();
@@ -184,16 +162,10 @@ public class ViciousBarsPlugin extends Plugin
 		int localX = dockPos.x - mapParentCanvas.getX();
 		int localY = dockPos.y - mapParentCanvas.getY();
 
-		log.debug("minimap dock: mapParentCanvas={} localX={} localY={}", mapParentCanvas, localX, localY);
+		log.debug("minimap dock: dockPos={} localX={} localY={} canvasLocation={}",
+			dockPos, localX, localY, mapContainer.getCanvasLocation());
 
-		if (mapContainer.getOriginalX() != localX || mapContainer.getOriginalY() != localY)
-		{
-			mapContainer.setOriginalX(localX);
-			mapContainer.setOriginalY(localY);
-			mapContainer.revalidate();
-			log.debug("minimap dock: wrote new X/Y, after write getOriginalX={} getOriginalY={} canvasLocation={}",
-				mapContainer.getOriginalX(), mapContainer.getOriginalY(), mapContainer.getCanvasLocation());
-		}
+		mapContainer.setForcedPosition(localX, localY);
 	}
 
 	private void restoreMapContainer()
@@ -205,10 +177,9 @@ public class ViciousBarsPlugin extends Plugin
 		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
 		if (mapContainer != null)
 		{
-			mapContainer.setXPositionMode(savedMapContainerXMode);
-			mapContainer.setYPositionMode(savedMapContainerYMode);
-			mapContainer.setOriginalX(savedMapContainerX);
-			mapContainer.setOriginalY(savedMapContainerY);
+			// Same clear-and-revalidate pair Compact Orbs' own MinimapOverlay
+			// uses to hand a forced-position widget back to normal layout.
+			mapContainer.setForcedPosition(-1, -1);
 			mapContainer.revalidate();
 		}
 		mapContainerMoved = false;
