@@ -79,11 +79,6 @@ public abstract class VitalBarOverlay extends Overlay
 	private int savedOrbXMode;
 	private int savedOrbYMode;
 
-	// This frame's real canvas-space orb target under ALIGNED mode, or null -
-	// read by ViciousBarsPlugin to size the shared ORBS/MAP_CONTAINER
-	// widgets large enough for alignRealOrb()'s own clamp to actually reach.
-	private Point lastIconCanvasCenter;
-
 	protected VitalBarOverlay(Client client)
 	{
 		this.client = client;
@@ -354,12 +349,6 @@ public abstract class VitalBarOverlay extends Overlay
 		orbPositionSaved = false;
 	}
 
-	/** This frame's real canvas-space orb target under ALIGNED mode, or null if not applicable this frame (mode isn't Aligned, bar isn't Docked, or isn't rendering). */
-	Point getLastIconCanvasCenter()
-	{
-		return lastIconCanvasCenter;
-	}
-
 	/** The icon's local top-left anchor point, independent of whether an icon/counter are actually shown - a stable "icon slot" ALIGNED mode can target regardless of Show icon/Show counter. */
 	private Point iconAnchor(int width, int height, Orientation orientation)
 	{
@@ -481,12 +470,10 @@ public abstract class VitalBarOverlay extends Overlay
 		{
 			Point anchor = iconAnchor(width, height, orientation);
 			int iconSize = getIconSize();
-			lastIconCanvasCenter = new Point(fixedPos.x + anchor.x + iconSize / 2, fixedPos.y + anchor.y + iconSize / 2);
-			alignRealOrb(lastIconCanvasCenter);
+			alignRealOrb(new Point(fixedPos.x + anchor.x + iconSize / 2, fixedPos.y + anchor.y + iconSize / 2));
 		}
 		else
 		{
-			lastIconCanvasCenter = null;
 			restoreRealOrbPosition();
 		}
 
