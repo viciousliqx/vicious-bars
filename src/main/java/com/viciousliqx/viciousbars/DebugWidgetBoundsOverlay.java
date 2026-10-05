@@ -36,11 +36,20 @@ class DebugWidgetBoundsOverlay extends Overlay
 	};
 
 	private final Client client;
+	private final HpBarOverlay hpBarOverlay;
+	private final PrayerBarOverlay prayerBarOverlay;
+	private final SpecBarOverlay specBarOverlay;
+	private final RunBarOverlay runBarOverlay;
 
 	@Inject
-	private DebugWidgetBoundsOverlay(Client client)
+	private DebugWidgetBoundsOverlay(Client client, HpBarOverlay hpBarOverlay, PrayerBarOverlay prayerBarOverlay,
+		SpecBarOverlay specBarOverlay, RunBarOverlay runBarOverlay)
 	{
 		this.client = client;
+		this.hpBarOverlay = hpBarOverlay;
+		this.prayerBarOverlay = prayerBarOverlay;
+		this.specBarOverlay = specBarOverlay;
+		this.runBarOverlay = runBarOverlay;
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_WIDGETS);
 	}
@@ -48,6 +57,12 @@ class DebugWidgetBoundsOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
+		graphics.setColor(Color.WHITE);
+		graphics.drawString("HP target: " + hpBarOverlay.getLastIconCanvasCenter(), 10, 400);
+		graphics.drawString("Prayer target: " + prayerBarOverlay.getLastIconCanvasCenter(), 10, 415);
+		graphics.drawString("Spec target: " + specBarOverlay.getLastIconCanvasCenter(), 10, 430);
+		graphics.drawString("Run target: " + runBarOverlay.getLastIconCanvasCenter(), 10, 445);
+
 		graphics.setStroke(new BasicStroke(1));
 
 		Widget orbsParent = null;
