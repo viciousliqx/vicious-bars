@@ -158,20 +158,17 @@ public class ViciousBarsPlugin extends Plugin
 	 * {@code getParent()} rather than hardcoded IDs, since we were wrong
 	 * about which widget matters once already.
 	 *
-	 * Also fixes a real anchoring bug: MAP_CONTAINER's X position mode is
-	 * ABSOLUTE_RIGHT (confirmed via direct query), meaning its real canvas
-	 * left edge is {@code parentRight - originalX - width} - growing width
-	 * alone therefore extends the box LEFTWARD (right edge fixed), the
-	 * opposite of what naive left-anchored math assumes. Every widget in the
-	 * chain is now grown via {@link #growToCoverTargets}, which checks each
-	 * one's own X/Y position mode and adjusts originalX/Y together with
-	 * width/height so it can extend in whichever direction is actually
-	 * needed, regardless of which edge it's really anchored to.
-	 *
-	 * All of this is computed fresh from each widget's live
-	 * {@code getCanvasLocation()} every single frame - never a cached
-	 * baseline - so manually dragging the minimap mid-session recalibrates
-	 * on its own next frame.
+	 * {@link #growToCoverTargets} only ever writes width/height, never X/Y -
+	 * confirmed position writes on this chain are inert, so an earlier
+	 * attempt to compensate MAP_CONTAINER's real ABSOLUTE_RIGHT X-anchoring
+	 * by also writing originalX did nothing, leaving width to grow
+	 * unbounded with no stable reference. It's anchor-aware instead: whichever
+	 * edge a pure size change actually leaves fixed (confirmed different per
+	 * widget) is what growth is measured from, recomputed fresh from live
+	 * canvas location every frame - never last frame's already-grown size -
+	 * so it can shrink back down again, not just ratchet upward, and so
+	 * manually dragging the minimap mid-session recalibrates on its own
+	 * next frame.
 	 */
 	@Subscribe
 	public void onBeforeRender(BeforeRender event)
@@ -218,12 +215,23 @@ public class ViciousBarsPlugin extends Plugin
 	}
 
 	/**
-	 * Grows {@code widget}'s own local X/Y/width/height so its real canvas
-	 * rect covers every non-null target point (with a margin), respecting
-	 * whichever edge its own position mode actually anchors to - see this
-	 * method's use in {@link #onBeforeRender} for why that matters. Saves
-	 * the widget's original bounds the first time it's touched, via
-	 * {@link #grownWidgets}, so {@link #restoreGrownWidgets} can undo it.
+	 * Grows {@code widget}'s own local width/height (NEVER X/Y - confirmed
+	 * via direct testing that position writes on this chain are inert, same
+	 * as every earlier attempt to move MAP_CONTAINER; last round's attempt
+	 * to compensate the right-anchor by writing originalX did nothing
+	 * useful and just let width grow unbounded) so its real canvas rect
+	 * covers every non-null target point (with a margin).
+	 * <p>
+	 * Critically, this is computed from whichever edge is actually STABLE
+	 * under a pure size change, per the widget's own real position mode -
+	 * ABSOLUTE_LEFT/TOP keeps the left/top edge fixed as width/height grow
+	 * (normal case), but ABSOLUTE_RIGHT/BOTTOM keeps the opposite edge fixed
+	 * instead (confirmed on MAP_CONTAINER: {@code canvasLeft = canvasRight -
+	 * width}, so canvasRight, not canvasLeft, is what stays put). Using the
+	 * stable edge as the one fixed reference point - recomputed fresh every
+	 * frame from live canvas location, never from last frame's already-grown
+	 * size - is what lets this shrink back down again once a target moves
+	 * closer, instead of only ever ratcheting upward.
 	 */
 	private void growToCoverTargets(Widget widget, Point[] targets)
 	{
@@ -245,68 +253,79 @@ public class ViciousBarsPlugin extends Plugin
 		net.runelite.api.Point canvas = widget.getCanvasLocation();
 		int currentLeft = canvas.getX();
 		int currentTop = canvas.getY();
-		int currentRight = currentLeft + widget.getWidth();
-		int currentBottom = currentTop + widget.getHeight();
-
-		int desiredLeft = currentLeft;
-		int desiredTop = currentTop;
-		int desiredRight = currentRight;
-		int desiredBottom = currentBottom;
-
-		for (Point p : targets)
-		{
-			if (p == null)
-			{
-				continue;
-			}
-			desiredLeft = Math.min(desiredLeft, p.x - CONTAINER_MARGIN);
-			desiredTop = Math.min(desiredTop, p.y - CONTAINER_MARGIN);
-			desiredRight = Math.max(desiredRight, p.x + CONTAINER_MARGIN);
-			desiredBottom = Math.max(desiredBottom, p.y + CONTAINER_MARGIN);
-		}
 
 		boolean changed = false;
 
-		int newWidth = Math.max(saved.originalWidth, desiredRight - desiredLeft);
 		if (widget.getXPositionMode() == WidgetPositionMode.ABSOLUTE_RIGHT)
 		{
-			int rightShift = desiredRight - currentRight;
-			if (rightShift != 0)
+			int stableRight = currentLeft + widget.getWidth();
+			int desiredLeft = stableRight - saved.originalWidth;
+			for (Point p : targets)
 			{
-				widget.setOriginalX(widget.getOriginalX() - rightShift);
+				if (p != null)
+				{
+					desiredLeft = Math.min(desiredLeft, p.x - CONTAINER_MARGIN);
+				}
+			}
+			int newWidth = stableRight - desiredLeft;
+			if (widget.getOriginalWidth() != newWidth)
+			{
+				widget.setOriginalWidth(newWidth);
 				changed = true;
 			}
 		}
-		else if (desiredLeft != currentLeft)
+		else
 		{
-			widget.setOriginalX(widget.getOriginalX() + (desiredLeft - currentLeft));
-			changed = true;
-		}
-		if (widget.getOriginalWidth() != newWidth)
-		{
-			widget.setOriginalWidth(newWidth);
-			changed = true;
+			int desiredRight = currentLeft + saved.originalWidth;
+			for (Point p : targets)
+			{
+				if (p != null)
+				{
+					desiredRight = Math.max(desiredRight, p.x + CONTAINER_MARGIN);
+				}
+			}
+			int newWidth = desiredRight - currentLeft;
+			if (widget.getOriginalWidth() != newWidth)
+			{
+				widget.setOriginalWidth(newWidth);
+				changed = true;
+			}
 		}
 
-		int newHeight = Math.max(saved.originalHeight, desiredBottom - desiredTop);
 		if (widget.getYPositionMode() == WidgetPositionMode.ABSOLUTE_BOTTOM)
 		{
-			int bottomShift = desiredBottom - currentBottom;
-			if (bottomShift != 0)
+			int stableBottom = currentTop + widget.getHeight();
+			int desiredTop = stableBottom - saved.originalHeight;
+			for (Point p : targets)
 			{
-				widget.setOriginalY(widget.getOriginalY() - bottomShift);
+				if (p != null)
+				{
+					desiredTop = Math.min(desiredTop, p.y - CONTAINER_MARGIN);
+				}
+			}
+			int newHeight = stableBottom - desiredTop;
+			if (widget.getOriginalHeight() != newHeight)
+			{
+				widget.setOriginalHeight(newHeight);
 				changed = true;
 			}
 		}
-		else if (desiredTop != currentTop)
+		else
 		{
-			widget.setOriginalY(widget.getOriginalY() + (desiredTop - currentTop));
-			changed = true;
-		}
-		if (widget.getOriginalHeight() != newHeight)
-		{
-			widget.setOriginalHeight(newHeight);
-			changed = true;
+			int desiredBottom = currentTop + saved.originalHeight;
+			for (Point p : targets)
+			{
+				if (p != null)
+				{
+					desiredBottom = Math.max(desiredBottom, p.y + CONTAINER_MARGIN);
+				}
+			}
+			int newHeight = desiredBottom - currentTop;
+			if (widget.getOriginalHeight() != newHeight)
+			{
+				widget.setOriginalHeight(newHeight);
+				changed = true;
+			}
 		}
 
 		if (changed)
