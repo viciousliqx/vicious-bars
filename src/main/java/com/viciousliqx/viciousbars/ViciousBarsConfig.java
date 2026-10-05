@@ -1834,4 +1834,53 @@ public interface ViciousBarsConfig extends Config
 	{
 		return 4;
 	}
+
+	// ------------------------------------------------------------------
+	// Minimap (experimental - see vicious_bars_dev_talk.txt)
+	// ------------------------------------------------------------------
+
+	@ConfigSection(
+		name = "Minimap",
+		description = "Experimental - docks the real minimap/orbs cluster to the panel, same mechanism as a bar.",
+		position = 8,
+		closedByDefault = true
+	)
+	String minimapSection = "minimapSection";
+
+	@ConfigItem(
+		keyName = "minimapDockEnabled",
+		name = "Dock minimap",
+		description = "Reposition the real minimap/orbs cluster to sit next to the panel instead of its vanilla corner.",
+		section = minimapSection,
+		position = 0
+	)
+	default boolean minimapDockEnabled()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "minimapDockSide",
+		name = "Minimap dock side",
+		description = "Which side of the panel to dock the real minimap/orbs cluster to, same as a bar.",
+		section = minimapSection,
+		position = 1
+	)
+	default DockSide minimapDockSide()
+	{
+		return DockSide.LEFT;
+	}
+
+	@ConfigItem(
+		keyName = "minimapDockOffset",
+		name = "Minimap dock offset",
+		description = "Gap in pixels between the panel and the minimap cluster - raise this to clear past whatever bars are already docked to the same side.",
+		section = minimapSection,
+		position = 2
+	)
+	@Range(min = 0)
+	default int minimapDockOffset()
+	{
+		return 4;
+	}
 }
