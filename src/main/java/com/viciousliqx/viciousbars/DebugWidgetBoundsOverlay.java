@@ -16,16 +16,20 @@ import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 
 /**
- * TEMPORARY diagnostic overlay - outlines MAP_CONTAINER and the real orbs
- * live in-game so we can see exactly where the dock logic put them. Not
- * meant to ship - rip this out once the minimap work is sorted.
+ * TEMPORARY diagnostic overlay - outlines the real orbs and every ancestor
+ * up to MAP_CONTAINER, walked dynamically via getParent() (not hardcoded
+ * IDs - the Widget Inspector showed the orbs' real direct parent is
+ * Orbs.UNIVERSE, not the outer ToplevelPreEoc.ORBS slot we assumed before),
+ * so we can see exactly which widget is actually growing at each level.
+ * Not meant to ship - rip this out once the minimap work is sorted.
  */
 @Singleton
 class DebugWidgetBoundsOverlay extends Overlay
 {
 	private static final Color ORB_COLOR = Color.CYAN;
-	private static final Color ORB_PARENT_COLOR = Color.YELLOW;
-	private static final Color MAP_CONTAINER_COLOR = Color.MAGENTA;
+	private static final Color[] ANCESTOR_COLORS = {
+		Color.YELLOW, Color.ORANGE, Color.MAGENTA, Color.GREEN, Color.PINK, Color.WHITE,
+	};
 
 	private static final int[] ORB_COMPONENTS = {
 		InterfaceID.Orbs.ORB_HEALTH,
@@ -59,20 +63,21 @@ class DebugWidgetBoundsOverlay extends Overlay
 			outline(graphics, orb, ORB_COLOR, null);
 		}
 
-		Widget orbsContainer = client.getWidget(InterfaceID.ToplevelPreEoc.ORBS);
-		if (orbsContainer != null && !orbsContainer.isHidden())
+		Widget anyOrb = client.getWidget(InterfaceID.Orbs.ORB_HEALTH);
+		Widget current = anyOrb != null ? anyOrb.getParent() : null;
+		for (int depth = 0; current != null && depth < ANCESTOR_COLORS.length; depth++)
 		{
-			outline(graphics, orbsContainer, ORB_PARENT_COLOR,
-				"ORBS " + orbsContainer.getOriginalX() + "," + orbsContainer.getOriginalY()
-					+ " " + orbsContainer.getWidth() + "x" + orbsContainer.getHeight());
-		}
-
-		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
-		if (mapContainer != null && !mapContainer.isHidden())
-		{
-			outline(graphics, mapContainer, MAP_CONTAINER_COLOR,
-				"MAP_CONTAINER " + mapContainer.getOriginalX() + "," + mapContainer.getOriginalY()
-					+ " " + mapContainer.getWidth() + "x" + mapContainer.getHeight());
+			if (!current.isHidden())
+			{
+				outline(graphics, current, ANCESTOR_COLORS[depth],
+					"id=" + current.getId() + " " + current.getOriginalX() + "," + current.getOriginalY()
+						+ " " + current.getWidth() + "x" + current.getHeight());
+			}
+			if (current.getId() == InterfaceID.ToplevelPreEoc.MAP_CONTAINER)
+			{
+				break;
+			}
+			current = current.getParent();
 		}
 
 		return null;
