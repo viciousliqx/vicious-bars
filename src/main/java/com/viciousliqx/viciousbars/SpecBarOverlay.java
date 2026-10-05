@@ -5,7 +5,6 @@ import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
-import net.runelite.api.MenuAction;
 import net.runelite.api.VarPlayer;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.SpriteID;
@@ -15,11 +14,6 @@ import net.runelite.client.game.SpriteManager;
 class SpecBarOverlay extends VitalBarOverlay
 {
 	private static final int MAX_PERCENT = 100;
-
-	// InterfaceID.Orbs.SPECBUTTON - confirmed by decompiling the real
-	// runelite-api jar to match exactly the component captured from a real
-	// MenuOptionClicked event.
-	private static final int SPECIAL_ATTACK_ORB_COMPONENT = InterfaceID.Orbs.SPECBUTTON;
 
 	// VarPlayer 301 - not a named RuneLite constant. Captured via
 	// SpecialAttackSniffer: flipped 0 -> 1 in the exact same tick as a real
@@ -222,16 +216,6 @@ class SpecBarOverlay extends VitalBarOverlay
 	protected int getWarningOpacity()
 	{
 		return config.specWarningOpacity();
-	}
-
-	@Override
-	protected void onOrbActivate()
-	{
-		// Exact parameters captured from a real click on the vanilla orb via
-		// MenuOptionClicked: action=CC_OP id=1 param0=-1 option='Use'
-		// target='<col=ff9040>Special Attack</col>' (the color tag is the
-		// real, literal target string the game itself uses).
-		client.menuAction(-1, SPECIAL_ATTACK_ORB_COMPONENT, MenuAction.CC_OP, 1, -1, "Use", "<col=ff9040>Special Attack</col>");
 	}
 
 	@Override

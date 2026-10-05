@@ -221,10 +221,4 @@ class EnemyHpBarOverlay extends VitalBarOverlay
 	{
 		return OrbMode.VANILLA;
 	}
-
-	@Override
-	protected void onOrbActivate()
-	{
-		// No orb - never called.
-	}
 }

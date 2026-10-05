@@ -5,7 +5,6 @@ import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
-import net.runelite.api.MenuAction;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.SpriteID;
 import net.runelite.client.game.SpriteManager;
@@ -14,11 +13,6 @@ import net.runelite.client.game.SpriteManager;
 class RunBarOverlay extends VitalBarOverlay
 {
 	private static final int MAX_PERCENT = 100;
-
-	// InterfaceID.Orbs.RUNBUTTON - confirmed by decompiling the real
-	// runelite-api jar to match exactly the component captured from a real
-	// MenuOptionClicked event.
-	private static final int RUN_ORB_COMPONENT = InterfaceID.Orbs.RUNBUTTON;
 
 	// VarPlayer 173 "TOGGLE_RUN" - wiki-documented (oldschool.runescape.wiki/w/RuneScape:Varplayer/173),
 	// no named constant in RuneLite's own VarPlayer enum, so queried by raw id.
@@ -206,15 +200,6 @@ class RunBarOverlay extends VitalBarOverlay
 	protected OrbMode getOrbMode()
 	{
 		return config.runOrbMode();
-	}
-
-	@Override
-	protected void onOrbActivate()
-	{
-		// Exact parameters captured from a real click on the vanilla orb via
-		// MenuOptionClicked: action=CC_OP id=1 param0=-1 option='Toggle Run'
-		// target=''.
-		client.menuAction(-1, RUN_ORB_COMPONENT, MenuAction.CC_OP, 1, -1, "Toggle Run", "");
 	}
 
 	@Override

@@ -1,21 +1,24 @@
 package com.viciousliqx.viciousbars;
 
 /**
- * How a bar relates to its vanilla minimap orb equivalent. Only applies to
- * bars that actually have a vanilla orb (HP, Prayer, Special Attack, Run) -
- * Warmth and Enemy HP have no orb to merge/mirror.
+ * How a bar relates to its vanilla minimap orb equivalent - purely a display
+ * choice, not an interaction one. Only applies to bars that actually have a
+ * vanilla orb (HP, Prayer, Special Attack, Run) - Warmth and Enemy HP have
+ * no orb to hide.
  *
- * A fourth mode, RELOCATED (physically move the real orb widget to sit at
- * the bar), was dropped - the widget is clipped to a small native parent
- * container near the minimap and can't be freely repositioned anywhere on
- * screen. See vicious_bars_dev_talk.txt for the full investigation.
+ * There is no click-through mode. A MIRRORED mode (real orb untouched, bar
+ * icon also independently clickable) and a click-through variant of MERGED
+ * were both built and torn out after RuneLite's own Hub reviewers confirmed
+ * (Discord #development) that letting a plugin-drawn element trigger a real
+ * orb's action - by any mechanism, not just client.menuAction() - counts as
+ * "adding new menu entries which cause actions to be sent to the server"
+ * and isn't allowed, regardless of implementation. See
+ * vicious_bars_dev_talk.txt for the full investigation.
  */
 public enum OrbMode
 {
 	/** Orb untouched, bar is purely a bar. */
 	VANILLA,
-	/** No separate orb rendered anywhere; the bar itself is the sole click target. */
-	MERGED,
-	/** Orb stays exactly where/how it is today AND the bar is also an independent click target. */
-	MIRRORED
+	/** Real orb hidden while this bar is rendering; bar is purely a display, same as Vanilla otherwise. */
+	MERGED
 }

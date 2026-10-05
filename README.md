@@ -3,7 +3,7 @@
 Configurable vital bars for Old School RuneScape, built on RuneLite. Blends [Status
 Bars](https://github.com/runelite/runelite/wiki/Status-Bars)' docked layout with
 [Custom Vital Bars](https://runelite.net/plugin-hub/show/custom-vital-bars)'
-customizability, plus orb click-through and a few extras of its own.
+customizability, plus a few extras of its own.
 
 ## Requirements
 
@@ -52,17 +52,14 @@ default), and Enemy Hitpoints (current target only, off by default).
 ### Orb modes (Hitpoints, Prayer, Special Attack, Run Energy)
 
 - **Vanilla** - the bar is a display-only readout; the real orb is untouched
-- **Mirrored** - the bar's own icon becomes a second, independent click target for the
-  same action the orb performs (quick-prayers, special attack, toggle run, cure
-  poison); the real orb keeps working too
-- **Merged** - same click-through as Mirrored, but the real orb is hidden while this
-  bar is doing its job, so the bar is the only thing on screen
+- **Merged** - the real orb is hidden while this bar is showing, so the bar is the only
+  thing on screen in its place
 
-Every orb click is wired to the real, captured menu-action parameters for that exact
-widget - none of it is simulated or guessed. In Mirrored/Merged mode, LEFT-clicking the
-icon fires the orb's primary action; RIGHT-clicking it fires the orb's secondary action
-if it has one (currently only Prayer's Setup, below) - otherwise right click does
-nothing, same as the real orb.
+Bars are display-only - there's no click-through. We spent a long night trying (relocating
+the real orb widget, calling its bound script directly, several other angles) and RuneLite's
+own Hub reviewers confirmed directly that letting a plugin-drawn element trigger a real
+orb's action isn't allowed under Hub rules, regardless of the mechanism used to do it. See
+`vicious_bars_dev_talk.txt` for the full investigation if you're curious.
 
 ### Prayer
 
@@ -72,9 +69,6 @@ nothing, same as the real orb.
   (self-correcting) interpolated sweep, so the cue that actually matters is never
   subject to drift
 - Dynamic bar color distinguishes active/inactive Quick Prayers
-- Right-clicking the icon in Mirrored/Merged mode opens the quick-prayer selection
-  interface (the real orb's own "Setup" option) - the one thing Merged mode would
-  otherwise take away, since the real orb is hidden
 
 ### Special Attack
 
@@ -93,7 +87,6 @@ nothing, same as the real orb.
 - **Show heal preview** - hovering a food or potion item previews how much it would
   heal, shown as a lighter shade beyond your current Hitpoints. Requires the **Item
   Stats** plugin to be enabled, since that's what actually computes the heal amount
-- Clicking the icon in Mirrored/Merged mode cures poison, exactly like the real orb
 
 ## Known limitations
 

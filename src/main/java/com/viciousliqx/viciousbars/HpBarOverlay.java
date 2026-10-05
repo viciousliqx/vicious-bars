@@ -5,7 +5,6 @@ import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
-import net.runelite.api.MenuAction;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.Skill;
 import net.runelite.api.VarPlayer;
@@ -24,15 +23,6 @@ class HpBarOverlay extends VitalBarOverlay
 	private static final Color POISONED = new Color(90, 170, 60);
 	private static final Color ENVENOMED = new Color(60, 120, 40);
 	private static final Color DISEASED = new Color(150, 110, 40);
-
-	// InterfaceID.Orbs.HEALTHBUTTON - confirmed by decompiling the real
-	// runelite-api jar to match exactly the component captured from a real
-	// MenuOptionClicked event while poisoned: action=CC_OP id=1 param0=-1
-	// option='Cure' target=''. The orb has no click action at all while not
-	// poisoned - that's real vanilla behavior (not something we gate
-	// ourselves), so firing this when not poisoned relies on the game's own
-	// script behind this component being a no-op, same as every other orb.
-	private static final int HP_ORB_COMPONENT = InterfaceID.Orbs.HEALTHBUTTON;
 
 	private final Client client;
 	private final ViciousBarsConfig config;
@@ -204,12 +194,6 @@ class HpBarOverlay extends VitalBarOverlay
 	protected OrbMode getOrbMode()
 	{
 		return config.hpOrbMode();
-	}
-
-	@Override
-	protected void onOrbActivate()
-	{
-		client.menuAction(-1, HP_ORB_COMPONENT, MenuAction.CC_OP, 1, -1, "Cure", "");
 	}
 
 	@Override

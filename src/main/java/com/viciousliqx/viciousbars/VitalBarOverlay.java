@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
@@ -22,9 +21,15 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  * computed by {@link PanelDock} and can't be dragged. Subclasses supply the
  * live data (current/max, color, icon, styling) for one specific bar.
  *
- * For bars with an Orb mode (HP/Prayer/Spec/Run), the icon's current
- * on-screen rectangle is tracked every frame so {@link OrbClickListener} can
- * hit-test real mouse clicks against it and invoke {@link #onOrbActivate()}.
+ * Orb mode (HP/Prayer/Spec/Run) only ever affects whether the real vanilla
+ * orb is shown or hidden ({@link #getOrbWidgetComponent()} /
+ * {@link #syncOrbState()}) - bars have no click-through functionality.
+ * RuneLite's own Hub reviewers confirmed real-time via Discord that
+ * replicating a real widget's action from a plugin-drawn element - by any
+ * mechanism, not just client.menuAction() - counts as "adding new menu
+ * entries which cause actions to be sent to the server" and isn't allowed,
+ * after a full night's investigation found no compliant way to do it (see
+ * vicious_bars_dev_talk.txt for the full story).
  */
 public abstract class VitalBarOverlay extends Overlay
 {
@@ -57,10 +62,6 @@ public abstract class VitalBarOverlay extends Overlay
 	private static final long WARNING_PULSE_PERIOD_MS = 1200;
 
 	private final Client client;
-	// Written on the client/render thread, read from the AWT event thread by
-	// OrbClickListener - needs volatile for cross-thread visibility, plain
-	// field writes aren't guaranteed to ever become visible on another thread.
-	private volatile Rectangle iconBounds;
 
 	protected VitalBarOverlay(Client client)
 	{
@@ -122,14 +123,6 @@ public abstract class VitalBarOverlay extends Overlay
 
 	/** VANILLA for bars with no orb (Warmth, Enemy HP). */
 	protected abstract OrbMode getOrbMode();
-
-	/** Called when the icon is LEFT-clicked while Orb mode is Merged or Mirrored - the orb's primary action. No-op for bars with no orb. */
-	protected abstract void onOrbActivate();
-
-	/** Called when the icon is RIGHT-clicked while Orb mode is Merged or Mirrored - the orb's secondary action, e.g. Prayer's "Set Quick-prayers". No-op by default; only Prayer overrides it. */
-	protected void onOrbSecondaryActivate()
-	{
-	}
 
 	// Metronome is Prayer-only for now - concrete no-op defaults here rather
 	// than forcing the other 5 bars to override methods they'll never use.
@@ -200,16 +193,10 @@ public abstract class VitalBarOverlay extends Overlay
 		return Integer.toString(current);
 	}
 
-	/** The real orb's own container widget (the whole visual orb, not the clickable sub-widget {@link #onOrbActivate()} uses) - hidden while Orb mode is Merged. -1 for bars with no orb. */
+	/** The real orb's own container widget - hidden while Orb mode is Merged. -1 for bars with no orb. */
 	protected int getOrbWidgetComponent()
 	{
 		return -1;
-	}
-
-	/** Current on-screen icon rectangle, or null if no icon is currently drawn. Used by {@link OrbClickListener}. */
-	Rectangle getIconBounds()
-	{
-		return iconBounds;
 	}
 
 	/** Unconditionally un-hides the real orb, regardless of Orb mode - called on plugin shutdown so we never leave a vanilla orb hidden behind us. No-op for bars with no orb. */
@@ -227,8 +214,14 @@ public abstract class VitalBarOverlay extends Overlay
 		}
 	}
 
-	/** Hides the real orb while this bar is actually rendering with Orb mode Merged; shown otherwise. No-op for bars with no orb. */
-	private void syncRealOrbVisibility()
+	/**
+	 * Hides the real orb's whole container ({@link #getOrbWidgetComponent()})
+	 * while this bar is rendering with Orb mode Merged; shown otherwise. No
+	 * bar currently needs to override this - it's protected rather than
+	 * private only so a future bar with different needs could. No-op for
+	 * bars with no orb.
+	 */
+	protected void syncOrbState()
 	{
 		int component = getOrbWidgetComponent();
 		if (component < 0)
@@ -245,11 +238,10 @@ public abstract class VitalBarOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		syncRealOrbVisibility();
+		syncOrbState();
 
 		if (!shouldRender())
 		{
-			iconBounds = null;
 			return null;
 		}
 
@@ -272,7 +264,6 @@ public abstract class VitalBarOverlay extends Overlay
 		}
 
 		Orientation orientation;
-		Point origin;
 		int length = getLength();
 		if (placementMode == PlacementMode.FIXED)
 		{
@@ -293,7 +284,6 @@ public abstract class VitalBarOverlay extends Overlay
 			if (pos == null)
 			{
 				// Panel widget not present (wrong layout, or not logged in yet) - nothing to dock to.
-				iconBounds = null;
 				return null;
 			}
 			// Non-movable DYNAMIC overlays aren't auto-translated by the overlay
@@ -301,15 +291,14 @@ public abstract class VitalBarOverlay extends Overlay
 			// Bars' own source, which draws at absolute coordinates for exactly
 			// this reason) - so we translate ourselves to reach the same effect.
 			graphics.translate(pos.x, pos.y);
-			origin = pos;
 		}
 		else
 		{
 			orientation = getOrientation();
-			// The overlay renderer already translated the graphics context to
-			// here (that's how movable overlays position themselves) and
-			// recorded it in our bounds before calling render().
-			origin = getBounds().getLocation();
+			// No explicit translate needed here - the overlay renderer
+			// already translated the graphics context to this bar's dragged
+			// position before calling render() (that's how movable overlays
+			// position themselves).
 		}
 
 		int width = orientation == Orientation.VERTICAL ? getThickness() : length;
@@ -342,10 +331,7 @@ public abstract class VitalBarOverlay extends Overlay
 		int max = Math.max(getMax(), 1);
 		int current = Math.max(0, Math.min(getCurrent(), max));
 		Color iconHighlight = resolveIconHighlight();
-		Point iconLocal = drawIconAndCounter(graphics, width, height, orientation, current, max, iconHighlight);
-		iconBounds = iconLocal != null
-			? new Rectangle(origin.x + iconLocal.x, origin.y + iconLocal.y, getIconSize(), getIconSize())
-			: null;
+		drawIconAndCounter(graphics, width, height, orientation, current, max, iconHighlight);
 
 		return new Dimension(width, height);
 	}
@@ -508,20 +494,15 @@ public abstract class VitalBarOverlay extends Overlay
 		}
 	}
 
-	/** Returns the icon's local (bar-relative) top-left position, or null if no icon was drawn. */
-	private Point drawIconAndCounter(Graphics2D graphics, int width, int height, Orientation orientation, int current, int max,
+	private void drawIconAndCounter(Graphics2D graphics, int width, int height, Orientation orientation, int current, int max,
 		Color iconHighlight)
 	{
-		OrbMode orbMode = getOrbMode();
-		// The icon IS the click target in Merged/Mirrored mode, so it can't be
-		// turned off in those modes regardless of the Show Icon setting.
-		boolean showIcon = isShowIcon() || orbMode == OrbMode.MERGED || orbMode == OrbMode.MIRRORED;
-		BufferedImage icon = showIcon ? getIcon() : null;
+		BufferedImage icon = isShowIcon() ? getIcon() : null;
 		boolean showCounter = isShowCounter();
 
 		if (icon == null && !showCounter)
 		{
-			return null;
+			return;
 		}
 
 		int iconSize = getIconSize();
@@ -545,7 +526,6 @@ public abstract class VitalBarOverlay extends Overlay
 		// fine-tuned a few px without touching Content justification itself.
 		int along = along(getJustification(), orientation == Orientation.VERTICAL ? height : width, clusterLength) + getContentOffset();
 		boolean reverse = isReverseContent();
-		Point iconLocal = null;
 
 		if (orientation == Orientation.VERTICAL)
 		{
@@ -567,7 +547,6 @@ public abstract class VitalBarOverlay extends Overlay
 						iconSize + 2 * ICON_GLOW_MARGIN, iconSize + 2 * ICON_GLOW_MARGIN);
 				}
 				graphics.drawImage(icon, iconX, y, iconSize, iconSize, null);
-				iconLocal = new Point(iconX, y);
 				y += iconSize + PADDING;
 			}
 			if (!reverse && counterText != null)
@@ -597,7 +576,6 @@ public abstract class VitalBarOverlay extends Overlay
 						iconSize + 2 * ICON_GLOW_MARGIN, iconSize + 2 * ICON_GLOW_MARGIN);
 				}
 				graphics.drawImage(icon, x, iconY, iconSize, iconSize, null);
-				iconLocal = new Point(x, iconY);
 				x += iconSize + PADDING;
 			}
 			if (!reverse && counterText != null)
@@ -607,8 +585,6 @@ public abstract class VitalBarOverlay extends Overlay
 				graphics.drawString(counterText, x, textY);
 			}
 		}
-
-		return iconLocal;
 	}
 
 	private static int along(Justification justification, int totalLength, int clusterLength)

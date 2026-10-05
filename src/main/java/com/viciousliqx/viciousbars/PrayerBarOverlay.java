@@ -5,7 +5,6 @@ import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
-import net.runelite.api.MenuAction;
 import net.runelite.api.Skill;
 import net.runelite.api.Varbits;
 import net.runelite.api.events.GameTick;
@@ -16,13 +15,6 @@ import net.runelite.client.game.SkillIconManager;
 @Singleton
 class PrayerBarOverlay extends VitalBarOverlay
 {
-	// InterfaceID.Orbs.PRAYERBUTTON - confirmed by decompiling the real
-	// runelite-api jar. NOT InterfaceID.Orbs.ORB_PRAYER (the orb's container,
-	// used for Merged mode's orb-hiding below) - that one turned out to be
-	// Movable Orbs' (160<<16)|18, the right widget for a different purpose
-	// than the clickable sub-widget we need here.
-	private static final int PRAYER_ORB_COMPONENT = InterfaceID.Orbs.PRAYERBUTTON;
-
 	// Sane fallback before we've observed a real tick's length, and a ceiling
 	// on how long an observed gap can be before we distrust it (e.g. logging
 	// in, or the game window losing focus) rather than let one freak reading
@@ -269,27 +261,6 @@ class PrayerBarOverlay extends VitalBarOverlay
 	protected OrbMode getOrbMode()
 	{
 		return config.prayerOrbMode();
-	}
-
-	@Override
-	protected void onOrbActivate()
-	{
-		// Exact parameters captured from a real click on the vanilla orb via
-		// MenuOptionClicked: action=CC_OP id=1 param0=-1 option=Activate/
-		// Deactivate target=Quick-prayers.
-		String option = isActive() ? "Deactivate" : "Activate";
-		client.menuAction(-1, PRAYER_ORB_COMPONENT, MenuAction.CC_OP, 1, -1, option, "Quick-prayers");
-	}
-
-	@Override
-	protected void onOrbSecondaryActivate()
-	{
-		// Exact parameters captured from a real right-click "Setup" on the
-		// vanilla orb via MenuOptionClicked: action=CC_OP id=2 param0=-1
-		// option='Setup' target='Quick-prayers' - opens the quick-prayer
-		// selection interface, the one thing Merged mode would otherwise
-		// take away since the real orb is hidden.
-		client.menuAction(-1, PRAYER_ORB_COMPONENT, MenuAction.CC_OP, 2, -1, "Setup", "Quick-prayers");
 	}
 
 	@Override

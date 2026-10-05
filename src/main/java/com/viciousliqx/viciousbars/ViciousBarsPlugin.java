@@ -5,7 +5,6 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.EventBus;
-import net.runelite.client.input.MouseManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -34,13 +33,7 @@ public class ViciousBarsPlugin extends Plugin
 	private EventBus eventBus;
 
 	@Inject
-	private MouseManager mouseManager;
-
-	@Inject
 	private OpponentTracker opponentTracker;
-
-	@Inject
-	private OrbClickListener orbClickListener;
 
 	@Inject
 	private HpBarOverlay hpBarOverlay;
@@ -65,7 +58,6 @@ public class ViciousBarsPlugin extends Plugin
 	{
 		eventBus.register(opponentTracker);
 		eventBus.register(prayerBarOverlay);
-		mouseManager.registerMouseListener(orbClickListener);
 
 		overlayManager.add(hpBarOverlay);
 		overlayManager.add(prayerBarOverlay);
@@ -87,7 +79,6 @@ public class ViciousBarsPlugin extends Plugin
 		overlayManager.remove(warmthBarOverlay);
 		overlayManager.remove(enemyHpBarOverlay);
 
-		mouseManager.unregisterMouseListener(orbClickListener);
 		eventBus.unregister(prayerBarOverlay);
 		eventBus.unregister(opponentTracker);
 		opponentTracker.reset();
