@@ -16,20 +16,22 @@ import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 
 /**
- * TEMPORARY diagnostic overlay - outlines the real orbs and every ancestor
- * up to MAP_CONTAINER, walked dynamically via getParent() (not hardcoded
- * IDs - the Widget Inspector showed the orbs' real direct parent is
- * Orbs.UNIVERSE, not the outer ToplevelPreEoc.ORBS slot we assumed before),
- * so we can see exactly which widget is actually growing at each level.
- * Not meant to ship - rip this out once the minimap work is sorted.
+ * TEMPORARY diagnostic overlay - outlines the real orbs plus exactly the
+ * two widgets {@link ViciousBarsPlugin#onBeforeRender} actually grows (the
+ * orb's real direct parent, and MAP_CONTAINER), clearly labeled by name -
+ * not the full ancestor chain. An earlier version of this overlay drew
+ * EVERY ancestor in between with similar colors, which was genuinely
+ * confusing once growth got scoped down to just these two specific
+ * widgets: boxes for untouched intermediate ancestors looked like they
+ * "weren't growing" when they were simply never being touched at all. Not
+ * meant to ship - rip this out once the minimap work is sorted.
  */
 @Singleton
 class DebugWidgetBoundsOverlay extends Overlay
 {
 	private static final Color ORB_COLOR = Color.CYAN;
-	private static final Color[] ANCESTOR_COLORS = {
-		Color.YELLOW, Color.ORANGE, Color.MAGENTA, Color.GREEN, Color.PINK, Color.WHITE,
-	};
+	private static final Color ORB_PARENT_COLOR = Color.YELLOW;
+	private static final Color MAP_CONTAINER_COLOR = Color.MAGENTA;
 
 	private static final int[] ORB_COMPONENTS = {
 		InterfaceID.Orbs.ORB_HEALTH,
@@ -53,6 +55,7 @@ class DebugWidgetBoundsOverlay extends Overlay
 	{
 		graphics.setStroke(new BasicStroke(1));
 
+		Widget anyOrb = null;
 		for (int componentId : ORB_COMPONENTS)
 		{
 			Widget orb = client.getWidget(componentId);
@@ -61,23 +64,24 @@ class DebugWidgetBoundsOverlay extends Overlay
 				continue;
 			}
 			outline(graphics, orb, ORB_COLOR, null);
+			if (anyOrb == null)
+			{
+				anyOrb = orb;
+			}
 		}
 
-		Widget anyOrb = client.getWidget(InterfaceID.Orbs.ORB_HEALTH);
-		Widget current = anyOrb != null ? anyOrb.getParent() : null;
-		for (int depth = 0; current != null && depth < ANCESTOR_COLORS.length; depth++)
+		Widget orbParent = anyOrb != null ? anyOrb.getParent() : null;
+		if (orbParent != null && !orbParent.isHidden())
 		{
-			if (!current.isHidden())
-			{
-				outline(graphics, current, ANCESTOR_COLORS[depth],
-					"id=" + current.getId() + " " + current.getOriginalX() + "," + current.getOriginalY()
-						+ " " + current.getWidth() + "x" + current.getHeight());
-			}
-			if (current.getId() == InterfaceID.ToplevelPreEoc.MAP_CONTAINER)
-			{
-				break;
-			}
-			current = current.getParent();
+			outline(graphics, orbParent, ORB_PARENT_COLOR,
+				"ORB PARENT (id=" + orbParent.getId() + ") " + orbParent.getWidth() + "x" + orbParent.getHeight());
+		}
+
+		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
+		if (mapContainer != null && !mapContainer.isHidden())
+		{
+			outline(graphics, mapContainer, MAP_CONTAINER_COLOR,
+				"MAP_CONTAINER " + mapContainer.getWidth() + "x" + mapContainer.getHeight());
 		}
 
 		return null;

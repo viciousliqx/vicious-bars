@@ -256,6 +256,17 @@ public class ViciousBarsPlugin extends Plugin
 		int currentLeft = canvas.getX();
 		int currentTop = canvas.getY();
 
+		// Never ask for more than the real client viewport can show -
+		// reported "spasm near the screen edge" is consistent with the
+		// engine itself clamping a widget's actual rendered bounds to the
+		// visible canvas, which would make our own write and the next
+		// frame's readback disagree, oscillating. Clamping our own target
+		// to a bit inside the real canvas bounds avoids ever asking for
+		// something the engine would silently clamp anyway.
+		int canvasWidth = client.getCanvasWidth();
+		int canvasHeight = client.getCanvasHeight();
+		int edgeMargin = 10;
+
 		boolean changed = false;
 
 		if (widget.getXPositionMode() == WidgetPositionMode.ABSOLUTE_RIGHT)
@@ -269,6 +280,7 @@ public class ViciousBarsPlugin extends Plugin
 					desiredLeft = Math.min(desiredLeft, p.x - CONTAINER_MARGIN);
 				}
 			}
+			desiredLeft = Math.max(desiredLeft, edgeMargin);
 			int newWidth = stableRight - desiredLeft;
 			if (widget.getOriginalWidth() != newWidth)
 			{
@@ -286,6 +298,7 @@ public class ViciousBarsPlugin extends Plugin
 					desiredRight = Math.max(desiredRight, p.x + CONTAINER_MARGIN);
 				}
 			}
+			desiredRight = Math.min(desiredRight, canvasWidth - edgeMargin);
 			int newWidth = desiredRight - currentLeft;
 			if (widget.getOriginalWidth() != newWidth)
 			{
@@ -305,6 +318,7 @@ public class ViciousBarsPlugin extends Plugin
 					desiredTop = Math.min(desiredTop, p.y - CONTAINER_MARGIN);
 				}
 			}
+			desiredTop = Math.max(desiredTop, edgeMargin);
 			int newHeight = stableBottom - desiredTop;
 			if (widget.getOriginalHeight() != newHeight)
 			{
@@ -322,6 +336,7 @@ public class ViciousBarsPlugin extends Plugin
 					desiredBottom = Math.max(desiredBottom, p.y + CONTAINER_MARGIN);
 				}
 			}
+			desiredBottom = Math.min(desiredBottom, canvasHeight - edgeMargin);
 			int newHeight = desiredBottom - currentTop;
 			if (widget.getOriginalHeight() != newHeight)
 			{
