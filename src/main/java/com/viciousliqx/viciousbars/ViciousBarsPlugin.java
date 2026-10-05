@@ -83,12 +83,18 @@ public class ViciousBarsPlugin extends Plugin
 		eventBus.unregister(opponentTracker);
 		opponentTracker.reset();
 
-		// Merged mode hides the real orb while we're running - make sure none
-		// of them are left hidden behind us if the plugin stops.
+		// Merged mode hides the real orb, Aligned mode moves it, while we're
+		// running - make sure none of them are left hidden or displaced
+		// behind us if the plugin stops.
 		hpBarOverlay.unhideRealOrb();
 		prayerBarOverlay.unhideRealOrb();
 		specBarOverlay.unhideRealOrb();
 		runBarOverlay.unhideRealOrb();
+
+		hpBarOverlay.restoreRealOrbPosition();
+		prayerBarOverlay.restoreRealOrbPosition();
+		specBarOverlay.restoreRealOrbPosition();
+		runBarOverlay.restoreRealOrbPosition();
 
 		log.debug("Vicious Bars stopped!");
 	}

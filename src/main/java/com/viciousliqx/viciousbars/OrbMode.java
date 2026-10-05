@@ -2,9 +2,9 @@ package com.viciousliqx.viciousbars;
 
 /**
  * How a bar relates to its vanilla minimap orb equivalent - purely a display
- * choice, not an interaction one. Only applies to bars that actually have a
- * vanilla orb (HP, Prayer, Special Attack, Run) - Warmth and Enemy HP have
- * no orb to hide.
+ * and positioning choice, not an interaction one. Only applies to bars that
+ * actually have a vanilla orb (HP, Prayer, Special Attack, Run) - Warmth and
+ * Enemy HP have no orb to hide or move.
  *
  * There is no click-through mode. A MIRRORED mode (real orb untouched, bar
  * icon also independently clickable) and a click-through variant of MERGED
@@ -14,11 +14,19 @@ package com.viciousliqx.viciousbars;
  * "adding new menu entries which cause actions to be sent to the server"
  * and isn't allowed, regardless of implementation. See
  * vicious_bars_dev_talk.txt for the full investigation.
+ *
+ * ALIGNED is a position-only move, same real technique the Hub-accepted
+ * "Orb Mover" plugin uses (setOriginalX/Y + revalidate(), clamped to the
+ * orb's own parent bounds) - the orb is never hidden, resized, or given a
+ * new click behavior, it's still the exact same real, fully clickable orb,
+ * just relocated to sit at this bar's icon position.
  */
 public enum OrbMode
 {
 	/** Orb untouched, bar is purely a bar. */
 	VANILLA,
 	/** Real orb hidden while this bar is rendering; bar is purely a display, same as Vanilla otherwise. */
-	MERGED
+	MERGED,
+	/** Real orb repositioned to sit at this bar's icon position - still the real, fully clickable orb, just moved. */
+	ALIGNED
 }
