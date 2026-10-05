@@ -6,6 +6,8 @@ import net.runelite.api.Client;
 import net.runelite.api.Point;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.events.VarClientIntChanged;
+import net.runelite.api.events.VarClientStrChanged;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.Subscribe;
@@ -70,5 +72,19 @@ class MinimapDragDiagnostic
 	{
 		log.debug("minimap drag varp: varpId={} varbitId={} value={}",
 			event.getVarpId(), event.getVarbitId(), event.getValue());
+	}
+
+	@Subscribe
+	public void onVarClientIntChanged(VarClientIntChanged event)
+	{
+		int index = event.getIndex();
+		log.debug("minimap drag varcint: index={} value={}", index, client.getVarcIntValue(index));
+	}
+
+	@Subscribe
+	public void onVarClientStrChanged(VarClientStrChanged event)
+	{
+		int index = event.getIndex();
+		log.debug("minimap drag varcstr: index={} value={}", index, client.getVarcStrValue(index));
 	}
 }
