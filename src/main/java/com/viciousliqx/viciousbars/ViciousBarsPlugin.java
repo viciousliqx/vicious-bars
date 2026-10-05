@@ -53,11 +53,17 @@ public class ViciousBarsPlugin extends Plugin
 	@Inject
 	private EnemyHpBarOverlay enemyHpBarOverlay;
 
+	// TEMPORARY - see MinimapDragDiagnostic's javadoc. Remove this field and
+	// its two eventBus lines once done comparing a manual drag's before/after.
+	@Inject
+	private MinimapDragDiagnostic minimapDragDiagnostic;
+
 	@Override
 	protected void startUp() throws Exception
 	{
 		eventBus.register(opponentTracker);
 		eventBus.register(prayerBarOverlay);
+		eventBus.register(minimapDragDiagnostic);
 
 		overlayManager.add(hpBarOverlay);
 		overlayManager.add(prayerBarOverlay);
@@ -81,6 +87,7 @@ public class ViciousBarsPlugin extends Plugin
 
 		eventBus.unregister(prayerBarOverlay);
 		eventBus.unregister(opponentTracker);
+		eventBus.unregister(minimapDragDiagnostic);
 		opponentTracker.reset();
 
 		log.debug("Vicious Bars stopped!");
