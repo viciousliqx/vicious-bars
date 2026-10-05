@@ -174,7 +174,7 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "hpOrbMode",
 		name = "Orb mode",
-		description = "How this bar relates to the vanilla Hitpoints orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing.",
+		description = "How this bar relates to the vanilla Hitpoints orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing. Aligned: real orb moved to sit on this bar's icon spot (Docked only).",
 		section = hpSection,
 		position = 12
 	)
@@ -481,7 +481,7 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "prayerOrbMode",
 		name = "Orb mode",
-		description = "How this bar relates to the vanilla Prayer orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing.",
+		description = "How this bar relates to the vanilla Prayer orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing. Aligned: real orb moved to sit on this bar's icon spot (Docked only).",
 		section = prayerSection,
 		position = 14
 	)
@@ -789,7 +789,7 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "specOrbMode",
 		name = "Orb mode",
-		description = "How this bar relates to the vanilla Special Attack orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing.",
+		description = "How this bar relates to the vanilla Special Attack orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing. Aligned: real orb moved to sit on this bar's icon spot (Docked only).",
 		section = specSection,
 		position = 12
 	)
@@ -1084,7 +1084,7 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "runOrbMode",
 		name = "Orb mode",
-		description = "How this bar relates to the vanilla Run Energy orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing.",
+		description = "How this bar relates to the vanilla Run Energy orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing. Aligned: real orb moved to sit on this bar's icon spot (Docked only).",
 		section = runSection,
 		position = 11
 	)
@@ -1841,7 +1841,7 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigSection(
 		name = "Minimap",
-		description = "Experimental - docks the real minimap/orbs cluster to the panel, same mechanism as a bar.",
+		description = "Experimental - the real minimap/orbs cluster can't be repositioned (confirmed: its real screen position isn't reachable through the plugin API, unlike individual orbs), so this only feeds a target point the orb container grows toward - it doesn't move anything visually itself.",
 		position = 8,
 		closedByDefault = true
 	)
@@ -1849,8 +1849,8 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "minimapDockEnabled",
-		name = "Dock minimap",
-		description = "Reposition the real minimap/orbs cluster to sit next to the panel instead of its vanilla corner.",
+		name = "Dock target",
+		description = "Grow the real orbs container to reach a point near the panel, computed the same way a bar's own Dock position is - so an Aligned orb bar near there has room to actually reach. Doesn't move the visible minimap itself.",
 		section = minimapSection,
 		position = 0
 	)
@@ -1861,8 +1861,8 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "minimapDockSide",
-		name = "Minimap dock side",
-		description = "Which side of the panel to dock the real minimap/orbs cluster to, same as a bar.",
+		name = "Dock target side",
+		description = "Which side of the panel the target point is computed from, same as a bar's own Dock side.",
 		section = minimapSection,
 		position = 1
 	)
@@ -1873,8 +1873,8 @@ public interface ViciousBarsConfig extends Config
 
 	@ConfigItem(
 		keyName = "minimapDockOffset",
-		name = "Minimap dock offset",
-		description = "Gap in pixels between the panel and the minimap cluster - raise this to clear past whatever bars are already docked to the same side.",
+		name = "Dock target offset",
+		description = "Gap in pixels between the panel and the target point - raise this to clear past whatever bars are already docked to the same side.",
 		section = minimapSection,
 		position = 2
 	)

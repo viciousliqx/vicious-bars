@@ -20,5 +20,7 @@ public enum OrbMode
 	/** Orb untouched, bar is purely a bar. */
 	VANILLA,
 	/** Real orb hidden while this bar is rendering; bar is purely a display, same as Vanilla otherwise. */
-	MERGED
+	MERGED,
+	/** Real orb repositioned to sit at this bar's icon position - still the real, fully clickable orb, just moved. */
+	ALIGNED
 }

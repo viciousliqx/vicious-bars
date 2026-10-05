@@ -6,7 +6,6 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.events.BeforeRender;
-import net.runelite.api.events.GameTick;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.config.ConfigManager;
@@ -30,6 +29,10 @@ import net.runelite.client.ui.overlay.OverlayManager;
 @PluginDependency(ItemStatPlugin.class)
 public class ViciousBarsPlugin extends Plugin
 {
+	// Experimental - how far past the dock target point to extend
+	// ORBS/MAP_CONTAINER, see onBeforeRender()'s javadoc.
+	private static final int CONTAINER_MARGIN = 20;
+
 	@Inject
 	private Client client;
 
@@ -67,8 +70,13 @@ public class ViciousBarsPlugin extends Plugin
 	@Inject
 	private DebugWidgetBoundsOverlay debugWidgetBoundsOverlay;
 
-	// Experimental - see onBeforeRender()'s javadoc.
-	private boolean mapContainerMoved;
+	// Experimental - see onBeforeRender()'s javadoc. Saved once, lazily, the
+	// first time the containers actually get grown.
+	private boolean containersExpanded;
+	private int savedMapContainerWidth;
+	private int savedMapContainerHeight;
+	private int savedOrbsWidth;
+	private int savedOrbsHeight;
 
 	@Override
 	protected void startUp() throws Exception
@@ -104,112 +112,161 @@ public class ViciousBarsPlugin extends Plugin
 		eventBus.unregister(this);
 		opponentTracker.reset();
 
-		// Merged mode hides the real orb while we're running - make sure none
-		// of them are left hidden behind us if the plugin stops.
+		// Merged mode hides the real orb, Aligned mode moves it, while we're
+		// running - make sure none of them are left hidden or displaced
+		// behind us if the plugin stops.
 		hpBarOverlay.unhideRealOrb();
 		prayerBarOverlay.unhideRealOrb();
 		specBarOverlay.unhideRealOrb();
 		runBarOverlay.unhideRealOrb();
 
-		restoreMapContainer();
+		hpBarOverlay.restoreRealOrbPosition();
+		prayerBarOverlay.restoreRealOrbPosition();
+		specBarOverlay.restoreRealOrbPosition();
+		runBarOverlay.restoreRealOrbPosition();
+
+		restoreContainerSizes();
 
 		log.debug("Vicious Bars stopped!");
 	}
 
 	/**
-	 * Experimental - single-purpose: dock the real MAP_CONTAINER widget
-	 * (minimap, compass, and orbs together) to the panel, using the exact
-	 * same {@link PanelDock} math a bar uses, via the Minimap dock
-	 * side/offset config. Uses {@code setForcedPosition()} rather than
-	 * {@code setOriginalX/Y()+revalidate()} - this is the same real API
-	 * RuneLite's own Compact Orbs uses for its minimap overlay, and almost
-	 * certainly what backs the vanilla client's own "hold Alt and drag to
-	 * reposition an interface" feature: an explicit override meant to
-	 * survive whatever native layout pass runs afterward, rather than a
-	 * plain position write that pass might just recompute over. No
-	 * resizing, no per-orb logic - just a position, same as a bar gets.
-	 * Untested yet whether this also carries the minimized (no-map)
-	 * orb-only state along with it, or whether that needs its own separate
-	 * handling - that's the next thing to check.
+	 * Experimental - grows the real ORBS and MAP_CONTAINER widgets' own
+	 * bounding box (never their position - confirmed via direct testing
+	 * that MAP_CONTAINER's real screen position isn't reachable through
+	 * setOriginalX/Y nor setForcedPosition, unlike individual orbs, which
+	 * move fine; a real Alt-drag changes its canvasLocation while
+	 * originalX/Y stay frozen, so whatever actually controls its position
+	 * is outside the APIs this plugin has access to - see
+	 * vicious_bars_dev_talk.txt) just far enough to reach two possible
+	 * targets: the Minimap dock position (computed via the same
+	 * {@link PanelDock} math a bar uses, from the Minimap dock side/offset
+	 * config) and whichever Aligned-mode bar's own icon position is
+	 * farthest. Either alone would do the individual-orb clamp in
+	 * {@link VitalBarOverlay#alignRealOrb} no good if the other needed more
+	 * room, so both feed the same growth target.
 	 */
 	@Subscribe
 	public void onBeforeRender(BeforeRender event)
 	{
+		Point[] barTargets = {
+			hpBarOverlay.getLastIconCanvasCenter(),
+			prayerBarOverlay.getLastIconCanvasCenter(),
+			specBarOverlay.getLastIconCanvasCenter(),
+			runBarOverlay.getLastIconCanvasCenter(),
+		};
+
 		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
+		Widget orbsContainer = client.getWidget(InterfaceID.ToplevelPreEoc.ORBS);
 
-		if (!config.minimapDockEnabled() || mapContainer == null)
+		boolean anyBarTarget = false;
+		for (Point p : barTargets)
 		{
-			restoreMapContainer();
+			if (p != null)
+			{
+				anyBarTarget = true;
+				break;
+			}
+		}
+
+		Point dockTarget = null;
+		if (config.minimapDockEnabled() && mapContainer != null)
+		{
+			dockTarget = PanelDock.position(client, config.minimapDockSide(), 1,
+				mapContainer.getOriginalWidth(), config.dockPadding(), config.minimapDockOffset(),
+				mapContainer.getOriginalHeight(), Justification.START);
+		}
+
+		if ((!anyBarTarget && dockTarget == null) || mapContainer == null || orbsContainer == null)
+		{
+			restoreContainerSizes();
 			return;
 		}
 
-		mapContainerMoved = true;
-
-		Point dockPos = PanelDock.position(client, config.minimapDockSide(), 1,
-			mapContainer.getOriginalWidth(), config.dockPadding(), config.minimapDockOffset(),
-			mapContainer.getOriginalHeight(), Justification.START);
-
-		if (dockPos == null)
+		if (!containersExpanded)
 		{
-			// Panel not present (wrong layout, not logged in yet) - nothing to dock to.
-			restoreMapContainer();
-			return;
+			savedMapContainerWidth = mapContainer.getOriginalWidth();
+			savedMapContainerHeight = mapContainer.getOriginalHeight();
+			savedOrbsWidth = orbsContainer.getOriginalWidth();
+			savedOrbsHeight = orbsContainer.getOriginalHeight();
+			containersExpanded = true;
 		}
 
-		Widget mapParent = mapContainer.getParent();
-		net.runelite.api.Point mapParentCanvas = mapParent != null
-			? mapParent.getCanvasLocation()
-			: new net.runelite.api.Point(0, 0);
-		int localX = dockPos.x - mapParentCanvas.getX();
-		int localY = dockPos.y - mapParentCanvas.getY();
+		net.runelite.api.Point mapCanvas = mapContainer.getCanvasLocation();
+		int neededWidth = savedMapContainerWidth;
+		int neededHeight = savedMapContainerHeight;
 
-		log.debug("minimap dock: dockPos={} localX={} localY={} canvasLocation={}",
-			dockPos, localX, localY, mapContainer.getCanvasLocation());
+		if (dockTarget != null)
+		{
+			neededWidth = Math.max(neededWidth, dockTarget.x - mapCanvas.getX() + CONTAINER_MARGIN);
+			neededHeight = Math.max(neededHeight, dockTarget.y - mapCanvas.getY() + CONTAINER_MARGIN);
+		}
+		for (Point p : barTargets)
+		{
+			if (p == null)
+			{
+				continue;
+			}
+			neededWidth = Math.max(neededWidth, p.x - mapCanvas.getX() + CONTAINER_MARGIN);
+			neededHeight = Math.max(neededHeight, p.y - mapCanvas.getY() + CONTAINER_MARGIN);
+		}
 
-		mapContainer.setForcedPosition(localX, localY);
+		boolean changed = false;
+		if (mapContainer.getOriginalWidth() != neededWidth)
+		{
+			mapContainer.setOriginalWidth(neededWidth);
+			changed = true;
+		}
+		if (mapContainer.getOriginalHeight() != neededHeight)
+		{
+			mapContainer.setOriginalHeight(neededHeight);
+			changed = true;
+		}
+
+		// ORBS is itself positioned at some local (x, y) inside MAP_CONTAINER
+		// - the space actually available to it is the container's new size
+		// minus that offset, not the container's full size.
+		int orbsNeededWidth = Math.max(savedOrbsWidth, neededWidth - orbsContainer.getOriginalX());
+		int orbsNeededHeight = Math.max(savedOrbsHeight, neededHeight - orbsContainer.getOriginalY());
+		if (orbsContainer.getOriginalWidth() != orbsNeededWidth)
+		{
+			orbsContainer.setOriginalWidth(orbsNeededWidth);
+			changed = true;
+		}
+		if (orbsContainer.getOriginalHeight() != orbsNeededHeight)
+		{
+			orbsContainer.setOriginalHeight(orbsNeededHeight);
+			changed = true;
+		}
+
+		if (changed)
+		{
+			mapContainer.revalidate();
+			orbsContainer.revalidate();
+		}
 	}
 
-	// TEMPORARY - diagnostic only. Logs MAP_CONTAINER's real fields every
-	// tick regardless of our own code, so a manual real Alt+drag of the
-	// minimap (with Dock minimap turned OFF, so our own writes don't
-	// interfere) shows exactly what actually changes during a genuine drag.
-	@Subscribe
-	public void onGameTick(GameTick event)
+	private void restoreContainerSizes()
 	{
-		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
-		if (mapContainer == null)
-		{
-			return;
-		}
-		log.debug("minimap tick: originalX={} originalY={} xMode={} yMode={} canvasLocation={}",
-			mapContainer.getOriginalX(), mapContainer.getOriginalY(),
-			mapContainer.getXPositionMode(), mapContainer.getYPositionMode(),
-			mapContainer.getCanvasLocation());
-
-		Widget parent = mapContainer.getParent();
-		if (parent != null)
-		{
-			log.debug("minimap tick parent: id={} originalX={} originalY={} xMode={} yMode={} canvasLocation={}",
-				parent.getId(), parent.getOriginalX(), parent.getOriginalY(),
-				parent.getXPositionMode(), parent.getYPositionMode(), parent.getCanvasLocation());
-		}
-	}
-
-	private void restoreMapContainer()
-	{
-		if (!mapContainerMoved)
+		if (!containersExpanded)
 		{
 			return;
 		}
 		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
 		if (mapContainer != null)
 		{
-			// Same clear-and-revalidate pair Compact Orbs' own MinimapOverlay
-			// uses to hand a forced-position widget back to normal layout.
-			mapContainer.setForcedPosition(-1, -1);
+			mapContainer.setOriginalWidth(savedMapContainerWidth);
+			mapContainer.setOriginalHeight(savedMapContainerHeight);
 			mapContainer.revalidate();
 		}
-		mapContainerMoved = false;
+		Widget orbsContainer = client.getWidget(InterfaceID.ToplevelPreEoc.ORBS);
+		if (orbsContainer != null)
+		{
+			orbsContainer.setOriginalWidth(savedOrbsWidth);
+			orbsContainer.setOriginalHeight(savedOrbsHeight);
+			orbsContainer.revalidate();
+		}
+		containersExpanded = false;
 	}
 
 	@Provides
