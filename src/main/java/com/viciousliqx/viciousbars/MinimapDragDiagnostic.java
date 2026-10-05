@@ -5,9 +5,6 @@ import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.Point;
 import net.runelite.api.events.GameTick;
-import net.runelite.api.events.VarbitChanged;
-import net.runelite.api.events.VarClientIntChanged;
-import net.runelite.api.events.VarClientStrChanged;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.Subscribe;
@@ -16,12 +13,15 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * TEMPORARY - pure read-only diagnostic, no behavior change. Logs the real
  * canvas position/size of every widget in the minimap/orbs cluster once per
- * tick (to compare a manual Alt+drag's before/after), and separately logs
- * every VarPlayer/Varbit change (same sniffing technique that found Special
- * Attack's queued-state VarPlayer earlier) - since the dragged position
- * survives a full client restart, it must be stored somewhere durable, and
- * a VarPlayer is the obvious real candidate. Delete this class and its two
- * wiring lines in ViciousBarsPlugin once done with it.
+ * tick (to compare a manual Alt+drag's before/after), plus each one's real
+ * drag-mechanics fields (getDragParent()/getDragDeadZone()/getDragDeadTime())
+ * - VarbitChanged and VarClientInt/StrChanged sweeps both came back negative
+ * (nothing changed in a way that correlated with the drag, only incidental
+ * UI-rebuild side effects), so this checks the other real, confirmed-to-exist
+ * drag-specific API surface instead: which widget (if any) is actually
+ * configured with a non-null drag parent reveals which one the client
+ * considers "the draggable one." Delete this class and its wiring lines in
+ * ViciousBarsPlugin once done with it.
  */
 @Slf4j
 @Singleton
@@ -33,16 +33,14 @@ class MinimapDragDiagnostic
 		{InterfaceID.ToplevelPreEoc.MAP_MINIMAP, 2},
 		{InterfaceID.ToplevelPreEoc.MINIMAP, 3},
 		{InterfaceID.ToplevelPreEoc.COMPASSCLICK, 4},
-		{InterfaceID.ToplevelPreEoc.MAP_MINIMAP_GRAPHIC6, 5},
-		{InterfaceID.ToplevelPreEoc.MAP_MINIMAP_GRAPHIC9, 6},
-		{InterfaceID.Orbs.ORB_HEALTH, 8},
-		{InterfaceID.Orbs.ORB_PRAYER, 9},
+		{InterfaceID.ToplevelPreEoc.GAMEFRAME, 5},
+		{InterfaceID.ToplevelPreEoc.TLI_LISTENER, 6},
+		{InterfaceID.ToplevelPreEoc.CONTROL, 7},
 	};
 
 	private static final String[] NAMES = {
 		"MAP_CONTAINER", "ORBS", "MAP_MINIMAP", "MINIMAP", "COMPASSCLICK",
-		"MAP_MINIMAP_GRAPHIC6", "MAP_MINIMAP_GRAPHIC9", "XP_DROPS",
-		"ORB_HEALTH", "ORB_PRAYER",
+		"GAMEFRAME", "TLI_LISTENER", "CONTROL",
 	};
 
 	@Inject
@@ -62,29 +60,11 @@ class MinimapDragDiagnostic
 				continue;
 			}
 			Point loc = w.getCanvasLocation();
-			log.debug("minimap drag: {} canvas={} size={}x{} hidden={}",
-				NAMES[nameIndex], loc, w.getWidth(), w.getHeight(), w.isHidden());
+			Widget dragParent = w.getDragParent();
+			log.debug("minimap drag: {} canvas={} size={}x{} hidden={} dragParent={} deadZone={} deadTime={}",
+				NAMES[nameIndex], loc, w.getWidth(), w.getHeight(), w.isHidden(),
+				dragParent == null ? "null" : dragParent.getId(),
+				w.getDragDeadZone(), w.getDragDeadTime());
 		}
-	}
-
-	@Subscribe
-	public void onVarbitChanged(VarbitChanged event)
-	{
-		log.debug("minimap drag varp: varpId={} varbitId={} value={}",
-			event.getVarpId(), event.getVarbitId(), event.getValue());
-	}
-
-	@Subscribe
-	public void onVarClientIntChanged(VarClientIntChanged event)
-	{
-		int index = event.getIndex();
-		log.debug("minimap drag varcint: index={} value={}", index, client.getVarcIntValue(index));
-	}
-
-	@Subscribe
-	public void onVarClientStrChanged(VarClientStrChanged event)
-	{
-		int index = event.getIndex();
-		log.debug("minimap drag varcstr: index={} value={}", index, client.getVarcStrValue(index));
 	}
 }
