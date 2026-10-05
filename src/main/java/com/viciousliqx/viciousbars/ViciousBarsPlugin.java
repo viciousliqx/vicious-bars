@@ -8,6 +8,7 @@ import net.runelite.api.Client;
 import net.runelite.api.events.BeforeRender;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetPositionMode;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
@@ -74,10 +75,14 @@ public class ViciousBarsPlugin extends Plugin
 	private DebugWidgetBoundsOverlay debugWidgetBoundsOverlay;
 
 	// TEMPORARY - see onBeforeRender()'s javadoc. Saved once, lazily, the
-	// first time either container actually gets grown.
+	// first time the containers actually get moved/grown.
 	private boolean containersExpanded;
+	private int savedMapContainerX;
+	private int savedMapContainerY;
 	private int savedMapContainerWidth;
 	private int savedMapContainerHeight;
+	private int savedMapContainerXMode;
+	private int savedMapContainerYMode;
 	private int savedOrbsWidth;
 	private int savedOrbsHeight;
 
@@ -135,15 +140,20 @@ public class ViciousBarsPlugin extends Plugin
 
 	/**
 	 * TEMPORARY - experimental, see the in-game testing note in
-	 * vicious_bars_dev_talk.txt. Grows the real ORBS and MAP_CONTAINER
-	 * widgets' own bounding box (never the minimap/compass's own size or
-	 * position within it - those keep their current local offsets, so the
-	 * visible circle doesn't move) downward/rightward only as far as
-	 * whichever Aligned-mode bar currently needs reaching, using the same
-	 * setOriginalWidth/Height()+revalidate() pattern as everywhere else.
-	 * This is what lets {@link VitalBarOverlay#alignRealOrb} actually reach a
-	 * Docked bar that's far from the orb's vanilla position, instead of
-	 * stalling on the parent-bounds clamp the way it did before this existed.
+	 * vicious_bars_dev_talk.txt. While at least one orb bar is Aligned, docks
+	 * the real MAP_CONTAINER widget (minimap, compass, and orbs together -
+	 * the whole real cluster, not just an invisible holder) to the panel
+	 * using the exact same {@link PanelDock} math a bar uses, via the
+	 * Minimap dock side/offset config - instead of leaving it at its vanilla
+	 * position and trying to invisibly stretch a box all the way over to
+	 * wherever a bar happens to be. Both position modes are forced to
+	 * ABSOLUTE first, same as {@link VitalBarOverlay#alignRealOrb} already
+	 * does for individual orbs - without that, the written X/Y only seemed
+	 * to take effect after something else (toggling minimize) forced a full
+	 * relayout, rather than applying on its own. Still grows the container
+	 * a bit further afterward if an individual orb's own target is beyond
+	 * the docked footprint, same as before, just starting from much closer
+	 * now so it rarely needs to stretch far.
 	 */
 	@Subscribe
 	public void onBeforeRender(BeforeRender event)
@@ -176,18 +186,62 @@ public class ViciousBarsPlugin extends Plugin
 
 		if (!containersExpanded)
 		{
+			savedMapContainerX = mapContainer.getOriginalX();
+			savedMapContainerY = mapContainer.getOriginalY();
 			savedMapContainerWidth = mapContainer.getOriginalWidth();
 			savedMapContainerHeight = mapContainer.getOriginalHeight();
+			savedMapContainerXMode = mapContainer.getXPositionMode();
+			savedMapContainerYMode = mapContainer.getYPositionMode();
 			savedOrbsWidth = orbsContainer.getOriginalWidth();
 			savedOrbsHeight = orbsContainer.getOriginalHeight();
 			containersExpanded = true;
 		}
 
+		Point dockPos = PanelDock.position(client, config.minimapDockSide(), 1,
+			savedMapContainerWidth, config.dockPadding(), config.minimapDockOffset(),
+			savedMapContainerHeight, Justification.START);
+
+		if (dockPos == null)
+		{
+			// Panel not present (wrong layout, not logged in yet) - nothing to dock to.
+			restoreContainerSizes();
+			return;
+		}
+
+		if (mapContainer.getXPositionMode() != WidgetPositionMode.ABSOLUTE_LEFT)
+		{
+			mapContainer.setXPositionMode(WidgetPositionMode.ABSOLUTE_LEFT);
+		}
+		if (mapContainer.getYPositionMode() != WidgetPositionMode.ABSOLUTE_TOP)
+		{
+			mapContainer.setYPositionMode(WidgetPositionMode.ABSOLUTE_TOP);
+		}
+
+		Widget mapParent = mapContainer.getParent();
+		net.runelite.api.Point mapParentCanvas = mapParent != null
+			? mapParent.getCanvasLocation()
+			: new net.runelite.api.Point(0, 0);
+		int dockLocalX = dockPos.x - mapParentCanvas.getX();
+		int dockLocalY = dockPos.y - mapParentCanvas.getY();
+
+		boolean changed = false;
+		if (mapContainer.getOriginalX() != dockLocalX)
+		{
+			mapContainer.setOriginalX(dockLocalX);
+			changed = true;
+		}
+		if (mapContainer.getOriginalY() != dockLocalY)
+		{
+			mapContainer.setOriginalY(dockLocalY);
+			changed = true;
+		}
+
 		// Take the max across every bar currently targeting a position, not
 		// just the first one found - two Aligned bars in different dock
 		// slots need the container to reach the FARTHER of the two, not
-		// whichever bar's overlay happened to render first this frame.
-		net.runelite.api.Point mapCanvas = mapContainer.getCanvasLocation();
+		// whichever bar's overlay happened to render first this frame. Now
+		// measured from the DOCKED position (dockPos), not wherever the
+		// container happened to be before this frame moved it.
 		int neededWidth = savedMapContainerWidth;
 		int neededHeight = savedMapContainerHeight;
 		for (Point p : targets)
@@ -196,11 +250,10 @@ public class ViciousBarsPlugin extends Plugin
 			{
 				continue;
 			}
-			neededWidth = Math.max(neededWidth, p.x - mapCanvas.getX() + CONTAINER_MARGIN);
-			neededHeight = Math.max(neededHeight, p.y - mapCanvas.getY() + CONTAINER_MARGIN);
+			neededWidth = Math.max(neededWidth, p.x - dockPos.x + CONTAINER_MARGIN);
+			neededHeight = Math.max(neededHeight, p.y - dockPos.y + CONTAINER_MARGIN);
 		}
 
-		boolean changed = false;
 		if (mapContainer.getOriginalWidth() != neededWidth)
 		{
 			mapContainer.setOriginalWidth(neededWidth);
@@ -244,6 +297,10 @@ public class ViciousBarsPlugin extends Plugin
 		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
 		if (mapContainer != null)
 		{
+			mapContainer.setXPositionMode(savedMapContainerXMode);
+			mapContainer.setYPositionMode(savedMapContainerYMode);
+			mapContainer.setOriginalX(savedMapContainerX);
+			mapContainer.setOriginalY(savedMapContainerY);
 			mapContainer.setOriginalWidth(savedMapContainerWidth);
 			mapContainer.setOriginalHeight(savedMapContainerHeight);
 			mapContainer.revalidate();

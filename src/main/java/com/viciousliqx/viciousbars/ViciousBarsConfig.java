@@ -1834,4 +1834,42 @@ public interface ViciousBarsConfig extends Config
 	{
 		return 4;
 	}
+
+	// ------------------------------------------------------------------
+	// Minimap (experimental - see vicious_bars_dev_talk.txt) - only takes
+	// effect while at least one orb bar's Orb mode is Aligned.
+	// ------------------------------------------------------------------
+
+	@ConfigSection(
+		name = "Minimap",
+		description = "Experimental - docks the real minimap/orbs cluster to the panel like a bar, so Aligned orbs have somewhere close to actually reach.",
+		position = 8,
+		closedByDefault = true
+	)
+	String minimapSection = "minimapSection";
+
+	@ConfigItem(
+		keyName = "minimapDockSide",
+		name = "Minimap dock side",
+		description = "Which side of the panel to dock the real minimap/orbs cluster to, same as a bar.",
+		section = minimapSection,
+		position = 0
+	)
+	default DockSide minimapDockSide()
+	{
+		return DockSide.LEFT;
+	}
+
+	@ConfigItem(
+		keyName = "minimapDockOffset",
+		name = "Minimap dock offset",
+		description = "Gap in pixels between the panel and the minimap cluster - raise this to clear past whatever bars are already docked to the same side.",
+		section = minimapSection,
+		position = 1
+	)
+	@Range(min = 0)
+	default int minimapDockOffset()
+	{
+		return 4;
+	}
 }
