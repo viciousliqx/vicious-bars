@@ -158,6 +158,9 @@ public class ViciousBarsPlugin extends Plugin
 			mapContainer.getOriginalWidth(), config.dockPadding(), config.minimapDockOffset(),
 			mapContainer.getOriginalHeight(), Justification.START);
 
+		log.debug("minimap dock: dockPos={} originalX={} originalY={} parent={}",
+			dockPos, mapContainer.getOriginalX(), mapContainer.getOriginalY(), mapContainer.getParent());
+
 		if (dockPos == null)
 		{
 			// Panel not present (wrong layout, not logged in yet) - nothing to dock to.
@@ -181,11 +184,15 @@ public class ViciousBarsPlugin extends Plugin
 		int localX = dockPos.x - mapParentCanvas.getX();
 		int localY = dockPos.y - mapParentCanvas.getY();
 
+		log.debug("minimap dock: mapParentCanvas={} localX={} localY={}", mapParentCanvas, localX, localY);
+
 		if (mapContainer.getOriginalX() != localX || mapContainer.getOriginalY() != localY)
 		{
 			mapContainer.setOriginalX(localX);
 			mapContainer.setOriginalY(localY);
 			mapContainer.revalidate();
+			log.debug("minimap dock: wrote new X/Y, after write getOriginalX={} getOriginalY={} canvasLocation={}",
+				mapContainer.getOriginalX(), mapContainer.getOriginalY(), mapContainer.getCanvasLocation());
 		}
 	}
 
