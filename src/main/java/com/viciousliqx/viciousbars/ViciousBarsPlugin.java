@@ -29,8 +29,8 @@ import net.runelite.client.ui.overlay.OverlayManager;
 @PluginDependency(ItemStatPlugin.class)
 public class ViciousBarsPlugin extends Plugin
 {
-	// Experimental - how far past the dock target point to extend
-	// ORBS/MAP_CONTAINER, see onBeforeRender()'s javadoc.
+	// Experimental - how far past the dock target point to extend ORBS, see
+	// onBeforeRender()'s javadoc.
 	private static final int CONTAINER_MARGIN = 20;
 
 	@Inject
@@ -71,10 +71,8 @@ public class ViciousBarsPlugin extends Plugin
 	private DebugWidgetBoundsOverlay debugWidgetBoundsOverlay;
 
 	// Experimental - see onBeforeRender()'s javadoc. Saved once, lazily, the
-	// first time the containers actually get grown.
+	// first time ORBS actually gets grown.
 	private boolean containersExpanded;
-	private int savedMapContainerWidth;
-	private int savedMapContainerHeight;
 	private int savedOrbsWidth;
 	private int savedOrbsHeight;
 
@@ -125,20 +123,21 @@ public class ViciousBarsPlugin extends Plugin
 	}
 
 	/**
-	 * Experimental - grows the real ORBS and MAP_CONTAINER widgets' own
-	 * bounding box (never their position - confirmed via direct testing
-	 * that MAP_CONTAINER's real screen position isn't reachable through
-	 * setOriginalX/Y nor setForcedPosition, unlike individual orbs, which
-	 * move fine; a real Alt-drag changes its canvasLocation while
-	 * originalX/Y stay frozen, so whatever actually controls its position
-	 * is outside the APIs this plugin has access to - see
-	 * vicious_bars_dev_talk.txt) just far enough to reach two possible
-	 * targets: the Minimap dock position (computed via the same
-	 * {@link PanelDock} math a bar uses, from the Minimap dock side/offset
-	 * config) and whichever Aligned-mode bar's own icon position is
-	 * farthest. Either alone would do the individual-orb clamp in
-	 * {@link VitalBarOverlay#alignRealOrb} no good if the other needed more
-	 * room, so both feed the same growth target.
+	 * Experimental - grows only the real ORBS widget's own bounding box
+	 * (never MAP_CONTAINER - confirmed via direct in-game testing that
+	 * growing MAP_CONTAINER stretches/displaces its OTHER children too: the
+	 * compass face, XP orb, scroll/wiki orb, and apparently the live
+	 * minimap render itself, none of which use fixed pixel sizes relative
+	 * to it. ORBS only holds the four orb icons, so growing just it keeps
+	 * the reach isolated away from anything else in the cluster - also
+	 * never touches its own position, for the same reason MAP_CONTAINER's
+	 * position isn't reachable: see vicious_bars_dev_talk.txt) just far
+	 * enough to reach two possible targets: the Minimap dock position
+	 * (computed via the same {@link PanelDock} math a bar uses, from the
+	 * Minimap dock side/offset config) and whichever orb bar's own icon
+	 * position is farthest. Either alone would do the individual-orb clamp
+	 * in {@link VitalBarOverlay#alignRealOrb} no good if the other needed
+	 * more room, so both feed the same growth target.
 	 */
 	@Subscribe
 	public void onBeforeRender(BeforeRender event)
@@ -179,21 +178,27 @@ public class ViciousBarsPlugin extends Plugin
 
 		if (!containersExpanded)
 		{
-			savedMapContainerWidth = mapContainer.getOriginalWidth();
-			savedMapContainerHeight = mapContainer.getOriginalHeight();
 			savedOrbsWidth = orbsContainer.getOriginalWidth();
 			savedOrbsHeight = orbsContainer.getOriginalHeight();
 			containersExpanded = true;
 		}
 
-		net.runelite.api.Point mapCanvas = mapContainer.getCanvasLocation();
-		int neededWidth = savedMapContainerWidth;
-		int neededHeight = savedMapContainerHeight;
+		// MAP_CONTAINER itself is never resized - confirmed via direct
+		// in-game testing that at least some of its OTHER children (the
+		// compass face, XP orb, scroll/wiki orb, and apparently the live
+		// minimap render itself) aren't using fixed pixel sizes relative to
+		// it, so growing it stretched/displaced all of them. ORBS only
+		// holds the four orb icons, so growing just it (testing now whether
+		// MAP_CONTAINER even clips children past its own bounds) should
+		// isolate the reach entirely away from anything else in the cluster.
+		net.runelite.api.Point orbsCanvas = orbsContainer.getCanvasLocation();
+		int neededWidth = savedOrbsWidth;
+		int neededHeight = savedOrbsHeight;
 
 		if (dockTarget != null)
 		{
-			neededWidth = Math.max(neededWidth, dockTarget.x - mapCanvas.getX() + CONTAINER_MARGIN);
-			neededHeight = Math.max(neededHeight, dockTarget.y - mapCanvas.getY() + CONTAINER_MARGIN);
+			neededWidth = Math.max(neededWidth, dockTarget.x - orbsCanvas.getX() + CONTAINER_MARGIN);
+			neededHeight = Math.max(neededHeight, dockTarget.y - orbsCanvas.getY() + CONTAINER_MARGIN);
 		}
 		for (Point p : barTargets)
 		{
@@ -201,41 +206,24 @@ public class ViciousBarsPlugin extends Plugin
 			{
 				continue;
 			}
-			neededWidth = Math.max(neededWidth, p.x - mapCanvas.getX() + CONTAINER_MARGIN);
-			neededHeight = Math.max(neededHeight, p.y - mapCanvas.getY() + CONTAINER_MARGIN);
+			neededWidth = Math.max(neededWidth, p.x - orbsCanvas.getX() + CONTAINER_MARGIN);
+			neededHeight = Math.max(neededHeight, p.y - orbsCanvas.getY() + CONTAINER_MARGIN);
 		}
 
 		boolean changed = false;
-		if (mapContainer.getOriginalWidth() != neededWidth)
+		if (orbsContainer.getOriginalWidth() != neededWidth)
 		{
-			mapContainer.setOriginalWidth(neededWidth);
+			orbsContainer.setOriginalWidth(neededWidth);
 			changed = true;
 		}
-		if (mapContainer.getOriginalHeight() != neededHeight)
+		if (orbsContainer.getOriginalHeight() != neededHeight)
 		{
-			mapContainer.setOriginalHeight(neededHeight);
-			changed = true;
-		}
-
-		// ORBS is itself positioned at some local (x, y) inside MAP_CONTAINER
-		// - the space actually available to it is the container's new size
-		// minus that offset, not the container's full size.
-		int orbsNeededWidth = Math.max(savedOrbsWidth, neededWidth - orbsContainer.getOriginalX());
-		int orbsNeededHeight = Math.max(savedOrbsHeight, neededHeight - orbsContainer.getOriginalY());
-		if (orbsContainer.getOriginalWidth() != orbsNeededWidth)
-		{
-			orbsContainer.setOriginalWidth(orbsNeededWidth);
-			changed = true;
-		}
-		if (orbsContainer.getOriginalHeight() != orbsNeededHeight)
-		{
-			orbsContainer.setOriginalHeight(orbsNeededHeight);
+			orbsContainer.setOriginalHeight(neededHeight);
 			changed = true;
 		}
 
 		if (changed)
 		{
-			mapContainer.revalidate();
 			orbsContainer.revalidate();
 		}
 	}
@@ -245,13 +233,6 @@ public class ViciousBarsPlugin extends Plugin
 		if (!containersExpanded)
 		{
 			return;
-		}
-		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
-		if (mapContainer != null)
-		{
-			mapContainer.setOriginalWidth(savedMapContainerWidth);
-			mapContainer.setOriginalHeight(savedMapContainerHeight);
-			mapContainer.revalidate();
 		}
 		Widget orbsContainer = client.getWidget(InterfaceID.ToplevelPreEoc.ORBS);
 		if (orbsContainer != null)
