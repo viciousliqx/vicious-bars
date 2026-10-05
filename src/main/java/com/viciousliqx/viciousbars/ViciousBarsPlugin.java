@@ -6,6 +6,7 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.events.BeforeRender;
+import net.runelite.api.events.GameTick;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.config.ConfigManager;
@@ -166,6 +167,24 @@ public class ViciousBarsPlugin extends Plugin
 			dockPos, localX, localY, mapContainer.getCanvasLocation());
 
 		mapContainer.setForcedPosition(localX, localY);
+	}
+
+	// TEMPORARY - diagnostic only. Logs MAP_CONTAINER's real fields every
+	// tick regardless of our own code, so a manual real Alt+drag of the
+	// minimap (with Dock minimap turned OFF, so our own writes don't
+	// interfere) shows exactly what actually changes during a genuine drag.
+	@Subscribe
+	public void onGameTick(GameTick event)
+	{
+		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
+		if (mapContainer == null)
+		{
+			return;
+		}
+		log.debug("minimap tick: originalX={} originalY={} xMode={} yMode={} canvasLocation={}",
+			mapContainer.getOriginalX(), mapContainer.getOriginalY(),
+			mapContainer.getXPositionMode(), mapContainer.getYPositionMode(),
+			mapContainer.getCanvasLocation());
 	}
 
 	private void restoreMapContainer()
