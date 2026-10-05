@@ -148,12 +148,27 @@ public class ViciousBarsPlugin extends Plugin
 	@Subscribe
 	public void onBeforeRender(BeforeRender event)
 	{
-		Point target = currentAlignTarget();
+		Point[] targets = {
+			hpBarOverlay.getLastIconCanvasCenter(),
+			prayerBarOverlay.getLastIconCanvasCenter(),
+			specBarOverlay.getLastIconCanvasCenter(),
+			runBarOverlay.getLastIconCanvasCenter(),
+		};
 
 		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
 		Widget orbsContainer = client.getWidget(InterfaceID.ToplevelPreEoc.ORBS);
 
-		if (target == null || mapContainer == null || orbsContainer == null)
+		boolean anyTarget = false;
+		for (Point p : targets)
+		{
+			if (p != null)
+			{
+				anyTarget = true;
+				break;
+			}
+		}
+
+		if (!anyTarget || mapContainer == null || orbsContainer == null)
 		{
 			restoreContainerSizes();
 			return;
@@ -168,9 +183,22 @@ public class ViciousBarsPlugin extends Plugin
 			containersExpanded = true;
 		}
 
+		// Take the max across every bar currently targeting a position, not
+		// just the first one found - two Aligned bars in different dock
+		// slots need the container to reach the FARTHER of the two, not
+		// whichever bar's overlay happened to render first this frame.
 		net.runelite.api.Point mapCanvas = mapContainer.getCanvasLocation();
-		int neededWidth = Math.max(savedMapContainerWidth, target.x - mapCanvas.getX() + CONTAINER_MARGIN);
-		int neededHeight = Math.max(savedMapContainerHeight, target.y - mapCanvas.getY() + CONTAINER_MARGIN);
+		int neededWidth = savedMapContainerWidth;
+		int neededHeight = savedMapContainerHeight;
+		for (Point p : targets)
+		{
+			if (p == null)
+			{
+				continue;
+			}
+			neededWidth = Math.max(neededWidth, p.x - mapCanvas.getX() + CONTAINER_MARGIN);
+			neededHeight = Math.max(neededHeight, p.y - mapCanvas.getY() + CONTAINER_MARGIN);
+		}
 
 		boolean changed = false;
 		if (mapContainer.getOriginalWidth() != neededWidth)
@@ -205,26 +233,6 @@ public class ViciousBarsPlugin extends Plugin
 			mapContainer.revalidate();
 			orbsContainer.revalidate();
 		}
-	}
-
-	private Point currentAlignTarget()
-	{
-		Point p = hpBarOverlay.getLastIconCanvasCenter();
-		if (p != null)
-		{
-			return p;
-		}
-		p = prayerBarOverlay.getLastIconCanvasCenter();
-		if (p != null)
-		{
-			return p;
-		}
-		p = specBarOverlay.getLastIconCanvasCenter();
-		if (p != null)
-		{
-			return p;
-		}
-		return runBarOverlay.getLastIconCanvasCenter();
 	}
 
 	private void restoreContainerSizes()
