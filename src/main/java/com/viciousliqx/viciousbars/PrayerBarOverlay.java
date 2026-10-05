@@ -1,14 +1,15 @@
 package com.viciousliqx.viciousbars;
 
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.Skill;
 import net.runelite.api.Varbits;
 import net.runelite.api.events.GameTick;
-import net.runelite.api.gameval.InterfaceID;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.game.SkillIconManager;
 
 @Singleton
 class PrayerBarOverlay extends VitalBarOverlay
@@ -23,6 +24,7 @@ class PrayerBarOverlay extends VitalBarOverlay
 
 	private final Client client;
 	private final ViciousBarsConfig config;
+	private final SkillIconManager skillIconManager;
 	private final OpponentTracker opponentTracker;
 
 	// Metronome timing state - GameTick is the only authoritative signal we
@@ -35,11 +37,12 @@ class PrayerBarOverlay extends VitalBarOverlay
 	private long flashUntilNanos;
 
 	@Inject
-	private PrayerBarOverlay(Client client, ViciousBarsConfig config, OpponentTracker opponentTracker)
+	private PrayerBarOverlay(Client client, ViciousBarsConfig config, SkillIconManager skillIconManager, OpponentTracker opponentTracker)
 	{
 		super(client);
 		this.client = client;
 		this.config = config;
+		this.skillIconManager = skillIconManager;
 		this.opponentTracker = opponentTracker;
 	}
 
@@ -180,6 +183,32 @@ class PrayerBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected boolean isShowIcon()
+	{
+		return config.prayerShowIcon();
+	}
+
+	@Override
+	protected BufferedImage getIcon()
+	{
+		// No orb icon sprite exists for Prayer (confirmed against RuneLite's own
+		// Status Bars source, which falls back to the skill icon for the same reason).
+		return skillIconManager.getSkillImage(Skill.PRAYER, true);
+	}
+
+	@Override
+	protected int getIconSize()
+	{
+		return config.prayerIconSize();
+	}
+
+	@Override
+	protected boolean isShowCounter()
+	{
+		return config.prayerShowCounter();
+	}
+
+	@Override
 	protected Justification getJustification()
 	{
 		return config.prayerJustification();
@@ -189,6 +218,12 @@ class PrayerBarOverlay extends VitalBarOverlay
 	protected int getContentOffset()
 	{
 		return config.prayerContentOffset();
+	}
+
+	@Override
+	protected boolean isReverseContent()
+	{
+		return config.prayerReverseContent();
 	}
 
 	@Override
@@ -219,11 +254,5 @@ class PrayerBarOverlay extends VitalBarOverlay
 	protected int getOpacity()
 	{
 		return config.prayerOpacity();
-	}
-
-	@Override
-	protected int getOrbWidgetComponent()
-	{
-		return InterfaceID.Orbs.ORB_PRAYER;
 	}
 }
