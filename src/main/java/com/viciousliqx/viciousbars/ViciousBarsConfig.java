@@ -174,7 +174,7 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "hpOrbMode",
 		name = "Orb mode",
-		description = "How this bar relates to the vanilla Hitpoints orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing. Aligned: real orb moved to sit on this bar's icon spot (Docked only).",
+		description = "How this bar relates to the vanilla Hitpoints orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing.",
 		section = hpSection,
 		position = 12
 	)
@@ -481,7 +481,7 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "prayerOrbMode",
 		name = "Orb mode",
-		description = "How this bar relates to the vanilla Prayer orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing. Aligned: real orb moved to sit on this bar's icon spot (Docked only).",
+		description = "How this bar relates to the vanilla Prayer orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing.",
 		section = prayerSection,
 		position = 14
 	)
@@ -789,7 +789,7 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "specOrbMode",
 		name = "Orb mode",
-		description = "How this bar relates to the vanilla Special Attack orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing. Aligned: real orb moved to sit on this bar's icon spot (Docked only).",
+		description = "How this bar relates to the vanilla Special Attack orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing.",
 		section = specSection,
 		position = 12
 	)
@@ -1084,7 +1084,7 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "runOrbMode",
 		name = "Orb mode",
-		description = "How this bar relates to the vanilla Run Energy orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing. Aligned: real orb moved to sit on this bar's icon spot (Docked only).",
+		description = "How this bar relates to the vanilla Run Energy orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing.",
 		section = runSection,
 		position = 11
 	)
