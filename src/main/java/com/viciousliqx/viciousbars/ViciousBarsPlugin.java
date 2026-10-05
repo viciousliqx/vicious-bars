@@ -199,19 +199,14 @@ public class ViciousBarsPlugin extends Plugin
 			return;
 		}
 
-		// Walk up from the orb's real parent to MAP_CONTAINER, growing each
-		// ancestor in turn. Capped at a handful of levels as a sanity bound
-		// in case MAP_CONTAINER isn't actually in this chain for some reason.
-		Widget current = orbParent;
-		for (int depth = 0; current != null && depth < 6; depth++)
-		{
-			growToCoverTargets(current, barTargets);
-			if (current.getId() == InterfaceID.ToplevelPreEoc.MAP_CONTAINER)
-			{
-				break;
-			}
-			current = current.getParent();
-		}
+		// Only the orb's own direct parent - NOT the whole ancestor chain up
+		// to MAP_CONTAINER. Growing multiple interdependent ancestors in the
+		// same pass caused a visible back-and-forth "spasm" in testing: each
+		// level's live canvas location (read fresh every frame, by design)
+		// shifts as a RESULT of its neighbor's own growth, so two or more
+		// levels could end up fighting each other frame to frame. A single
+		// widget has nothing else in the chain to fight with.
+		growToCoverTargets(orbParent, barTargets);
 	}
 
 	/**
