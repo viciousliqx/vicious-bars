@@ -185,6 +185,14 @@ public class ViciousBarsPlugin extends Plugin
 			mapContainer.getOriginalX(), mapContainer.getOriginalY(),
 			mapContainer.getXPositionMode(), mapContainer.getYPositionMode(),
 			mapContainer.getCanvasLocation());
+
+		Widget parent = mapContainer.getParent();
+		if (parent != null)
+		{
+			log.debug("minimap tick parent: id={} originalX={} originalY={} xMode={} yMode={} canvasLocation={}",
+				parent.getId(), parent.getOriginalX(), parent.getOriginalY(),
+				parent.getXPositionMode(), parent.getYPositionMode(), parent.getCanvasLocation());
+		}
 	}
 
 	private void restoreMapContainer()
