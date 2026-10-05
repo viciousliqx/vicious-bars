@@ -1,7 +1,6 @@
 package com.viciousliqx.viciousbars;
 
 import java.awt.Color;
-import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
@@ -9,9 +8,7 @@ import net.runelite.api.MenuEntry;
 import net.runelite.api.Skill;
 import net.runelite.api.VarPlayer;
 import net.runelite.api.gameval.InterfaceID;
-import net.runelite.api.gameval.SpriteID;
 import net.runelite.api.widgets.Widget;
-import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.itemstats.Effect;
 import net.runelite.client.plugins.itemstats.ItemStatChangesService;
 import net.runelite.client.plugins.itemstats.StatChange;
@@ -26,16 +23,14 @@ class HpBarOverlay extends VitalBarOverlay
 
 	private final Client client;
 	private final ViciousBarsConfig config;
-	private final SpriteManager spriteManager;
 	private final ItemStatChangesService itemStatService;
 
 	@Inject
-	private HpBarOverlay(Client client, ViciousBarsConfig config, SpriteManager spriteManager, ItemStatChangesService itemStatService)
+	private HpBarOverlay(Client client, ViciousBarsConfig config, ItemStatChangesService itemStatService)
 	{
 		super(client);
 		this.client = client;
 		this.config = config;
-		this.spriteManager = spriteManager;
 		this.itemStatService = itemStatService;
 	}
 
@@ -119,30 +114,6 @@ class HpBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
-	protected boolean isShowIcon()
-	{
-		return config.hpShowIcon();
-	}
-
-	@Override
-	protected BufferedImage getIcon()
-	{
-		return spriteManager.getSprite(SpriteID.OrbIcon.HITPOINTS, 0);
-	}
-
-	@Override
-	protected int getIconSize()
-	{
-		return config.hpIconSize();
-	}
-
-	@Override
-	protected boolean isShowCounter()
-	{
-		return config.hpShowCounter();
-	}
-
-	@Override
 	protected Justification getJustification()
 	{
 		return config.hpJustification();
@@ -152,12 +123,6 @@ class HpBarOverlay extends VitalBarOverlay
 	protected int getContentOffset()
 	{
 		return config.hpContentOffset();
-	}
-
-	@Override
-	protected boolean isReverseContent()
-	{
-		return config.hpReverseContent();
 	}
 
 	@Override
@@ -188,12 +153,6 @@ class HpBarOverlay extends VitalBarOverlay
 	protected int getOpacity()
 	{
 		return config.hpOpacity();
-	}
-
-	@Override
-	protected OrbMode getOrbMode()
-	{
-		return config.hpOrbMode();
 	}
 
 	@Override

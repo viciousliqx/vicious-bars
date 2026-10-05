@@ -215,10 +215,4 @@ class EnemyHpBarOverlay extends VitalBarOverlay
 	{
 		return config.enemyHpOpacity();
 	}
-
-	@Override
-	protected OrbMode getOrbMode()
-	{
-		return OrbMode.VANILLA;
-	}
 }

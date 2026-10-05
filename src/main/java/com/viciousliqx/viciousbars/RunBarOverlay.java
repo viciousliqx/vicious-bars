@@ -1,13 +1,10 @@
 package com.viciousliqx.viciousbars;
 
 import java.awt.Color;
-import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.gameval.InterfaceID;
-import net.runelite.api.gameval.SpriteID;
-import net.runelite.client.game.SpriteManager;
 
 @Singleton
 class RunBarOverlay extends VitalBarOverlay
@@ -20,15 +17,13 @@ class RunBarOverlay extends VitalBarOverlay
 
 	private final Client client;
 	private final ViciousBarsConfig config;
-	private final SpriteManager spriteManager;
 
 	@Inject
-	private RunBarOverlay(Client client, ViciousBarsConfig config, SpriteManager spriteManager)
+	private RunBarOverlay(Client client, ViciousBarsConfig config)
 	{
 		super(client);
 		this.client = client;
 		this.config = config;
-		this.spriteManager = spriteManager;
 	}
 
 	@Override
@@ -123,32 +118,6 @@ class RunBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
-	protected boolean isShowIcon()
-	{
-		return config.runShowIcon();
-	}
-
-	@Override
-	protected BufferedImage getIcon()
-	{
-		// No dedicated "run" orb icon - core Status Bars uses the walk/boot icon
-		// for this bar too, so we match that exact choice.
-		return spriteManager.getSprite(SpriteID.OrbIcon.WALK, 0);
-	}
-
-	@Override
-	protected int getIconSize()
-	{
-		return config.runIconSize();
-	}
-
-	@Override
-	protected boolean isShowCounter()
-	{
-		return config.runShowCounter();
-	}
-
-	@Override
 	protected Justification getJustification()
 	{
 		return config.runJustification();
@@ -158,12 +127,6 @@ class RunBarOverlay extends VitalBarOverlay
 	protected int getContentOffset()
 	{
 		return config.runContentOffset();
-	}
-
-	@Override
-	protected boolean isReverseContent()
-	{
-		return config.runReverseContent();
 	}
 
 	@Override
@@ -194,12 +157,6 @@ class RunBarOverlay extends VitalBarOverlay
 	protected int getOpacity()
 	{
 		return config.runOpacity();
-	}
-
-	@Override
-	protected OrbMode getOrbMode()
-	{
-		return config.runOrbMode();
 	}
 
 	@Override

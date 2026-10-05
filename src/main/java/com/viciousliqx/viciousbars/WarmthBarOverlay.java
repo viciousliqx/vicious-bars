@@ -210,10 +210,4 @@ class WarmthBarOverlay extends VitalBarOverlay
 	{
 		return config.warmthOpacity();
 	}
-
-	@Override
-	protected OrbMode getOrbMode()
-	{
-		return OrbMode.VANILLA;
-	}
 }

@@ -172,58 +172,9 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "hpOrbMode",
-		name = "Orb mode",
-		description = "How this bar relates to the vanilla Hitpoints orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing. Aligned: real orb moved to sit on this bar's icon spot (Docked only).",
-		section = hpSection,
-		position = 12
-	)
-	default OrbMode hpOrbMode()
-	{
-		return OrbMode.VANILLA;
-	}
-
-	@ConfigItem(
-		keyName = "hpShowIcon",
-		name = "Show icon",
-		description = "Show the Hitpoints orb icon on the bar.",
-		section = hpSection,
-		position = 13
-	)
-	default boolean hpShowIcon()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "hpIconSize",
-		name = "Icon size",
-		description = "Pixel size (width and height) of the icon on the bar.",
-		section = hpSection,
-		position = 14
-	)
-	@Range(min = 1)
-	default int hpIconSize()
-	{
-		return 18;
-	}
-
-	@ConfigItem(
-		keyName = "hpShowCounter",
-		name = "Show counter",
-		description = "Show the current Hitpoints value as text on the bar.",
-		section = hpSection,
-		position = 15
-	)
-	default boolean hpShowCounter()
-	{
-		return true;
-	}
-
-	@ConfigItem(
 		keyName = "hpJustification",
 		name = "Content justification",
-		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
+		description = "Where the real Hitpoints orb sits along the bar (Docked only) - it's the bar's label now. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = hpSection,
 		position = 16
 	)
@@ -235,25 +186,13 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "hpContentOffset",
 		name = "Content offset",
-		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
+		description = "Nudges the orb along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
 		section = hpSection,
 		position = 17
 	)
 	default int hpContentOffset()
 	{
 		return 0;
-	}
-
-	@ConfigItem(
-		keyName = "hpReverseContent",
-		name = "Reverse content order",
-		description = "Draw the counter before the icon (counter above icon on a vertical bar, counter left of icon on a horizontal bar) instead of the default icon-then-counter.",
-		section = hpSection,
-		position = 18
-	)
-	default boolean hpReverseContent()
-	{
-		return false;
 	}
 
 	@ConfigItem(
@@ -479,58 +418,9 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "prayerOrbMode",
-		name = "Orb mode",
-		description = "How this bar relates to the vanilla Prayer orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing. Aligned: real orb moved to sit on this bar's icon spot (Docked only).",
-		section = prayerSection,
-		position = 14
-	)
-	default OrbMode prayerOrbMode()
-	{
-		return OrbMode.VANILLA;
-	}
-
-	@ConfigItem(
-		keyName = "prayerShowIcon",
-		name = "Show icon",
-		description = "Show the Prayer orb icon on the bar.",
-		section = prayerSection,
-		position = 15
-	)
-	default boolean prayerShowIcon()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "prayerIconSize",
-		name = "Icon size",
-		description = "Pixel size (width and height) of the icon on the bar.",
-		section = prayerSection,
-		position = 16
-	)
-	@Range(min = 1)
-	default int prayerIconSize()
-	{
-		return 18;
-	}
-
-	@ConfigItem(
-		keyName = "prayerShowCounter",
-		name = "Show counter",
-		description = "Show the current Prayer value as text on the bar.",
-		section = prayerSection,
-		position = 17
-	)
-	default boolean prayerShowCounter()
-	{
-		return true;
-	}
-
-	@ConfigItem(
 		keyName = "prayerJustification",
 		name = "Content justification",
-		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
+		description = "Where the real Prayer orb sits along the bar (Docked only) - it's the bar's label now. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = prayerSection,
 		position = 18
 	)
@@ -542,25 +432,13 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "prayerContentOffset",
 		name = "Content offset",
-		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
+		description = "Nudges the orb along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
 		section = prayerSection,
 		position = 19
 	)
 	default int prayerContentOffset()
 	{
 		return 0;
-	}
-
-	@ConfigItem(
-		keyName = "prayerReverseContent",
-		name = "Reverse content order",
-		description = "Draw the counter before the icon (counter above icon on a vertical bar, counter left of icon on a horizontal bar) instead of the default icon-then-counter.",
-		section = prayerSection,
-		position = 20
-	)
-	default boolean prayerReverseContent()
-	{
-		return false;
 	}
 
 	@ConfigItem(
@@ -787,58 +665,9 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "specOrbMode",
-		name = "Orb mode",
-		description = "How this bar relates to the vanilla Special Attack orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing. Aligned: real orb moved to sit on this bar's icon spot (Docked only).",
-		section = specSection,
-		position = 12
-	)
-	default OrbMode specOrbMode()
-	{
-		return OrbMode.VANILLA;
-	}
-
-	@ConfigItem(
-		keyName = "specShowIcon",
-		name = "Show icon",
-		description = "Show the Special Attack orb icon on the bar.",
-		section = specSection,
-		position = 13
-	)
-	default boolean specShowIcon()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "specIconSize",
-		name = "Icon size",
-		description = "Pixel size (width and height) of the icon on the bar.",
-		section = specSection,
-		position = 14
-	)
-	@Range(min = 1)
-	default int specIconSize()
-	{
-		return 18;
-	}
-
-	@ConfigItem(
-		keyName = "specShowCounter",
-		name = "Show counter",
-		description = "Show the current Special Attack value as text on the bar.",
-		section = specSection,
-		position = 15
-	)
-	default boolean specShowCounter()
-	{
-		return true;
-	}
-
-	@ConfigItem(
 		keyName = "specJustification",
 		name = "Content justification",
-		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
+		description = "Where the real Special Attack orb sits along the bar (Docked only) - it's the bar's label now. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = specSection,
 		position = 16
 	)
@@ -850,25 +679,13 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "specContentOffset",
 		name = "Content offset",
-		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
+		description = "Nudges the orb along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
 		section = specSection,
 		position = 17
 	)
 	default int specContentOffset()
 	{
 		return 0;
-	}
-
-	@ConfigItem(
-		keyName = "specReverseContent",
-		name = "Reverse content order",
-		description = "Draw the counter before the icon (counter above icon on a vertical bar, counter left of icon on a horizontal bar) instead of the default icon-then-counter.",
-		section = specSection,
-		position = 18
-	)
-	default boolean specReverseContent()
-	{
-		return false;
 	}
 
 	@ConfigItem(
@@ -1082,58 +899,9 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "runOrbMode",
-		name = "Orb mode",
-		description = "How this bar relates to the vanilla Run Energy orb. Vanilla: orb untouched. Merged: real orb hidden while this bar is showing. Aligned: real orb moved to sit on this bar's icon spot (Docked only).",
-		section = runSection,
-		position = 11
-	)
-	default OrbMode runOrbMode()
-	{
-		return OrbMode.VANILLA;
-	}
-
-	@ConfigItem(
-		keyName = "runShowIcon",
-		name = "Show icon",
-		description = "Show the Run Energy orb icon on the bar.",
-		section = runSection,
-		position = 12
-	)
-	default boolean runShowIcon()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "runIconSize",
-		name = "Icon size",
-		description = "Pixel size (width and height) of the icon on the bar.",
-		section = runSection,
-		position = 13
-	)
-	@Range(min = 1)
-	default int runIconSize()
-	{
-		return 18;
-	}
-
-	@ConfigItem(
-		keyName = "runShowCounter",
-		name = "Show counter",
-		description = "Show the current Run Energy value as text on the bar.",
-		section = runSection,
-		position = 14
-	)
-	default boolean runShowCounter()
-	{
-		return true;
-	}
-
-	@ConfigItem(
 		keyName = "runJustification",
 		name = "Content justification",
-		description = "Where the icon/counter sit along the bar. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
+		description = "Where the real Run Energy orb sits along the bar (Docked only) - it's the bar's label now. Start = left (horizontal) or top (vertical). End = right (horizontal) or bottom (vertical).",
 		section = runSection,
 		position = 15
 	)
@@ -1145,25 +913,13 @@ public interface ViciousBarsConfig extends Config
 	@ConfigItem(
 		keyName = "runContentOffset",
 		name = "Content offset",
-		description = "Nudges the icon/counter along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
+		description = "Nudges the orb along the bar by this many pixels - positive moves toward the far end, negative moves back toward the near end. For small fixes without having to change Content justification.",
 		section = runSection,
 		position = 16
 	)
 	default int runContentOffset()
 	{
 		return 0;
-	}
-
-	@ConfigItem(
-		keyName = "runReverseContent",
-		name = "Reverse content order",
-		description = "Draw the counter before the icon (counter above icon on a vertical bar, counter left of icon on a horizontal bar) instead of the default icon-then-counter.",
-		section = runSection,
-		position = 17
-	)
-	default boolean runReverseContent()
-	{
-		return false;
 	}
 
 	@ConfigItem(

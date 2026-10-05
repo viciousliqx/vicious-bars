@@ -22,21 +22,22 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  * computed by {@link PanelDock} and can't be dragged. Subclasses supply the
  * live data (current/max, color, icon, styling) for one specific bar.
  *
- * Orb mode (HP/Prayer/Spec/Run) only ever affects whether the real vanilla
- * orb is shown/hidden ({@link #getOrbWidgetComponent()} /
- * {@link #syncOrbState()}) or repositioned ({@link #alignRealOrb(Point)}) -
- * bars have no click-through functionality. RuneLite's own Hub reviewers
- * confirmed real-time via Discord that replicating a real widget's action
- * from a plugin-drawn element - by any mechanism, not just
+ * Bars with a real vanilla orb equivalent (HP/Prayer/Spec/Run) always pull
+ * that real orb onto themselves ({@link #getOrbWidgetComponent()} /
+ * {@link #alignRealOrb(Point)}) when Docked and rendering - the orb is part
+ * of the bar's design, not a configurable choice. This is a position-only
+ * move, not a new action: the orb is never hidden, resized, or given a new
+ * click behavior, it's still the same real, fully clickable orb, just
+ * relocated - the same technique the Hub-accepted Orb Mover plugin already
+ * uses. Bars have no click-through functionality of their own; RuneLite's
+ * own Hub reviewers confirmed real-time via Discord that replicating a real
+ * widget's action from a plugin-drawn element - by any mechanism, not just
  * client.menuAction() - counts as "adding new menu entries which cause
  * actions to be sent to the server" and isn't allowed, after a full night's
  * investigation found no compliant way to do it (see vicious_bars_dev_talk.txt
- * for the full story). Repositioning the orb (ALIGNED mode) is a different
- * thing entirely - the orb is never given a new action, it's still the same
- * real orb doing the same real thing, just moved, the same technique the
- * Hub-accepted Orb Mover plugin already uses. Only supported for FIXED
- * placement for now - a FLOATING bar has no single screen position to park
- * the orb at.
+ * for the full story). Only supported for FIXED placement for now - a
+ * FLOATING bar has no single screen position to park the orb at, so its
+ * real orb just stays wherever vanilla puts it.
  */
 public abstract class VitalBarOverlay extends Overlay
 {
@@ -70,18 +71,18 @@ public abstract class VitalBarOverlay extends Overlay
 
 	private final Client client;
 
-	// Saved once per bar, the first time this bar's orb gets moved for
-	// ALIGNED mode - same restore-on-the-way-out shape as Orb Mover's own
-	// RestoreEntry, just scoped to a single orb instead of a list of them.
+	// Saved once per bar, the first time this bar's orb gets moved onto it -
+	// same restore-on-the-way-out shape as Orb Mover's own RestoreEntry,
+	// just scoped to a single orb instead of a list of them.
 	private boolean orbPositionSaved;
 	private int savedOrbX;
 	private int savedOrbY;
 	private int savedOrbXMode;
 	private int savedOrbYMode;
 
-	// This frame's real canvas-space orb target under ALIGNED mode, or null -
-	// read by ViciousBarsPlugin to size the shared ORBS/MAP_CONTAINER
-	// widgets large enough for alignRealOrb()'s own clamp to actually reach.
+	// This frame's real canvas-space orb target, or null - read by
+	// ViciousBarsPlugin to size the shared ORBS/MAP_CONTAINER widgets large
+	// enough for alignRealOrb()'s own clamp to actually reach.
 	private Point lastIconCanvasCenter;
 
 	protected VitalBarOverlay(Client client)
@@ -112,23 +113,47 @@ public abstract class VitalBarOverlay extends Overlay
 
 	protected abstract Color getColor();
 
-	protected abstract boolean isShowIcon();
+	// isShowIcon/getIcon/getIconSize/isShowCounter/isReverseContent have
+	// concrete no-op defaults rather than being abstract - bars with a real
+	// orb (HP/Prayer/Spec/Run) don't draw their own icon/counter at all
+	// anymore (see render()'s orb-vs-content branch below), so they simply
+	// don't override these; only Warmth/Enemy HP (no orb) do.
 
-	/** Null if disabled, unavailable, or not yet loaded. */
-	protected abstract BufferedImage getIcon();
+	/** True to draw this bar's own icon. No-op (always false) for bars with a real orb - the orb itself is the icon. */
+	protected boolean isShowIcon()
+	{
+		return false;
+	}
 
-	/** Pixel size (width and height) the icon is drawn at. */
-	protected abstract int getIconSize();
+	/** Null if disabled, unavailable, or not yet loaded. No-op for bars with a real orb. */
+	protected BufferedImage getIcon()
+	{
+		return null;
+	}
 
-	protected abstract boolean isShowCounter();
+	/** Pixel size (width and height) the icon is drawn at. No-op for bars with a real orb - its own real size is used instead. */
+	protected int getIconSize()
+	{
+		return 18;
+	}
 
+	/** True to draw this bar's own counter text. No-op (always false) for bars with a real orb - the orb already shows its own number. */
+	protected boolean isShowCounter()
+	{
+		return false;
+	}
+
+	/** Where the content cluster sits along the bar - the drawn icon/counter for bars without a real orb, or the orb itself for bars with one. */
 	protected abstract Justification getJustification();
 
-	/** Nudges the icon/counter cluster along the bar by this many pixels - positive toward the far end, negative toward the near end. */
+	/** Nudges the content cluster along the bar by this many pixels - positive toward the far end, negative toward the near end. */
 	protected abstract int getContentOffset();
 
-	/** True to draw the counter before the icon (reversed stacking order) instead of the default icon-then-counter. */
-	protected abstract boolean isReverseContent();
+	/** True to draw the counter before the icon (reversed stacking order) instead of the default icon-then-counter. No-op for bars with a real orb. */
+	protected boolean isReverseContent()
+	{
+		return false;
+	}
 
 	protected abstract Orientation getOrientation();
 
@@ -141,9 +166,6 @@ public abstract class VitalBarOverlay extends Overlay
 
 	/** 0-100. Scales both the background and the fill color's alpha. */
 	protected abstract int getOpacity();
-
-	/** VANILLA for bars with no orb (Warmth, Enemy HP). */
-	protected abstract OrbMode getOrbMode();
 
 	// Metronome is Prayer-only for now - concrete no-op defaults here rather
 	// than forcing the other 5 bars to override methods they'll never use.
@@ -214,46 +236,10 @@ public abstract class VitalBarOverlay extends Overlay
 		return Integer.toString(current);
 	}
 
-	/** The real orb's own container widget - hidden while Orb mode is Merged. -1 for bars with no orb. */
+	/** The real orb's own widget component to pull onto this bar. -1 for bars with no orb (Warmth, Enemy HP). */
 	protected int getOrbWidgetComponent()
 	{
 		return -1;
-	}
-
-	/** Unconditionally un-hides the real orb, regardless of Orb mode - called on plugin shutdown so we never leave a vanilla orb hidden behind us. No-op for bars with no orb. */
-	void unhideRealOrb()
-	{
-		int component = getOrbWidgetComponent();
-		if (component < 0)
-		{
-			return;
-		}
-		Widget orb = client.getWidget(component);
-		if (orb != null)
-		{
-			orb.setHidden(false);
-		}
-	}
-
-	/**
-	 * Hides the real orb's whole container ({@link #getOrbWidgetComponent()})
-	 * while this bar is rendering with Orb mode Merged; shown otherwise. No
-	 * bar currently needs to override this - it's protected rather than
-	 * private only so a future bar with different needs could. No-op for
-	 * bars with no orb.
-	 */
-	protected void syncOrbState()
-	{
-		int component = getOrbWidgetComponent();
-		if (component < 0)
-		{
-			return;
-		}
-		Widget orb = client.getWidget(component);
-		if (orb != null)
-		{
-			orb.setHidden(shouldRender() && getOrbMode() == OrbMode.MERGED);
-		}
 	}
 
 	/**
@@ -326,9 +312,10 @@ public abstract class VitalBarOverlay extends Overlay
 	}
 
 	/**
-	 * Restores the real orb to wherever it was before ALIGNED first moved
-	 * it. Safe to call unconditionally every frame mode isn't ALIGNED - a
-	 * no-op once nothing's saved. Also called unconditionally from
+	 * Restores the real orb to wherever it was before this bar first moved
+	 * it. Safe to call unconditionally whenever this bar isn't currently
+	 * aligning its orb (not Docked, not rendering) - a no-op once nothing's
+	 * saved. Also called unconditionally from
 	 * {@link ViciousBarsPlugin#shutDown()} so a moved orb never gets left
 	 * behind if the plugin stops.
 	 */
@@ -354,27 +341,24 @@ public abstract class VitalBarOverlay extends Overlay
 		orbPositionSaved = false;
 	}
 
-	/** This frame's real canvas-space orb target under ALIGNED mode, or null if not applicable this frame (mode isn't Aligned, bar isn't Docked, or isn't rendering). */
+	/** This frame's real canvas-space orb target, or null if not applicable this frame (no orb, bar isn't Docked, or isn't rendering). */
 	Point getLastIconCanvasCenter()
 	{
 		return lastIconCanvasCenter;
 	}
 
-	/** The icon's local top-left anchor point, independent of whether an icon/counter are actually shown - a stable "icon slot" ALIGNED mode can target regardless of Show icon/Show counter. */
-	private Point iconAnchor(int width, int height, Orientation orientation)
+	/** The content cluster's local top-left anchor point for a slot of the given size - the drawn icon for bars without a real orb, or the real orb's own size for bars with one. */
+	private Point contentAnchor(int width, int height, Orientation orientation, int slotLength, int slotThickness)
 	{
-		int iconSize = getIconSize();
-		int along = along(getJustification(), orientation == Orientation.VERTICAL ? height : width, iconSize) + getContentOffset();
+		int along = along(getJustification(), orientation == Orientation.VERTICAL ? height : width, slotLength) + getContentOffset();
 		return orientation == Orientation.VERTICAL
-			? new Point((width - iconSize) / 2, along)
-			: new Point(along, (height - iconSize) / 2);
+			? new Point((width - slotThickness) / 2, along)
+			: new Point(along, (height - slotThickness) / 2);
 	}
 
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		syncOrbState();
-
 		if (!shouldRender())
 		{
 			lastIconCanvasCenter = null;
@@ -403,10 +387,10 @@ public abstract class VitalBarOverlay extends Overlay
 		Orientation orientation;
 		int length = getLength();
 		// Only set for FIXED placement - the real canvas-space top-left this
-		// bar is drawn at. ALIGNED mode needs this to know where on screen to
-		// park the orb; a FLOATING bar has no equivalent single fixed point
-		// (the overlay renderer translates the graphics instead of handing
-		// us a coordinate), so ALIGNED is a no-op there for now.
+		// bar is drawn at. Pulling the real orb onto this bar needs this to
+		// know where on screen to park it; a FLOATING bar has no equivalent
+		// single fixed point (the overlay renderer translates the graphics
+		// instead of handing us a coordinate), so its orb just stays put.
 		Point fixedPos = null;
 		if (placementMode == PlacementMode.FIXED)
 		{
@@ -471,19 +455,36 @@ public abstract class VitalBarOverlay extends Overlay
 		// Icon + counter draw last, on top of the frame AND the vial, sized
 		// against the bar's full outer footprint rather than the vial's
 		// inset interior - a label pinned to the front of the whole
-		// assembly, same as a real orb's icon sitting on its meter, not
-		// squeezed inside the fill. Same returned Dimension either way, so
-		// PanelDock and dock-slot stacking never see a difference.
+		// assembly. Only for bars with no real orb (Warmth, Enemy HP) - a
+		// bar with one pulls the real orb onto itself instead (below), and
+		// the orb already shows its own icon and number, so drawing our own
+		// on top would just be a redundant second label. Same returned
+		// Dimension either way, so PanelDock and dock-slot stacking never
+		// see a difference.
 		int max = Math.max(getMax(), 1);
 		int current = Math.max(0, Math.min(getCurrent(), max));
-		Color iconHighlight = resolveIconHighlight();
-		drawIconAndCounter(graphics, width, height, orientation, current, max, iconHighlight);
+		int orbComponent = getOrbWidgetComponent();
 
-		if (fixedPos != null && getOrbMode() == OrbMode.ALIGNED)
+		if (orbComponent < 0)
 		{
-			Point anchor = iconAnchor(width, height, orientation);
-			int iconSize = getIconSize();
-			lastIconCanvasCenter = new Point(fixedPos.x + anchor.x + iconSize / 2, fixedPos.y + anchor.y + iconSize / 2);
+			Color iconHighlight = resolveIconHighlight();
+			drawIconAndCounter(graphics, width, height, orientation, current, max, iconHighlight);
+		}
+
+		Widget orb = fixedPos != null && orbComponent >= 0 ? client.getWidget(orbComponent) : null;
+		if (orb != null)
+		{
+			// The orb is the label now - centered on whatever slot its own
+			// real size occupies, positioned along the bar the same way the
+			// old icon/counter cluster was (Content justification/offset),
+			// just sized to the orb's own real dimensions instead of a
+			// configured icon size.
+			int slotLength = orientation == Orientation.VERTICAL ? orb.getHeight() : orb.getWidth();
+			int slotThickness = orientation == Orientation.VERTICAL ? orb.getWidth() : orb.getHeight();
+			Point anchor = contentAnchor(width, height, orientation, slotLength, slotThickness);
+			int centerX = orientation == Orientation.VERTICAL ? anchor.x + slotThickness / 2 : anchor.x + slotLength / 2;
+			int centerY = orientation == Orientation.VERTICAL ? anchor.y + slotLength / 2 : anchor.y + slotThickness / 2;
+			lastIconCanvasCenter = new Point(fixedPos.x + centerX, fixedPos.y + centerY);
 			alignRealOrb(lastIconCanvasCenter);
 		}
 		else

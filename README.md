@@ -49,17 +49,21 @@ default), and Enemy Hitpoints (current target only, off by default).
   only ever actually shows through wherever the bar is empty - no separate clipping or
   geometry to configure, and Docked/Floating look identical
 
-### Orb modes (Hitpoints, Prayer, Special Attack, Run Energy)
+### Orbs (Hitpoints, Prayer, Special Attack, Run Energy)
 
-- **Vanilla** - the bar is a display-only readout; the real orb is untouched
-- **Merged** - the real orb is hidden while this bar is showing, so the bar is the only
-  thing on screen in its place
+The real vanilla orb is pulled onto the bar itself while Docked - it's part of the bar's
+design, not a separate toggle. It's still the same real, fully clickable orb underneath,
+just relocated: the same technique the Hub-accepted Orb Mover plugin already uses. Only
+works for Docked bars - a Floating bar has no single fixed screen position to park the
+orb at, so its real orb just stays in its vanilla spot.
 
-Bars are display-only - there's no click-through. We spent a long night trying (relocating
-the real orb widget, calling its bound script directly, several other angles) and RuneLite's
-own Hub reviewers confirmed directly that letting a plugin-drawn element trigger a real
-orb's action isn't allowed under Hub rules, regardless of the mechanism used to do it. See
-`vicious_bars_dev_talk.txt` for the full investigation if you're curious.
+Bars have no click-through functionality of their own, and never will - we spent a long
+night trying (relocating the real orb widget, calling its bound script directly, several
+other angles) and RuneLite's own Hub reviewers confirmed directly that letting a
+plugin-drawn element trigger a real orb's action isn't allowed under Hub rules, regardless
+of the mechanism used to do it. Moving the orb itself is a different thing entirely - it's
+never given a new action, just relocated. See `vicious_bars_dev_talk.txt` for the full
+investigation if you're curious.
 
 ### Prayer
 
