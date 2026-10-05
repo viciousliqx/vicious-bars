@@ -63,6 +63,10 @@ public class ViciousBarsPlugin extends Plugin
 	@Inject
 	private EnemyHpBarOverlay enemyHpBarOverlay;
 
+	// TEMPORARY - diagnostic only, see DebugWidgetBoundsOverlay's javadoc.
+	@Inject
+	private DebugWidgetBoundsOverlay debugWidgetBoundsOverlay;
+
 	// Experimental - see onBeforeRender()'s javadoc. Saved once, lazily, the
 	// first time the container actually gets moved.
 	private boolean mapContainerMoved;
@@ -84,6 +88,7 @@ public class ViciousBarsPlugin extends Plugin
 		overlayManager.add(runBarOverlay);
 		overlayManager.add(warmthBarOverlay);
 		overlayManager.add(enemyHpBarOverlay);
+		overlayManager.add(debugWidgetBoundsOverlay);
 
 		log.debug("Vicious Bars started!");
 	}
@@ -97,6 +102,7 @@ public class ViciousBarsPlugin extends Plugin
 		overlayManager.remove(runBarOverlay);
 		overlayManager.remove(warmthBarOverlay);
 		overlayManager.remove(enemyHpBarOverlay);
+		overlayManager.remove(debugWidgetBoundsOverlay);
 
 		eventBus.unregister(prayerBarOverlay);
 		eventBus.unregister(opponentTracker);
@@ -130,6 +136,8 @@ public class ViciousBarsPlugin extends Plugin
 	public void onBeforeRender(BeforeRender event)
 	{
 		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
+
+		log.debug("minimap dock check: enabled={} mapContainer={}", config.minimapDockEnabled(), mapContainer);
 
 		if (!config.minimapDockEnabled() || mapContainer == null)
 		{
