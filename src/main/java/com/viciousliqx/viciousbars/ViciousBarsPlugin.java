@@ -1,10 +1,16 @@
 package com.viciousliqx.viciousbars;
 
 import com.google.inject.Provides;
+import java.awt.Point;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.Client;
+import net.runelite.api.events.BeforeRender;
+import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.EventBus;
+import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -23,6 +29,14 @@ import net.runelite.client.ui.overlay.OverlayManager;
 @PluginDependency(ItemStatPlugin.class)
 public class ViciousBarsPlugin extends Plugin
 {
+	// TEMPORARY - how far past the target point to extend ORBS/MAP_CONTAINER,
+	// see onBeforeRender()'s javadoc. Not a config value - purely experimental
+	// while we figure out the real approach for this.
+	private static final int CONTAINER_MARGIN = 20;
+
+	@Inject
+	private Client client;
+
 	@Inject
 	private ViciousBarsConfig config;
 
@@ -59,11 +73,20 @@ public class ViciousBarsPlugin extends Plugin
 	@Inject
 	private DebugWidgetBoundsOverlay debugWidgetBoundsOverlay;
 
+	// TEMPORARY - see onBeforeRender()'s javadoc. Saved once, lazily, the
+	// first time either container actually gets grown.
+	private boolean containersExpanded;
+	private int savedMapContainerWidth;
+	private int savedMapContainerHeight;
+	private int savedOrbsWidth;
+	private int savedOrbsHeight;
+
 	@Override
 	protected void startUp() throws Exception
 	{
 		eventBus.register(opponentTracker);
 		eventBus.register(prayerBarOverlay);
+		eventBus.register(this);
 
 		overlayManager.add(hpBarOverlay);
 		overlayManager.add(prayerBarOverlay);
@@ -89,6 +112,7 @@ public class ViciousBarsPlugin extends Plugin
 
 		eventBus.unregister(prayerBarOverlay);
 		eventBus.unregister(opponentTracker);
+		eventBus.unregister(this);
 		opponentTracker.reset();
 
 		// Merged mode hides the real orb, Aligned mode moves it, while we're
@@ -104,7 +128,126 @@ public class ViciousBarsPlugin extends Plugin
 		specBarOverlay.restoreRealOrbPosition();
 		runBarOverlay.restoreRealOrbPosition();
 
+		restoreContainerSizes();
+
 		log.debug("Vicious Bars stopped!");
+	}
+
+	/**
+	 * TEMPORARY - experimental, see the in-game testing note in
+	 * vicious_bars_dev_talk.txt. Grows the real ORBS and MAP_CONTAINER
+	 * widgets' own bounding box (never the minimap/compass's own size or
+	 * position within it - those keep their current local offsets, so the
+	 * visible circle doesn't move) downward/rightward only as far as
+	 * whichever Aligned-mode bar currently needs reaching, using the same
+	 * setOriginalWidth/Height()+revalidate() pattern as everywhere else.
+	 * This is what lets {@link VitalBarOverlay#alignRealOrb} actually reach a
+	 * Docked bar that's far from the orb's vanilla position, instead of
+	 * stalling on the parent-bounds clamp the way it did before this existed.
+	 */
+	@Subscribe
+	public void onBeforeRender(BeforeRender event)
+	{
+		Point target = currentAlignTarget();
+
+		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
+		Widget orbsContainer = client.getWidget(InterfaceID.ToplevelPreEoc.ORBS);
+
+		if (target == null || mapContainer == null || orbsContainer == null)
+		{
+			restoreContainerSizes();
+			return;
+		}
+
+		if (!containersExpanded)
+		{
+			savedMapContainerWidth = mapContainer.getOriginalWidth();
+			savedMapContainerHeight = mapContainer.getOriginalHeight();
+			savedOrbsWidth = orbsContainer.getOriginalWidth();
+			savedOrbsHeight = orbsContainer.getOriginalHeight();
+			containersExpanded = true;
+		}
+
+		net.runelite.api.Point mapCanvas = mapContainer.getCanvasLocation();
+		int neededWidth = Math.max(savedMapContainerWidth, target.x - mapCanvas.getX() + CONTAINER_MARGIN);
+		int neededHeight = Math.max(savedMapContainerHeight, target.y - mapCanvas.getY() + CONTAINER_MARGIN);
+
+		boolean changed = false;
+		if (mapContainer.getOriginalWidth() != neededWidth)
+		{
+			mapContainer.setOriginalWidth(neededWidth);
+			changed = true;
+		}
+		if (mapContainer.getOriginalHeight() != neededHeight)
+		{
+			mapContainer.setOriginalHeight(neededHeight);
+			changed = true;
+		}
+
+		// ORBS is itself positioned at some local (x, y) inside MAP_CONTAINER
+		// - the space actually available to it is the container's new size
+		// minus that offset, not the container's full size.
+		int orbsNeededWidth = Math.max(savedOrbsWidth, neededWidth - orbsContainer.getOriginalX());
+		int orbsNeededHeight = Math.max(savedOrbsHeight, neededHeight - orbsContainer.getOriginalY());
+		if (orbsContainer.getOriginalWidth() != orbsNeededWidth)
+		{
+			orbsContainer.setOriginalWidth(orbsNeededWidth);
+			changed = true;
+		}
+		if (orbsContainer.getOriginalHeight() != orbsNeededHeight)
+		{
+			orbsContainer.setOriginalHeight(orbsNeededHeight);
+			changed = true;
+		}
+
+		if (changed)
+		{
+			mapContainer.revalidate();
+			orbsContainer.revalidate();
+		}
+	}
+
+	private Point currentAlignTarget()
+	{
+		Point p = hpBarOverlay.getLastIconCanvasCenter();
+		if (p != null)
+		{
+			return p;
+		}
+		p = prayerBarOverlay.getLastIconCanvasCenter();
+		if (p != null)
+		{
+			return p;
+		}
+		p = specBarOverlay.getLastIconCanvasCenter();
+		if (p != null)
+		{
+			return p;
+		}
+		return runBarOverlay.getLastIconCanvasCenter();
+	}
+
+	private void restoreContainerSizes()
+	{
+		if (!containersExpanded)
+		{
+			return;
+		}
+		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
+		if (mapContainer != null)
+		{
+			mapContainer.setOriginalWidth(savedMapContainerWidth);
+			mapContainer.setOriginalHeight(savedMapContainerHeight);
+			mapContainer.revalidate();
+		}
+		Widget orbsContainer = client.getWidget(InterfaceID.ToplevelPreEoc.ORBS);
+		if (orbsContainer != null)
+		{
+			orbsContainer.setOriginalWidth(savedOrbsWidth);
+			orbsContainer.setOriginalHeight(savedOrbsHeight);
+			orbsContainer.revalidate();
+		}
+		containersExpanded = false;
 	}
 
 	@Provides
