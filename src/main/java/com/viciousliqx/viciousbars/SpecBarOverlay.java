@@ -1,13 +1,11 @@
 package com.viciousliqx.viciousbars;
 
 import java.awt.Color;
-import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.VarPlayer;
-import net.runelite.api.gameval.SpriteID;
-import net.runelite.client.game.SpriteManager;
+import net.runelite.api.gameval.InterfaceID;
 
 @Singleton
 class SpecBarOverlay extends VitalBarOverlay
@@ -24,16 +22,14 @@ class SpecBarOverlay extends VitalBarOverlay
 
 	private final Client client;
 	private final ViciousBarsConfig config;
-	private final SpriteManager spriteManager;
 	private final OpponentTracker opponentTracker;
 
 	@Inject
-	private SpecBarOverlay(Client client, ViciousBarsConfig config, SpriteManager spriteManager, OpponentTracker opponentTracker)
+	private SpecBarOverlay(Client client, ViciousBarsConfig config, OpponentTracker opponentTracker)
 	{
 		super(client);
 		this.client = client;
 		this.config = config;
-		this.spriteManager = spriteManager;
 		this.opponentTracker = opponentTracker;
 	}
 
@@ -110,30 +106,6 @@ class SpecBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
-	protected boolean isShowIcon()
-	{
-		return config.specShowIcon();
-	}
-
-	@Override
-	protected BufferedImage getIcon()
-	{
-		return spriteManager.getSprite(SpriteID.OrbIcon.SPECIAL, 0);
-	}
-
-	@Override
-	protected int getIconSize()
-	{
-		return config.specIconSize();
-	}
-
-	@Override
-	protected boolean isShowCounter()
-	{
-		return config.specShowCounter();
-	}
-
-	@Override
 	protected Justification getJustification()
 	{
 		return config.specJustification();
@@ -143,12 +115,6 @@ class SpecBarOverlay extends VitalBarOverlay
 	protected int getContentOffset()
 	{
 		return config.specContentOffset();
-	}
-
-	@Override
-	protected boolean isReverseContent()
-	{
-		return config.specReverseContent();
 	}
 
 	@Override
@@ -179,6 +145,12 @@ class SpecBarOverlay extends VitalBarOverlay
 	protected int getOpacity()
 	{
 		return config.specOpacity();
+	}
+
+	@Override
+	protected int getOrbWidgetComponent()
+	{
+		return InterfaceID.Orbs.ORB_SPECENERGY;
 	}
 
 	@Override
