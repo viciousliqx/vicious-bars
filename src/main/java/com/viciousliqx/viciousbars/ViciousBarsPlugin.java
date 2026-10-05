@@ -199,14 +199,21 @@ public class ViciousBarsPlugin extends Plugin
 			return;
 		}
 
-		// Only the orb's own direct parent - NOT the whole ancestor chain up
-		// to MAP_CONTAINER. Growing multiple interdependent ancestors in the
-		// same pass caused a visible back-and-forth "spasm" in testing: each
-		// level's live canvas location (read fresh every frame, by design)
-		// shifts as a RESULT of its neighbor's own growth, so two or more
-		// levels could end up fighting each other frame to frame. A single
-		// widget has nothing else in the chain to fight with.
+		// The orb's direct parent alone wasn't enough - confirmed in testing
+		// that even though it grows correctly, clicks outside MAP_CONTAINER's
+		// own (unchanged, small) bounds still hit the ground: parent widgets
+		// clip their children's real hit-test region to their own bounds, so
+		// MAP_CONTAINER being small clips the reach regardless of how big its
+		// descendant grows. Testing both levels together now - NOT the whole
+		// chain (that caused the earlier spasm) - to see whether exactly two,
+		// each computed independently against the same bar targets, stays
+		// stable while actually fixing the click-through.
 		growToCoverTargets(orbParent, barTargets);
+		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
+		if (mapContainer != null)
+		{
+			growToCoverTargets(mapContainer, barTargets);
+		}
 	}
 
 	/**
