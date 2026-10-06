@@ -216,11 +216,23 @@ public class ViciousBarsPlugin extends Plugin
 		// chain (that caused the earlier spasm) - to see whether exactly two,
 		// each computed independently against the same bar targets, stays
 		// stable while actually fixing the click-through.
-		growToCoverTargets(orbParent, barTargets);
+		boolean changed = growToCoverTargets(orbParent, barTargets);
 		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
 		if (mapContainer != null)
 		{
-			growToCoverTargets(mapContainer, barTargets);
+			changed |= growToCoverTargets(mapContainer, barTargets);
+		}
+
+		// TEMPORARY - debug-only. Dumps the full ancestor chain's live sizes
+		// in one line, but ONLY on a frame where something actually got
+		// resized - logging every frame regardless would be thousands of
+		// identical lines a minute while nothing's happening. A spasm shows
+		// up as a burst of these lines in a tight run of frames; whichever
+		// widget's size is flipping back and forth between two values across
+		// that burst is the one still missing from growToCoverTargets.
+		if (changed)
+		{
+			logChainSizes(anyOrb);
 		}
 
 		// TEMPORARY - debug-only, see ViciousBarsConfig#debugHideMinimapGraphic.
@@ -250,7 +262,7 @@ public class ViciousBarsPlugin extends Plugin
 	 * size - is what lets this shrink back down again once a target moves
 	 * closer, instead of only ever ratcheting upward.
 	 */
-	private void growToCoverTargets(Widget widget, Point[] targets)
+	private boolean growToCoverTargets(Widget widget, Point[] targets)
 	{
 		GrownWidget saved = null;
 		for (GrownWidget g : grownWidgets)
@@ -364,6 +376,51 @@ public class ViciousBarsPlugin extends Plugin
 		{
 			widget.revalidate();
 		}
+		return changed;
+	}
+
+	// TEMPORARY - debug-only, see onBeforeRender()'s call site.
+	private String knownName(int id)
+	{
+		if (id == InterfaceID.ToplevelPreEoc.MAP_CONTAINER) return "MAP_CONTAINER";
+		if (id == InterfaceID.ToplevelPreEoc.ORBS) return "ORBS";
+		if (id == InterfaceID.ToplevelPreEoc.MAP_MINIMAP) return "MAP_MINIMAP";
+		if (id == InterfaceID.ToplevelPreEoc.MINIMAP) return "MINIMAP";
+		if (id == InterfaceID.ToplevelPreEoc.COMPASSCLICK) return "COMPASSCLICK";
+		if (id == InterfaceID.ToplevelPreEoc.GAMEFRAME) return "GAMEFRAME";
+		if (id == InterfaceID.ToplevelPreEoc.TLI_LISTENER) return "TLI_LISTENER";
+		if (id == InterfaceID.ToplevelPreEoc.CONTROL) return "CONTROL";
+		return "id=" + id;
+	}
+
+	// TEMPORARY - debug-only. Walks the SAME chain DebugWidgetBoundsOverlay
+	// draws (orb's direct parent up to the root) and dumps every level's
+	// live size/canvas position/position-mode in one log.debug line.
+	private void logChainSizes(Widget anyOrb)
+	{
+		if (anyOrb == null)
+		{
+			return;
+		}
+		StringBuilder sb = new StringBuilder("chain:");
+		net.runelite.api.Point orbLoc = anyOrb.getCanvasLocation();
+		sb.append(" ORB ").append(anyOrb.getWidth()).append('x').append(anyOrb.getHeight())
+			.append('@').append(orbLoc == null ? "?" : orbLoc.getX() + "," + orbLoc.getY());
+
+		Widget w = anyOrb.getParent();
+		int depth = 0;
+		while (w != null && depth < 10)
+		{
+			net.runelite.api.Point loc = w.getCanvasLocation();
+			sb.append(" | ").append(depth).append(':').append(knownName(w.getId()))
+				.append(' ').append(w.getWidth()).append('x').append(w.getHeight())
+				.append('@').append(loc == null ? "?" : loc.getX() + "," + loc.getY())
+				.append(" xMode=").append(w.getXPositionMode())
+				.append(" yMode=").append(w.getYPositionMode());
+			w = w.getParent();
+			depth++;
+		}
+		log.debug(sb.toString());
 	}
 
 	private void restoreGrownWidgets()
