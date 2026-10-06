@@ -38,7 +38,6 @@ import com.compactorbs.CompactOrbsConstants.Sprite;
 import com.compactorbs.CompactOrbsConstants.VarClient;
 import com.compactorbs.CompactOrbsConstants.Varbit;
 import com.compactorbs.CompactOrbsConstants.Widgets.Classic;
-import com.compactorbs.CompactOrbsConstants.Widgets.MinimapOverlay;
 import com.compactorbs.CompactOrbsConstants.Widgets.Modern;
 import com.compactorbs.util.MigrateConfig;
 import com.compactorbs.util.ValueKey;
@@ -62,7 +61,6 @@ import java.util.function.Function;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Menu;
@@ -75,10 +73,6 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetPositionMode;
 import net.runelite.api.widgets.WidgetSizeMode;
 import net.runelite.client.callback.ClientThread;
-import net.runelite.client.chat.ChatColorType;
-import net.runelite.client.chat.ChatMessageBuilder;
-import net.runelite.client.chat.ChatMessageManager;
-import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.Keybind;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -88,9 +82,6 @@ import net.runelite.client.util.ColorUtil;
 @Singleton
 public class CompactOrbsManager
 {
-	@Inject
-	private ChatMessageManager chatMessageManager;
-
 	@Inject
 	private Client client;
 
@@ -130,21 +121,11 @@ public class CompactOrbsManager
 	public boolean hideLogoutX;
 	public boolean enableNoClickThrough;
 	public boolean enableOrbSwapping;
-	public boolean hasSeenWikiWarning;
 	public boolean isLoggingIn;
 	public boolean isCutsceneActive;
-	public boolean detachedMinimapParentIsReady;
 
 	public Widget compassFrame;
 	public Widget minimapButton;
-	private Widget overlayCompass;
-	private Widget overlayCompassLayer;
-	private Widget overlayCompassNoClick;
-	private Widget overlayCompassMenuOp;
-	private Widget overlayMinimap;
-	private Widget overlayMinimapFrame;
-	private Widget overlayLogoutXStone;
-	private Widget overlayLogoutXIcon;
 	private final Map<TargetWidget, Widget> noClickThroughChildren = new HashMap<>();
 
 	//update on startup, onWidgetLoaded, and onScriptPostFired
@@ -169,7 +150,6 @@ public class CompactOrbsManager
 
 		if (isFixedMode())
 		{
-			widgetManager.setHidden(MinimapOverlay.UNIVERSE, true);
 			widgetManager.remapTargets(Orbs.values());
 			updateNoClickThrough();
 			return;
@@ -197,7 +177,6 @@ public class CompactOrbsManager
 			editManager.toggleEditMode(false);
 		}
 
-		hasSeenWikiWarning = false;
 		hideWorldMap = false;
 		hideLogoutX = false;
 		enableNoClickThrough = false;
@@ -226,7 +205,6 @@ public class CompactOrbsManager
 			editManager.toggleEditMode(false);
 		}
 
-		hasSeenWikiWarning = false;
 		hideWorldMap = config.hideWorld();
 		hideLogoutX = config.hideLogout();
 		enableNoClickThrough = config.enableNoClickthrough();
@@ -533,7 +511,6 @@ public class CompactOrbsManager
 	{
 		updateCompassFrameChild();
 		updateMinimapToggleButton();
-		widgetManager.setHidden(MinimapOverlay.UNIVERSE, hideMinimapOverlay());
 	}
 
 	private void updateCompassFrameChild()
@@ -585,103 +562,9 @@ public class CompactOrbsManager
 	{
 		widgetManager.clearChild(minimapButton);
 		widgetManager.clearChild(compassFrame);
-		widgetManager.clearChild(overlayLogoutXIcon);
-		widgetManager.clearChild(overlayLogoutXStone);
-
-		//reset & clear the minimap overlay
-		configureMinimapOverlayContainer(false);
-		final Widget parent = client.getWidget(MinimapOverlay.UNIVERSE);
-		if (parent != null)
-		{
-			parent.deleteAllChildren();
-		}
-
-		overlayCompass = null;
-		overlayCompassLayer = null;
-		overlayCompassNoClick = null;
-		overlayCompassMenuOp = null;
-		overlayMinimap = null;
-		overlayMinimapFrame = null;
-		overlayLogoutXStone = null;
-		overlayLogoutXIcon = null;
 
 		minimapButton = null;
 		compassFrame = null;
-	}
-
-	//initial setup for the minimap overlay
-	//@enabled - for startup/shutdown behaviour
-	private void configureMinimapOverlayContainer(boolean enabled)
-	{
-		Widget parent = client.getWidget(MinimapOverlay.UNIVERSE);
-		if (parent == null)
-		{
-			return;
-		}
-
-		if (enabled && overlayMinimap != null)
-		{
-			return;
-		}
-
-		if (!enabled)
-		{
-			parent.setForcedPosition(-1, -1);
-			parent.setHidden(false);
-		}
-
-		parent.setOriginalWidth(enabled ? Layout.MinimapOverlay.CONTAINER_WIDTH : 0);
-		parent.setOriginalHeight(enabled ? Layout.MinimapOverlay.CONTAINER_HEIGHT : 0);
-		parent.setWidthMode(enabled ? WidgetSizeMode.ABSOLUTE : WidgetSizeMode.MINUS);
-		parent.setHeightMode(enabled ? WidgetSizeMode.ABSOLUTE : WidgetSizeMode.MINUS);
-		parent.setXPositionMode(enabled ? WidgetPositionMode.ABSOLUTE_RIGHT : WidgetPositionMode.ABSOLUTE_CENTER);
-		parent.setYPositionMode(enabled ? WidgetPositionMode.ABSOLUTE_TOP : WidgetPositionMode.ABSOLUTE_CENTER);
-		parent.revalidate();
-
-		detachedMinimapParentIsReady = true;
-	}
-
-	//create necessary widgets for the minimap overlay
-	private void createMinimapOverlayChildren()
-	{
-		final Widget parent = client.getWidget(MinimapOverlay.UNIVERSE);
-		if (parent == null)
-		{
-			return;
-		}
-
-		for (int index = 0; index < Layout.MinimapOverlay.NO_CLICK_Y.length; index++)
-		{
-			final Widget mapNoClick = widgetManager.createOverlayNoClick(parent,
-				Layout.MinimapOverlay.NO_CLICK_Y[index],
-				Layout.MinimapOverlay.NO_CLICK_WIDTH[index],
-				Layout.MinimapOverlay.NO_CLICK_HEIGHT[index]
-			);
-		}
-
-		overlayCompass = widgetManager.createOverlayCompass(parent);
-		overlayCompassLayer = widgetManager.createOverlayCompassLayer(parent);
-		overlayCompassNoClick = widgetManager.createOverlayCompassNoClick(overlayCompassLayer);
-		overlayCompassMenuOp = widgetManager.createOverlayCompassMenuOp(overlayCompassLayer);
-		overlayMinimap = widgetManager.createOverlayMinimap(parent);
-		overlayMinimapFrame = widgetManager.createOverlayMinimapFrame(parent);
-		overlayLogoutXStone = widgetManager.createOverlayLogoutXStone(parent, hideOverlayLogoutX());
-		overlayLogoutXIcon = widgetManager.createOverlayLogoutXIcon(parent, hideOverlayLogoutX());
-	}
-
-	public void setupMinimapOverlay()
-	{
-		configureMinimapOverlayContainer(true);
-		clientThread.invokeLater(() ->
-		{
-			if (detachedMinimapParentIsReady)
-			{
-				createMinimapOverlayChildren();
-				detachedMinimapParentIsReady = false;
-				return true;
-			}
-			return false;
-		});
 	}
 
 	public void updateWikiBannerVisibility(boolean hidden)
@@ -742,22 +625,7 @@ public class CompactOrbsManager
 			return;
 		}
 
-		if (widget == overlayLogoutXStone)
-		{
-			menu.createMenuEntry(1)
-				.setOption(MenuOp.WORLD_SWITCHER_OP)
-				.setDeprioritized(false)
-				.setType(MenuAction.RUNELITE)
-				.onClick(e ->
-				{
-					Widget w = client.getWidget(InterfaceID.Worldswitcher.BUTTONS);
-					if (w == null)
-					{
-						client.openWorldHopper();
-					}
-				});
-		}
-		else if (widget == minimapButton)
+		if (widget == minimapButton)
 		{
 			if (!isFixedMode())
 			{
@@ -908,16 +776,6 @@ public class CompactOrbsManager
 		return config.hideMinimapToggle();
 	}
 
-	boolean hideMinimapOverlay()
-	{
-		return !(isMinimapOverlayEnabled() && isMinimapHidden() && !isMinimapMinimized()) || isFixedMode();
-	}
-
-	public boolean isMinimapOverlayEnabled()
-	{
-		return config.showMinimapInCompactView();
-	}
-
 	//prevent unintended state changes for the logout-x since it is treated as a side icon/stone, i.e. don't unhide when it should be hidden
 	public void hideLogout()
 	{
@@ -926,13 +784,11 @@ public class CompactOrbsManager
 			return;
 		}
 
-		boolean hidden = hideLogoutX && !isOverlayLogoutVisible() || hideStonesAndIcons();
+		boolean hidden = hideLogoutX || hideStonesAndIcons();
 
 		widgetManager.setTargetsHidden(hidden, Orbs.LOGOUT_X_STONE, Orbs.LOGOUT_X_ICON);
 	}
 
-	//offset the logout-x instead of using the hidden-flag (similarly to the world map) when the overlays
-	//logout-x is visible (retaining the FPS/Ping status offset so it doesn't block the overlays logout-x)
 	public void updateLogoutXPosition()
 	{
 		if (isFixedMode() || isMinimapMinimized())
@@ -940,30 +796,6 @@ public class CompactOrbsManager
 			return;
 		}
 		widgetManager.remapTargets(Orbs.LOGOUT_X_STONE, Orbs.LOGOUT_X_ICON);
-	}
-
-	public void updateLogoutXOverlay()
-	{
-		if (overlayLogoutXStone == null || overlayLogoutXIcon == null)
-		{
-			return;
-		}
-
-		widgetManager.syncSprite(overlayLogoutXStone, Modern.LOGOUT_X_STONE);
-
-		overlayLogoutXStone.setHidden(hideOverlayLogoutX());
-		overlayLogoutXIcon.setHidden(hideOverlayLogoutX());
-	}
-
-	//restrict the overlays logout-x visibility to the same conditions as the original
-	private boolean hideOverlayLogoutX()
-	{
-		if (widgetManager.getOrbsParent() == null)
-		{
-			return true;
-		}
-
-		return !config.showOverlayLogoutX() || isClassicResizable() || hideStonesAndIcons();
 	}
 
 	//similar to how the cs2 script hides/shows the logout-x by referencing the containers hidden state
@@ -976,18 +808,6 @@ public class CompactOrbsManager
 		}
 
 		return w.isHidden();
-	}
-
-	//use offset-hiding instead of using the hidden-flag for the logout-x
-	public boolean offsetLogoutX()
-	{
-		return isOverlayLogoutVisible() && !isMinimapMinimized();
-	}
-
-	boolean isOverlayLogoutVisible()
-	{
-		return isCompactLayout() &&
-			isMinimapOverlayEnabled() && config.showOverlayLogoutX();
 	}
 
 	public boolean isActivityOrbDisabled()
@@ -1110,7 +930,6 @@ public class CompactOrbsManager
 
 			case ConfigKeys.HIDE_WIKI:
 				updateWikiBannerVisibility(config.hideWiki());
-				warnWikiPluginConflict();
 
 				if (getCurrentLayout().isHorizontal() && isMinimapHidden())
 				{
@@ -1182,51 +1001,6 @@ public class CompactOrbsManager
 			configManager.getConfiguration(configGroup, configKey, Boolean.class));
 
 		return isPluginEnabled && isConfigEnabled;
-	}
-
-	public void warnWikiPluginConflict()
-	{
-		if (!hasSeenWikiWarning && isWikiPluginConfigEnabled() && config.hideWiki())
-		{
-			sendMessage(msg ->
-				msg
-					.append("the ")
-					.append(ChatColorType.HIGHLIGHT)
-					.append("`Hide Wiki banner` ")
-					.append(ChatColorType.NORMAL)
-					.append("setting is overriding the Wiki plugin's ")
-					.append(ChatColorType.HIGHLIGHT)
-					.append("`Show wiki button under minimap` ")
-					.append(ChatColorType.NORMAL)
-					.append("setting.")
-			);
-
-			hasSeenWikiWarning = true;
-		}
-	}
-
-	private void sendMessage(Consumer<ChatMessageBuilder> consumer)
-	{
-		if (!isLoggedIn())
-		{
-			return;
-		}
-
-		ChatMessageBuilder builder = new ChatMessageBuilder()
-			.append("[")
-			.append(ChatColorType.HIGHLIGHT)
-			.append("Compact Orbs")
-			.append(ChatColorType.NORMAL)
-			.append("] ");
-
-		consumer.accept(builder);
-
-		String input = builder.build();
-
-		chatMessageManager.queue(QueuedMessage.builder()
-			.type(ChatMessageType.CONSOLE)
-			.runeLiteFormattedMessage(input)
-			.build());
 	}
 
 	public boolean useSavedPosition(Widget widget, int index)
