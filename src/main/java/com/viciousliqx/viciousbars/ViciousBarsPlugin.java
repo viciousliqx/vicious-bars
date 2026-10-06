@@ -207,33 +207,37 @@ public class ViciousBarsPlugin extends Plugin
 			return;
 		}
 
-		// The orb's direct parent alone wasn't enough - confirmed in testing
-		// that even though it grows correctly, clicks outside MAP_CONTAINER's
-		// own (unchanged, small) bounds still hit the ground: parent widgets
-		// clip their children's real hit-test region to their own bounds, so
-		// MAP_CONTAINER being small clips the reach regardless of how big its
-		// descendant grows. Testing both levels together now - NOT the whole
-		// chain (that caused the earlier spasm) - to see whether exactly two,
-		// each computed independently against the same bar targets, stays
-		// stable while actually fixing the click-through.
-		// logChainSizes (below) revealed a third, previously untouched level
-		// sitting BETWEEN the two we were growing: ToplevelPreEoc.ORBS sits
-		// directly between the orb's real parent (id=10485760, depth 0) and
-		// MAP_CONTAINER (depth 2) - and stayed fixed at a small size the
-		// whole time, even while its own child grew far past it from the
-		// same top-left corner. That's a clipping ancestor we were simply
-		// never resizing, independent of MAP_CONTAINER's own behavior.
-		boolean changed = growToCoverTargets(orbParent, barTargets);
+		// Every level in the real chain clips its descendants to its own
+		// bounds, so all three - MAP_CONTAINER, ORBS (sits directly inside
+		// it), and the orb's real parent id=10485760 (sits directly inside
+		// ORBS) - need to grow. Order matters: MAP_CONTAINER is x=RIGHT, so
+		// growing IT shifts its OWN canvasLeft, which cascades down and
+		// shifts where ORBS and orbParent sit too. logChainSizes caught this
+		// directly - growing inner-to-outer (as this used to) meant each
+		// inner level's math ran against last frame's STALE inherited
+		// position, so by the time MAP_CONTAINER grew and shifted everything
+		// under it, the inner levels' right edges had already receded from
+		// their targets again next frame, demanding more growth, which
+		// demanded more from MAP_CONTAINER - a genuine feedback spiral
+		// (confirmed in the log: MAP_CONTAINER's width climbing by a fixed
+		// ~31px every single frame before suddenly collapsing and
+		// restarting). Growing outer-to-inner instead means each inner
+		// level's growToCoverTargets call reads its parent's
+		// ALREADY-updated position from earlier in this same frame -
+		// revalidate() is synchronous, so this converges within one frame
+		// instead of lagging and spiraling across frames.
+		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
+		boolean changed = false;
+		if (mapContainer != null)
+		{
+			changed |= growToCoverTargets(mapContainer, barTargets);
+		}
 		Widget orbsSlot = client.getWidget(InterfaceID.ToplevelPreEoc.ORBS);
 		if (orbsSlot != null)
 		{
 			changed |= growToCoverTargets(orbsSlot, barTargets);
 		}
-		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
-		if (mapContainer != null)
-		{
-			changed |= growToCoverTargets(mapContainer, barTargets);
-		}
+		changed |= growToCoverTargets(orbParent, barTargets);
 
 		// TEMPORARY - debug-only. Dumps the full ancestor chain's live sizes
 		// in one line, but ONLY on a frame where something actually got
