@@ -216,7 +216,19 @@ public class ViciousBarsPlugin extends Plugin
 		// chain (that caused the earlier spasm) - to see whether exactly two,
 		// each computed independently against the same bar targets, stays
 		// stable while actually fixing the click-through.
+		// logChainSizes (below) revealed a third, previously untouched level
+		// sitting BETWEEN the two we were growing: ToplevelPreEoc.ORBS sits
+		// directly between the orb's real parent (id=10485760, depth 0) and
+		// MAP_CONTAINER (depth 2) - and stayed fixed at a small size the
+		// whole time, even while its own child grew far past it from the
+		// same top-left corner. That's a clipping ancestor we were simply
+		// never resizing, independent of MAP_CONTAINER's own behavior.
 		boolean changed = growToCoverTargets(orbParent, barTargets);
+		Widget orbsSlot = client.getWidget(InterfaceID.ToplevelPreEoc.ORBS);
+		if (orbsSlot != null)
+		{
+			changed |= growToCoverTargets(orbsSlot, barTargets);
+		}
 		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
 		if (mapContainer != null)
 		{
