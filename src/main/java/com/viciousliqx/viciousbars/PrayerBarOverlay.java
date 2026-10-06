@@ -7,6 +7,7 @@ import net.runelite.api.Client;
 import net.runelite.api.Skill;
 import net.runelite.api.Varbits;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.client.eventbus.Subscribe;
 
 @Singleton
@@ -218,5 +219,11 @@ class PrayerBarOverlay extends VitalBarOverlay
 	protected int getOpacity()
 	{
 		return config.prayerOpacity();
+	}
+
+	@Override
+	protected int getOrbWidgetComponent()
+	{
+		return config.dockOrbsToBars() ? InterfaceID.Orbs.ORB_PRAYER : -1;
 	}
 }

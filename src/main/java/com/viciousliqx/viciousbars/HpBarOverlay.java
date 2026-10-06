@@ -156,6 +156,12 @@ class HpBarOverlay extends VitalBarOverlay
 	}
 
 	@Override
+	protected int getOrbWidgetComponent()
+	{
+		return config.dockOrbsToBars() ? InterfaceID.Orbs.ORB_HEALTH : -1;
+	}
+
+	@Override
 	protected int getPreviewAmount()
 	{
 		if (!config.hpShowHealPreview())

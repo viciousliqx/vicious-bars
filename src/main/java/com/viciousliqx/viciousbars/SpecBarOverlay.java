@@ -5,6 +5,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.VarPlayer;
+import net.runelite.api.gameval.InterfaceID;
 
 @Singleton
 class SpecBarOverlay extends VitalBarOverlay
@@ -144,6 +145,12 @@ class SpecBarOverlay extends VitalBarOverlay
 	protected int getOpacity()
 	{
 		return config.specOpacity();
+	}
+
+	@Override
+	protected int getOrbWidgetComponent()
+	{
+		return config.dockOrbsToBars() ? InterfaceID.Orbs.ORB_SPECENERGY : -1;
 	}
 
 	@Override

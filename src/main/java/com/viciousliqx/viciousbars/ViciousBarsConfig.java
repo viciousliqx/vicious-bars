@@ -1592,26 +1592,25 @@ public interface ViciousBarsConfig extends Config
 	}
 
 	// ------------------------------------------------------------------
-	// Debug (temporary - sorting out the minimap/orb growth work, not for
-	// shipping - see DebugWidgetBoundsOverlay's javadoc)
+	// Orb Dock
 	// ------------------------------------------------------------------
 
 	@ConfigSection(
-		name = "Debug (temporary)",
-		description = "Temporary diagnostics for the minimap/orb alignment work - not for shipping",
+		name = "Orb Dock",
+		description = "Docking the real HP/Prayer/Spec/Run orbs onto the matching bars",
 		position = 8,
 		closedByDefault = true
 	)
-	String debugSection = "debugSection";
+	String orbDockSection = "orbDockSection";
 
 	@ConfigItem(
-		keyName = "debugHideMinimapGraphic",
-		name = "Hide minimap graphic",
-		description = "Hides just the round minimap drawing surface - not the orbs, not MAP_CONTAINER - so the orb-to-bar alignment and the debug outlines are easier to see without the map underneath them.",
-		section = debugSection,
+		keyName = "dockOrbsToBars",
+		name = "Dock orbs to bars",
+		description = "Hides the round minimap (same type-swap trick Compact Orbs uses - not a resize or a hide, just stops it drawing) and pulls the real HP/Prayer/Spec/Run orbs onto their matching bars, wherever those bars are currently docked. Off by default - this resizes the real minimap/orb widgets to fit, which needs the bars positioned somewhere reasonable relative to the minimap's own location first.",
+		section = orbDockSection,
 		position = 0
 	)
-	default boolean debugHideMinimapGraphic()
+	default boolean dockOrbsToBars()
 	{
 		return false;
 	}
