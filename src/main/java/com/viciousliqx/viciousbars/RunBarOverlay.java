@@ -4,7 +4,6 @@ import java.awt.Color;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
-import net.runelite.api.gameval.InterfaceID;
 
 @Singleton
 class RunBarOverlay extends VitalBarOverlay
@@ -157,11 +156,5 @@ class RunBarOverlay extends VitalBarOverlay
 	protected int getOpacity()
 	{
 		return config.runOpacity();
-	}
-
-	@Override
-	protected int getOrbWidgetComponent()
-	{
-		return InterfaceID.Orbs.ORB_RUNENERGY;
 	}
 }
