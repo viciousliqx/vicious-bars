@@ -207,7 +207,7 @@ public class CompactOrbsManager
 
 		hideWorldMap = config.hideWorld();
 		hideLogoutX = config.hideLogout();
-		enableNoClickThrough = config.enableNoClickthrough();
+		enableNoClickThrough = true;
 		enableOrbSwapping = config.enableOrbSwapping();
 		isUpdatingProfile = false;
 
@@ -369,7 +369,7 @@ public class CompactOrbsManager
 		widgetManager.setNoClickThrough(backing.getId(), !noClickThrough);
 		widgetManager.setNoClickThrough(button.getId(), noClickThrough);
 
-		if (!config.enableNoClickthrough() || !button.isHidden())
+		if (!button.isHidden())
 		{
 			widgetManager.clearChild(noClickThroughChildren.remove(target));
 			return;
@@ -664,9 +664,15 @@ public class CompactOrbsManager
 		}
 	}
 
+	// Hardcoded here rather than routed through the Config interface -
+	// RuneLite's config proxy returns null (not the interface's own
+	// default method body) for a method with no @ConfigItem, which NPEs
+	// on unboxing the moment anything calls it. Confirmed live: this is
+	// exactly what broke plugin startup the first time this was tried via
+	// config.layout() with the @ConfigItem removed.
 	public CompactOrbsLayout getCurrentLayout()
 	{
-		return config.layout();
+		return CompactOrbsLayout.HORIZONTAL_WIDE;
 	}
 
 	//invert for readability

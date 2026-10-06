@@ -147,7 +147,7 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 		manager.isEditingLayout = false;
 		manager.hideWorldMap = config.hideWorld();
 		manager.hideLogoutX = config.hideLogout();
-		manager.enableNoClickThrough = config.enableNoClickthrough();
+		manager.enableNoClickThrough = true;
 		manager.enableOrbSwapping = config.enableOrbSwapping();
 		manager.snapCornerRepositioned = manager.isSnapCornerRepositioned();
 
@@ -478,7 +478,7 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 				{
 					if (key.equals(ConfigKeys.ENABLE_NO_CLICKTHROUGH))
 					{
-						manager.enableNoClickThrough = config.enableNoClickthrough();
+						manager.enableNoClickThrough = true;
 					}
 					else
 					{

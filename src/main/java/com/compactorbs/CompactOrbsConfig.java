@@ -94,18 +94,16 @@ public interface CompactOrbsConfig extends Config
 		EDIT_MODE
 	}
 
-	// Vicious Bars only ever has ONE layout - no user-facing choice here
-	// (the @ConfigItem that made this a dropdown is deliberately gone) -
-	// but the underlying layout SYSTEM (CompactOrbsLayout, the Slot/Offset
-	// machinery that reads this) stays, since positioning still needs it.
-	// HORIZONTAL_WIDE picked as the starting base per the reference
-	// screenshots during this session's testing - likely to get replaced
-	// with Vicious-Bars-specific constants once that work happens, but
-	// keeping a real, working preset for now rather than an undesigned one.
-	default CompactOrbsLayout layout()
-	{
-		return CompactOrbsLayout.HORIZONTAL_WIDE;
-	}
+	// Vicious Bars only ever has ONE layout (hardcoded as
+	// CompactOrbsLayout.HORIZONTAL_WIDE directly in
+	// CompactOrbsManager#getCurrentLayout()) and always prevents orb
+	// clickthrough (hardcoded true at its two call sites) - no config
+	// surface for either anymore. Deliberately NOT a no-@ConfigItem default
+	// method here: RuneLite's config proxy returns null (not the
+	// interface's own default body) for a method with no @ConfigItem,
+	// which NPEs the instant anything calls it - confirmed live, broke
+	// plugin startup entirely. Hardcoding at the call site instead avoids
+	// the Config interface for these two entirely.
 
 	@ConfigSection(
 		name = "Layout Options",
@@ -113,14 +111,6 @@ public interface CompactOrbsConfig extends Config
 		position = 1
 	)
 	String layout = "layout";
-
-	// Always on for Vicious Bars - no reason a user would ever want orb
-	// clicks passing through to the ground underneath, so this is no
-	// longer a user-facing choice (the @ConfigItem is gone).
-	default boolean enableNoClickthrough()
-	{
-		return true;
-	}
 
 	@Range(min = 0, max = 200)
 	@ConfigItem(
