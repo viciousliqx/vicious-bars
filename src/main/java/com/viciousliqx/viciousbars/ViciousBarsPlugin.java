@@ -12,21 +12,22 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
-import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
-import net.runelite.client.plugins.itemstats.ItemStatPlugin;
 import net.runelite.client.ui.overlay.OverlayManager;
 
+/**
+ * FULL RESET IN PROGRESS - see vicious_bars_dev_talk.txt / git log for the
+ * bars feature this plugin used to have (fully recoverable from history,
+ * nothing lost). Deliberately stripped down to a single, isolated piece:
+ * replicate Compact Orbs' own minimap-hide mechanism, with nothing else
+ * going on - no bars, no docking, no config beyond the one toggle below -
+ * so this foundation can be gotten right on its own before anything else
+ * is layered back on top of it.
+ */
 @Slf4j
 @PluginDescriptor(
 	name = "Vicious Bars"
 )
-// Same dependency core Status Bars itself declares for its own heal-restore
-// preview - ItemStatChangesService (the thing that actually computes "this
-// food heals X Hitpoints") is only bound/available via Guice while this
-// plugin is enabled, so the HP bar's preview simply has nothing to show if
-// the user doesn't have Item Stats turned on.
-@PluginDependency(ItemStatPlugin.class)
 public class ViciousBarsPlugin extends Plugin
 {
 	@Inject
@@ -42,45 +43,14 @@ public class ViciousBarsPlugin extends Plugin
 	private EventBus eventBus;
 
 	@Inject
-	private OpponentTracker opponentTracker;
-
-	@Inject
-	private HpBarOverlay hpBarOverlay;
-
-	@Inject
-	private PrayerBarOverlay prayerBarOverlay;
-
-	@Inject
-	private SpecBarOverlay specBarOverlay;
-
-	@Inject
-	private RunBarOverlay runBarOverlay;
-
-	@Inject
-	private WarmthBarOverlay warmthBarOverlay;
-
-	@Inject
-	private EnemyHpBarOverlay enemyHpBarOverlay;
-
-	// TEMPORARY - diagnostic only, see DebugWidgetBoundsOverlay's javadoc.
-	@Inject
-	private DebugWidgetBoundsOverlay debugWidgetBoundsOverlay;
-
-	// TEMPORARY - diagnostic only, see MinimapDragDiagnostic's javadoc.
-	@Inject
-	private MinimapDragDiagnostic minimapDragDiagnostic;
+	private OrbZoneDebugOverlay orbZoneDebugOverlay;
 
 	// Lazily-saved real state of the minimap's actual graphic/mask widget,
-	// so the hide below can be reversed exactly. Same trick Compact Orbs'
-	// real source uses - confirmed it targets InterfaceID.ToplevelPreEoc.
-	// MINIMAP specifically, by flipping its WidgetType from GRAPHIC to LAYER
-	// and clearing its sprite, rather than hiding/resizing anything. Nothing
-	// about its size, position, or the surrounding hierarchy is ever touched
-	// - MAP_CONTAINER and the orb cluster stay at their own natural size
-	// always now, since VitalBarOverlay anchors bars to wherever each real
-	// orb already sits instead of growing anything to reach the inventory
-	// panel (the old growth mechanism this plugin used to carry - see git
-	// history / vicious_bars_dev_talk.txt for why that approach was dropped).
+	// so the hide below can be reversed exactly. Confirmed against Compact
+	// Orbs' real source: it targets InterfaceID.ToplevelPreEoc.MINIMAP
+	// specifically, by flipping its WidgetType from GRAPHIC to LAYER and
+	// clearing its sprite - not a hide, not a resize, nothing about the
+	// surrounding hierarchy ever changes.
 	private boolean minimapRenderingSaved;
 	private int savedMinimapType;
 	private int savedMinimapContentType;
@@ -119,56 +89,24 @@ public class ViciousBarsPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		eventBus.register(opponentTracker);
-		eventBus.register(prayerBarOverlay);
 		eventBus.register(this);
-		eventBus.register(minimapDragDiagnostic);
-
-		overlayManager.add(hpBarOverlay);
-		overlayManager.add(prayerBarOverlay);
-		overlayManager.add(specBarOverlay);
-		overlayManager.add(runBarOverlay);
-		overlayManager.add(warmthBarOverlay);
-		overlayManager.add(enemyHpBarOverlay);
-		overlayManager.add(debugWidgetBoundsOverlay);
-
-		log.debug("Vicious Bars started!");
+		overlayManager.add(orbZoneDebugOverlay);
+		log.debug("Vicious Bars started (minimap-replacement foundation only)");
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
-		overlayManager.remove(hpBarOverlay);
-		overlayManager.remove(prayerBarOverlay);
-		overlayManager.remove(specBarOverlay);
-		overlayManager.remove(runBarOverlay);
-		overlayManager.remove(warmthBarOverlay);
-		overlayManager.remove(enemyHpBarOverlay);
-		overlayManager.remove(debugWidgetBoundsOverlay);
-
-		eventBus.unregister(prayerBarOverlay);
-		eventBus.unregister(opponentTracker);
 		eventBus.unregister(this);
-		eventBus.unregister(minimapDragDiagnostic);
-		opponentTracker.reset();
-
-		// Every orb bar pulls its real orb onto itself while docking is on -
-		// make sure none of them are left displaced behind us if the plugin
-		// stops.
-		hpBarOverlay.restoreRealOrbPosition();
-		prayerBarOverlay.restoreRealOrbPosition();
-		specBarOverlay.restoreRealOrbPosition();
-		runBarOverlay.restoreRealOrbPosition();
-
+		overlayManager.remove(orbZoneDebugOverlay);
 		setMinimapRenderingHidden(false);
-
-		log.debug("Vicious Bars stopped!");
+		log.debug("Vicious Bars stopped");
 	}
 
 	@Subscribe
 	public void onBeforeRender(BeforeRender event)
 	{
-		setMinimapRenderingHidden(config.dockOrbsToBars());
+		setMinimapRenderingHidden(config.hideMinimap());
 	}
 
 	@Provides

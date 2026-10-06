@@ -11,26 +11,21 @@ import net.runelite.api.Client;
 import net.runelite.api.Point;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
-import net.runelite.api.widgets.WidgetPositionMode;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 
 /**
- * TEMPORARY diagnostic overlay. Outlines every real orb (cyan), then walks
- * the orb's FULL ancestor chain from its direct parent up to the root -
- * every level, not just MAP_CONTAINER - drawing each in its own color and
- * labeling it with whatever MinimapDragDiagnostic's own well-known IDs
- * recognize it as (else just its raw id), its live size/canvas position,
- * and its real X/Y position modes. Any ancestor whose own bounds don't
- * fully contain the orb's bounds is flagged CLIPPING and drawn with a
- * thicker stroke - that's exactly what silently eats clicks even when the
- * orb itself looks fine, so it's the thing worth watching for while
- * dragging the map toward a spasm. Not meant to ship - rip this out once
- * the minimap work is sorted.
+ * Outlines every real orb plus its full ancestor chain up to MAP_CONTAINER,
+ * so the real "zone" the orbs live in - and how big it actually is - is
+ * visible while the minimap-replacement foundation gets built. Checks both
+ * widget interfaces (Orbs and, if the user's also hit vanilla's own
+ * minimize button, OrbsNomap) since they use entirely different component
+ * ids. Not meant to ship - this whole plugin is a scoped foundation piece
+ * right now, see ViciousBarsPlugin's javadoc.
  */
 @Singleton
-class DebugWidgetBoundsOverlay extends Overlay
+class OrbZoneDebugOverlay extends Overlay
 {
 	private static final Color ORB_COLOR = Color.CYAN;
 
@@ -39,9 +34,6 @@ class DebugWidgetBoundsOverlay extends Overlay
 		Color.PINK, Color.RED, new Color(120, 180, 255), Color.WHITE,
 	};
 
-	// Both widget interfaces - minimizing the minimap swaps Orbs for the
-	// entirely separate InterfaceID.OrbsNomap, own distinct component ids -
-	// so both need checking to see anything while minimized.
 	private static final int[] ORB_COMPONENTS = {
 		InterfaceID.Orbs.ORB_HEALTH,
 		InterfaceID.Orbs.ORB_PRAYER,
@@ -53,8 +45,6 @@ class DebugWidgetBoundsOverlay extends Overlay
 		InterfaceID.OrbsNomap.ORB_SPECENERGY,
 	};
 
-	// Same widgets MinimapDragDiagnostic already tracks, so labels in both
-	// line up with each other and with the log output.
 	private static final int[] KNOWN_IDS = {
 		InterfaceID.ToplevelPreEoc.MAP_CONTAINER,
 		InterfaceID.ToplevelPreEoc.ORBS,
@@ -74,7 +64,7 @@ class DebugWidgetBoundsOverlay extends Overlay
 	private final Client client;
 
 	@Inject
-	private DebugWidgetBoundsOverlay(Client client)
+	private OrbZoneDebugOverlay(Client client)
 	{
 		this.client = client;
 		setPosition(OverlayPosition.DYNAMIC);
@@ -105,28 +95,13 @@ class DebugWidgetBoundsOverlay extends Overlay
 			return null;
 		}
 
-		Point orbLoc = anyOrb.getCanvasLocation();
-		Rectangle orbBounds = orbLoc == null ? null
-			: new Rectangle(orbLoc.getX(), orbLoc.getY(), anyOrb.getWidth(), anyOrb.getHeight());
-
 		Widget w = anyOrb.getParent();
 		int depth = 0;
 		while (w != null && depth < CHAIN_COLORS.length)
 		{
 			if (!w.isHidden())
 			{
-				Point loc = w.getCanvasLocation();
-				boolean clips = orbBounds != null && loc != null
-					&& !new Rectangle(loc.getX(), loc.getY(), w.getWidth(), w.getHeight()).contains(orbBounds);
-
-				String label = depth + ":" + knownName(w.getId())
-					+ " " + w.getWidth() + "x" + w.getHeight()
-					+ " @" + (loc != null ? loc.getX() + "," + loc.getY() : "?")
-					+ " x=" + modeName(w.getXPositionMode(), true)
-					+ " y=" + modeName(w.getYPositionMode(), false)
-					+ (clips ? " CLIPPING" : "");
-
-				graphics.setStroke(new BasicStroke(clips ? 3 : 1));
+				String label = depth + ":" + knownName(w.getId()) + " " + w.getWidth() + "x" + w.getHeight();
 				outline(graphics, w, CHAIN_COLORS[depth % CHAIN_COLORS.length], label);
 			}
 			w = w.getParent();
@@ -146,23 +121,6 @@ class DebugWidgetBoundsOverlay extends Overlay
 			}
 		}
 		return "id=" + id;
-	}
-
-	private String modeName(int mode, boolean xAxis)
-	{
-		if (mode == WidgetPositionMode.ABSOLUTE_LEFT)
-		{
-			return xAxis ? "LEFT" : "TOP";
-		}
-		if (mode == WidgetPositionMode.ABSOLUTE_CENTER)
-		{
-			return "CENTER";
-		}
-		if (mode == WidgetPositionMode.ABSOLUTE_RIGHT)
-		{
-			return xAxis ? "RIGHT" : "BOTTOM";
-		}
-		return "mode(" + mode + ")";
 	}
 
 	private void outline(Graphics2D graphics, Widget widget, Color color, String label)
