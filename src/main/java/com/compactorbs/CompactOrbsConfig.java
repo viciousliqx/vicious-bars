@@ -114,16 +114,12 @@ public interface CompactOrbsConfig extends Config
 	)
 	String layout = "layout";
 
-	@ConfigItem(
-		keyName = ConfigKeys.ENABLE_NO_CLICKTHROUGH,
-		name = "Prevent orb clickthrough",
-		description = "When enabled, this option will prevent clicks from passing through the data orbs",
-		section = layout,
-		position = 0
-	)
+	// Always on for Vicious Bars - no reason a user would ever want orb
+	// clicks passing through to the ground underneath, so this is no
+	// longer a user-facing choice (the @ConfigItem is gone).
 	default boolean enableNoClickthrough()
 	{
-		return false;
+		return true;
 	}
 
 	@Range(min = 0, max = 200)
