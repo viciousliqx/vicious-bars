@@ -91,15 +91,6 @@ public abstract class VitalBarOverlay extends Overlay
 	private int savedOrbY;
 	private int savedOrbXMode;
 	private int savedOrbYMode;
-	// The orb's own real canvas-space center at the moment it was FIRST seen
-	// - i.e. before this bar (or any earlier bar touching the same orb) ever
-	// moved it. This, not a live re-read, is what the bar anchors itself to
-	// every frame - re-reading the orb's current position each frame would
-	// be self-referential the instant we start moving it ourselves (our own
-	// last write feeding back in as next frame's target), the same shape of
-	// bug the old MAP_CONTAINER growth code hit.
-	private int savedOrbCanvasCenterX;
-	private int savedOrbCanvasCenterY;
 
 	// This frame's real canvas-space orb target, or null if not applicable.
 	private Point lastIconCanvasCenter;
@@ -323,12 +314,10 @@ public abstract class VitalBarOverlay extends Overlay
 	}
 
 	/**
-	 * Captures this orb widget instance's real baseline state - original
-	 * local X/Y/position-mode (for restore) AND its real canvas-space center
-	 * (for the orb-anchored bar placement below) - the first time it's seen,
-	 * before anything has ever moved it. A no-op on every later call for the
-	 * same instance, so it's safe to call this every frame before computing
-	 * where to draw the bar.
+	 * Captures this orb widget instance's real baseline local X/Y/
+	 * position-mode, the first time it's seen - before anything has ever
+	 * moved it. A no-op on every later call for the same instance, so it's
+	 * safe to call this every frame before computing where to draw the bar.
 	 */
 	private void captureOrbBaselineIfNeeded(Widget orb)
 	{
@@ -340,10 +329,38 @@ public abstract class VitalBarOverlay extends Overlay
 		savedOrbY = orb.getOriginalY();
 		savedOrbXMode = orb.getXPositionMode();
 		savedOrbYMode = orb.getYPositionMode();
-		net.runelite.api.Point canvas = orb.getCanvasLocation();
-		savedOrbCanvasCenterX = canvas.getX() + orb.getWidth() / 2;
-		savedOrbCanvasCenterY = canvas.getY() + orb.getHeight() / 2;
 		alignedOrbWidget = orb;
+	}
+
+	/**
+	 * This orb's natural canvas-space center RIGHT NOW, as if it had never
+	 * been moved - computed fresh every single frame as the orb's PARENT's
+	 * live canvas position (read fresh - safe, since nothing here ever
+	 * writes to the parent) plus the orb's saved baseline local offset
+	 * (frozen at {@link #captureOrbBaselineIfNeeded}, never the orb's own
+	 * live/post-write local position). This is deliberately NOT a frozen
+	 * one-time snapshot of the orb's own canvas location - that was tried
+	 * first and the bar just froze in place, because nothing ever re-read it
+	 * after the first frame. Nor does it ever read the orb's own LIVE
+	 * canvas location directly - once we start writing to the orb ourselves,
+	 * that would be self-referential, the same shape of bug the old
+	 * MAP_CONTAINER growth code hit. Deriving it from the PARENT (never
+	 * written to) plus a frozen LOCAL offset gets both properties at once:
+	 * immune to our own writes, but still tracks genuine external movement
+	 * (dragging the minimap) because the parent's live position does.
+	 */
+	private Point naturalOrbCenter(Widget orb)
+	{
+		Widget parent = orb.getParent();
+		if (parent == null)
+		{
+			net.runelite.api.Point canvas = orb.getCanvasLocation();
+			return new Point(canvas.getX() + orb.getWidth() / 2, canvas.getY() + orb.getHeight() / 2);
+		}
+		net.runelite.api.Point parentCanvas = parent.getCanvasLocation();
+		return new Point(
+			parentCanvas.getX() + savedOrbX + orb.getWidth() / 2,
+			parentCanvas.getY() + savedOrbY + orb.getHeight() / 2);
 	}
 
 	/**
@@ -477,15 +494,16 @@ public abstract class VitalBarOverlay extends Overlay
 		Point fixedPos;
 		if (orb != null)
 		{
-			// Anchored to the orb's own natural position (captured once,
-			// above) rather than PanelDock - DockSide/DockSlot/Clamp slot
-			// don't apply here at all, each bar simply ends up wherever its
-			// own real orb already sits, which vanilla already keeps
-			// non-overlapping between HP/Prayer/Run/Spec.
+			// Anchored to the orb's own natural position, recomputed fresh
+			// every frame (see naturalOrbCenter()'s javadoc for why) -
+			// DockSide/DockSlot/Clamp slot don't apply here at all, each bar
+			// simply ends up wherever its own real orb already sits, which
+			// vanilla already keeps non-overlapping between HP/Prayer/Run/Spec.
 			orientation = getOrientation();
 			int width = orientation == Orientation.VERTICAL ? getThickness() : length;
 			int height = orientation == Orientation.VERTICAL ? length : getThickness();
-			fixedPos = new Point(savedOrbCanvasCenterX - width / 2, savedOrbCanvasCenterY - height / 2);
+			Point natural = naturalOrbCenter(orb);
+			fixedPos = new Point(natural.x - width / 2, natural.y - height / 2);
 			graphics.translate(fixedPos.x, fixedPos.y);
 		}
 		else if (placementMode == PlacementMode.FIXED)
