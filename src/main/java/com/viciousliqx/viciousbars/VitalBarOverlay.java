@@ -23,12 +23,17 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  * computed by {@link PanelDock} and can't be dragged. Subclasses supply the
  * live data (current/max, color, icon, styling) for one specific bar.
  *
- * Bars with a real vanilla orb equivalent (HP/Prayer/Spec/Run) pull that
- * real orb onto themselves ({@link #getOrbWidgetComponent()} /
- * {@link #alignRealOrb(Widget, Point)}) when Docked, rendering, AND the
- * "Dock orbs to bars" toggle is on (each bar's own getOrbWidgetComponent()
- * override is what actually gates this, reading
- * {@code ViciousBarsConfig#dockOrbsToBars()} itself - see HpBarOverlay etc).
+ * Bars with a real vanilla orb equivalent (HP/Prayer/Spec/Run), while the
+ * "Dock orbs to bars" toggle is on, flip the whole positioning model: rather
+ * than docking to the inventory panel (or chasing the orb cluster out to
+ * wherever the panel happens to be - the old, fragile approach that needed
+ * to keep resizing MAP_CONTAINER to reach it), the BAR itself is drawn
+ * anchored to wherever its own real orb naturally already sits, and the real
+ * orb is nudged the short distance onto it
+ * ({@link #alignRealOrb(Widget, Point)}). Nothing ever needs to grow or
+ * reach anywhere - the orb cluster stays at its own natural size, and
+ * dragging the minimap (the same real Alt-drag that's always worked)
+ * carries the bars along for free, since their anchor point moves with it.
  * This is a position-only move, not a new action: the orb is never hidden,
  * resized, or given a new click behavior, it's still the same real, fully
  * clickable orb, just relocated - the same technique the Hub-accepted Orb
@@ -36,8 +41,9 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  * real-time via Discord that replicating a real widget's action from a
  * plugin-drawn element isn't allowed under Hub rules, regardless of
  * mechanism - moving the orb itself is different, it's never given a new
- * action, just moved. Only supported for FIXED placement - a FLOATING bar
- * has no single screen position to park the orb at.
+ * action, just moved. When the toggle is off, HP/Prayer/Spec/Run fall back
+ * to ordinary FIXED (docked to the inventory panel via {@link PanelDock}) or
+ * FLOATING (user-dragged) placement, same as Warmth/Enemy HP always use.
  */
 public abstract class VitalBarOverlay extends Overlay
 {
@@ -71,24 +77,31 @@ public abstract class VitalBarOverlay extends Overlay
 
 	private final Client client;
 
-	// Saved once per bar, the first time this bar's orb gets moved onto it.
-	// Keyed to the WIDGET INSTANCE rather than a plain boolean flag:
-	// minimizing the minimap swaps in a completely different widget
-	// interface (InterfaceID.OrbsNomap instead of InterfaceID.Orbs - own
-	// distinct component ids, e.g. ORB_HEALTH is 10485767 in one and
-	// 58654725 in the other), which means a brand new Widget object - a
-	// saved X/Y/mode from the OLD widget must never get applied to the NEW
-	// one. Tracking the actual instance lets that mismatch be detected and
-	// handled by just starting fresh.
+	// Saved once per bar, the first time this bar's orb is seen. Keyed to
+	// the WIDGET INSTANCE rather than a plain boolean flag: minimizing the
+	// minimap swaps in a completely different widget interface
+	// (InterfaceID.OrbsNomap instead of InterfaceID.Orbs - own distinct
+	// component ids, e.g. ORB_HEALTH is 10485767 in one and 58654725 in the
+	// other), which means a brand new Widget object - saved state from the
+	// OLD widget must never get applied to the NEW one. Tracking the actual
+	// instance lets that mismatch be detected and handled by just starting
+	// fresh.
 	private Widget alignedOrbWidget;
 	private int savedOrbX;
 	private int savedOrbY;
 	private int savedOrbXMode;
 	private int savedOrbYMode;
+	// The orb's own real canvas-space center at the moment it was FIRST seen
+	// - i.e. before this bar (or any earlier bar touching the same orb) ever
+	// moved it. This, not a live re-read, is what the bar anchors itself to
+	// every frame - re-reading the orb's current position each frame would
+	// be self-referential the instant we start moving it ourselves (our own
+	// last write feeding back in as next frame's target), the same shape of
+	// bug the old MAP_CONTAINER growth code hit.
+	private int savedOrbCanvasCenterX;
+	private int savedOrbCanvasCenterY;
 
-	// This frame's real canvas-space orb target, or null - read by
-	// ViciousBarsPlugin to size the shared ORBS/MAP_CONTAINER widgets large
-	// enough for alignRealOrb()'s own clamp to actually reach.
+	// This frame's real canvas-space orb target, or null if not applicable.
 	private Point lastIconCanvasCenter;
 
 	protected VitalBarOverlay(Client client)
@@ -310,16 +323,39 @@ public abstract class VitalBarOverlay extends Overlay
 	}
 
 	/**
+	 * Captures this orb widget instance's real baseline state - original
+	 * local X/Y/position-mode (for restore) AND its real canvas-space center
+	 * (for the orb-anchored bar placement below) - the first time it's seen,
+	 * before anything has ever moved it. A no-op on every later call for the
+	 * same instance, so it's safe to call this every frame before computing
+	 * where to draw the bar.
+	 */
+	private void captureOrbBaselineIfNeeded(Widget orb)
+	{
+		if (alignedOrbWidget == orb)
+		{
+			return;
+		}
+		savedOrbX = orb.getOriginalX();
+		savedOrbY = orb.getOriginalY();
+		savedOrbXMode = orb.getXPositionMode();
+		savedOrbYMode = orb.getYPositionMode();
+		net.runelite.api.Point canvas = orb.getCanvasLocation();
+		savedOrbCanvasCenterX = canvas.getX() + orb.getWidth() / 2;
+		savedOrbCanvasCenterY = canvas.getY() + orb.getHeight() / 2;
+		alignedOrbWidget = orb;
+	}
+
+	/**
 	 * Moves the real orb to sit centered on {@code iconCanvasCenter} (a real
 	 * canvas-space point). Same real mechanism the Hub-accepted Orb Mover
 	 * plugin uses: switch both position modes to absolute, write the target
 	 * through {@code setOriginalX/Y}, then {@code revalidate()} - clamped to
-	 * the orb's own parent bounds exactly like Orb Mover clamps, so this
-	 * never asks the orb to move somewhere its parent container doesn't
-	 * reach. The orb's original position is captured once, lazily, the
-	 * first time THIS SPECIFIC widget instance actually gets moved - see
-	 * {@link #alignedOrbWidget}'s javadoc for why identity (not just a
-	 * boolean flag) matters here.
+	 * the orb's own parent bounds exactly like Orb Mover clamps. In the
+	 * current orb-anchored design that clamp should essentially never bind
+	 * in practice - the target is always very close to the orb's own natural
+	 * position by construction - but it stays as a safety net regardless.
+	 * Assumes {@link #captureOrbBaselineIfNeeded} already ran this frame.
 	 */
 	private void alignRealOrb(Widget orb, Point iconCanvasCenter)
 	{
@@ -327,15 +363,6 @@ public abstract class VitalBarOverlay extends Overlay
 		if (parent == null)
 		{
 			return;
-		}
-
-		if (alignedOrbWidget != orb)
-		{
-			savedOrbX = orb.getOriginalX();
-			savedOrbY = orb.getOriginalY();
-			savedOrbXMode = orb.getXPositionMode();
-			savedOrbYMode = orb.getYPositionMode();
-			alignedOrbWidget = orb;
 		}
 
 		if (orb.getXPositionMode() != WidgetPositionMode.ABSOLUTE_LEFT)
@@ -392,12 +419,6 @@ public abstract class VitalBarOverlay extends Overlay
 		alignedOrbWidget = null;
 	}
 
-	/** This frame's real canvas-space orb target, or null if not applicable this frame (no orb, bar isn't Docked, or isn't rendering). */
-	Point getLastIconCanvasCenter()
-	{
-		return lastIconCanvasCenter;
-	}
-
 	/** The content cluster's local top-left anchor point for a slot of the given size - the drawn icon for bars without a real orb, or the real orb's own size for bars with one. */
 	private Point contentAnchor(int width, int height, Orientation orientation, int slotLength, int slotThickness)
 	{
@@ -417,9 +438,21 @@ public abstract class VitalBarOverlay extends Overlay
 			return null;
 		}
 
+		// Orb docking (when on) takes over placement entirely for this bar,
+		// ahead of PlacementMode/DockSide/PanelDock - see the class javadoc.
+		// Resolved early, before any positioning math, because the anchor
+		// point it provides IS the position - there's no PanelDock call to
+		// make in this branch at all.
+		int orbComponent = getOrbWidgetComponent();
+		Widget orb = orbComponent >= 0 ? resolveOrbWidget() : null;
+		if (orb != null)
+		{
+			captureOrbBaselineIfNeeded(orb);
+		}
+
 		PlacementMode placementMode = getPlacementMode();
-		setMovable(placementMode == PlacementMode.FLOATING);
-		if (placementMode == PlacementMode.FIXED)
+		setMovable(orb == null && placementMode == PlacementMode.FLOATING);
+		if (orb != null || placementMode == PlacementMode.FIXED)
 		{
 			// RuneLite's OverlayRenderer pre-translates the graphics we're
 			// given by the overlay's stored preferred location (set by
@@ -437,12 +470,25 @@ public abstract class VitalBarOverlay extends Overlay
 
 		Orientation orientation;
 		int length = getLength();
-		// Only set for FIXED placement - the real canvas-space top-left this
-		// bar is drawn at. Pulling the real orb onto this bar needs this to
-		// know where on screen to park it; a FLOATING bar has no equivalent
-		// single fixed point, so its orb just stays put.
-		Point fixedPos = null;
-		if (placementMode == PlacementMode.FIXED)
+		// The real canvas-space top-left this bar is drawn at - set
+		// whenever this bar's position is a single fixed point this frame
+		// (orb-anchored, or FIXED/docked), null for FLOATING with no orb
+		// (the overlay renderer handles that positioning itself).
+		Point fixedPos;
+		if (orb != null)
+		{
+			// Anchored to the orb's own natural position (captured once,
+			// above) rather than PanelDock - DockSide/DockSlot/Clamp slot
+			// don't apply here at all, each bar simply ends up wherever its
+			// own real orb already sits, which vanilla already keeps
+			// non-overlapping between HP/Prayer/Run/Spec.
+			orientation = getOrientation();
+			int width = orientation == Orientation.VERTICAL ? getThickness() : length;
+			int height = orientation == Orientation.VERTICAL ? length : getThickness();
+			fixedPos = new Point(savedOrbCanvasCenterX - width / 2, savedOrbCanvasCenterY - height / 2);
+			graphics.translate(fixedPos.x, fixedPos.y);
+		}
+		else if (placementMode == PlacementMode.FIXED)
 		{
 			DockSide side = getDockSide();
 			orientation = side.orientation();
@@ -475,6 +521,7 @@ public abstract class VitalBarOverlay extends Overlay
 		else
 		{
 			orientation = getOrientation();
+			fixedPos = null;
 			// No explicit translate needed here - the overlay renderer
 			// already translated the graphics context to this bar's dragged
 			// position before calling render() (that's how movable overlays
@@ -509,12 +556,9 @@ public abstract class VitalBarOverlay extends Overlay
 		// any bar while "Dock orbs to bars" is off) - a bar with an active
 		// orb pulls the real orb onto itself instead (below), and the orb
 		// already shows its own icon and number, so drawing our own on top
-		// would just be a redundant second label. Same returned Dimension
-		// either way, so PanelDock and dock-slot stacking never see a
-		// difference.
+		// would just be a redundant second label.
 		int max = Math.max(getMax(), 1);
 		int current = Math.max(0, Math.min(getCurrent(), max));
-		int orbComponent = getOrbWidgetComponent();
 
 		if (orbComponent < 0)
 		{
@@ -522,7 +566,6 @@ public abstract class VitalBarOverlay extends Overlay
 			drawIconAndCounter(graphics, width, height, orientation, current, max, iconHighlight);
 		}
 
-		Widget orb = fixedPos != null && orbComponent >= 0 ? resolveOrbWidget() : null;
 		if (orb != null)
 		{
 			// The orb is the label now - centered on whatever slot its own
