@@ -120,36 +120,15 @@ public class WidgetManager
 			return;
 		}
 
-		// TEMPORARY - debug-only, tracing the vertical-offset mystery.
-		// Logs ONLY the orb container target's Y writes (the widget
-		// OrbContainerOffset actually touches) - before/after canvas
-		// location directly tests whether this is a bad-math problem or a
-		// dead-write problem, same question we had to answer for
-		// MAP_CONTAINER earlier this session.
-		boolean tracing = widget.getId() == Modern.ORBS;
-		net.runelite.api.Point beforeLoc = tracing ? widget.getCanvasLocation() : null;
-
 		boolean remapped = false;
 		for (Map.Entry<ValueKey, SetValue> entry : getTarget(target).getValueMap().entrySet())
 		{
-			if (tracing && entry.getKey() == ValueKey.Y)
-			{
-				int computed = getValue(widget, target.getArrayId(), entry.getKey(), entry.getValue(), toDefault);
-				log.debug("vertOffset trace: ORBS Y computed={} currentOriginalY={} beforeCanvas={}",
-					computed, widget.getOriginalY(), beforeLoc);
-			}
 			remapped |= setValue(widget, target.getArrayId(), entry.getKey(), entry.getValue(), toDefault);
 		}
 
 		if (remapped)
 		{
 			widget.revalidate();
-		}
-
-		if (tracing)
-		{
-			log.debug("vertOffset trace: ORBS afterOriginalY={} afterCanvas={} remapped={}",
-				widget.getOriginalY(), widget.getCanvasLocation(), remapped);
 		}
 	}
 
