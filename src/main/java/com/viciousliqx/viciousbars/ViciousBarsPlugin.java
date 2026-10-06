@@ -114,6 +114,26 @@ public class ViciousBarsPlugin extends Plugin
 				.setSpriteId(SpriteID.COMPASS_OUTLINE)
 				.setOpacity(0)
 				.setHidden(false);
+
+			// Compact Orbs leaves this at the default (0,0) local position,
+			// which only lands on the real compass because their
+			// COMPASS_PARENT's own origin happens to coincide with it in
+			// their layout. Confirmed via live testing that assumption
+			// doesn't hold here - centered it on the real COMPASSCLICK
+			// widget's own canvas center instead, converted into local
+			// coordinates relative to this same parent, which is robust
+			// regardless of how the two are actually nested.
+			Widget compassClick = client.getWidget(InterfaceID.ToplevelPreEoc.COMPASSCLICK);
+			if (compassClick != null)
+			{
+				net.runelite.api.Point parentCanvas = parent.getCanvasLocation();
+				net.runelite.api.Point clickCanvas = compassClick.getCanvasLocation();
+				int centerX = clickCanvas.getX() + compassClick.getWidth() / 2;
+				int centerY = clickCanvas.getY() + compassClick.getHeight() / 2;
+				compassFrame.setOriginalX(centerX - parentCanvas.getX() - COMPASS_FRAME_SIZE / 2);
+				compassFrame.setOriginalY(centerY - parentCanvas.getY() - COMPASS_FRAME_SIZE / 2);
+			}
+
 			compassFrame.revalidate();
 		}
 
