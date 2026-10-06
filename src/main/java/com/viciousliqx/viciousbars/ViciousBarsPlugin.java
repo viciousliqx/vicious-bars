@@ -59,15 +59,17 @@ public class ViciousBarsPlugin extends Plugin
 	// The first hide alone left the full circular frame/border visible -
 	// MINIMAP (the content-type swap above) is only the TERRAIN graphic.
 	// Confirmed against Compact Orbs' real source (CompactOrbsManager#
-	// setupMinimapContainer, hiding its Minimap.COMPONENTS group): the
-	// actual frame/border is a SEPARATE widget, MAP_MINIMAP_GRAPHIC9 (their
-	// own constant for it is even just named "MINIMAP", confusingly
-	// distinct from their "MINIMAP_MASK" which is our MINIMAP target
-	// above) - plus six invisible click-blocker widgets, MAP_NOCLICK_0
-	// through MAP_NOCLICK_5. All seven are hidden with a plain
-	// setHidden(true)/false, no type/sprite tricks needed for these.
+	// setupMinimapContainer, hiding its Minimap.COMPONENTS group) that a
+	// separate widget is also involved - but MAP_MINIMAP_GRAPHIC9
+	// specifically turned out to ALSO back the compass's own stone ring,
+	// which Compact Orbs does NOT hide (it draws its own independent
+	// replacement compass graphic instead - manager.compassFrame /
+	// Sprite.COMPASS_FRAME - rather than reusing or hiding the vanilla
+	// one). Pulled out for now until the actual frame-only widget is
+	// identified. The six invisible click-blocker widgets, MAP_NOCLICK_0
+	// through MAP_NOCLICK_5, stay - hidden with a plain setHidden(true)/
+	// false, no type/sprite tricks needed for these.
 	private static final int[] EXTRA_HIDE_TARGETS = {
-		InterfaceID.ToplevelPreEoc.MAP_MINIMAP_GRAPHIC9,
 		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_0,
 		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_1,
 		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_2,
