@@ -187,11 +187,8 @@ public class EditManager
 					setupHiddenOrbs(target, hidden);
 					setupHandlerActions(handler, target, toggle, hidden);
 
-					boolean swapping = manager.enableOrbSwapping;
-
 					if (manager.isCustomLayout()
-						|| (swapping && Orbs.isSwappableOrb(bound.getId()))
-						|| (!swapping && !manager.isCompactLayout() && !target.isLogoutX()))
+						|| (!manager.isCompactLayout() && !target.isLogoutX()))
 					{
 						//set draggable
 						handler.setClickMask(DRAG | DRAG_ON);
@@ -240,7 +237,7 @@ public class EditManager
 			MenuOp.HANDLER_TOGGLE_OP_INDEX,
 			manager.buildToggleOp(isHidden, toggle.getMenuName()));
 
-		if (!manager.enableOrbSwapping && !manager.isCompactLayout() || manager.isCustomLayout())
+		if (!manager.isCompactLayout() || manager.isCustomLayout())
 		{
 			handler.setAction(
 				MenuOp.RESET_POSITION_OP_INDEX,
@@ -253,12 +250,9 @@ public class EditManager
 				MenuOp.EDIT_MODE_OP_INDEX,
 				manager.buildEditOp(manager.isEditingLayout));
 
-			if (!manager.enableOrbSwapping || manager.isCustomLayout())
-			{
-				handler.setAction(
-					RESET_ALL_OP_INDEX,
-					ColorUtil.wrapWithColorTag(MenuOp.RESET_ALL, MenuOp.RED));
-			}
+			handler.setAction(
+				RESET_ALL_OP_INDEX,
+				ColorUtil.wrapWithColorTag(MenuOp.RESET_ALL, MenuOp.RED));
 		}
 
 		//handle the menu actions: each handler can hide/show, or reset its bound widget

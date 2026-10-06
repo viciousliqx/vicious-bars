@@ -28,7 +28,6 @@ package com.compactorbs;
 import static com.compactorbs.CompactOrbsConstants.ConfigGroup.GROUP_NAME;
 import com.compactorbs.CompactOrbsConstants.ConfigKeys;
 import com.compactorbs.CompactOrbsConstants.Layout;
-import com.compactorbs.widget.elements.Orbs;
 import java.awt.event.KeyEvent;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -180,18 +179,6 @@ public interface CompactOrbsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = ConfigKeys.ENABLE_ORB_SWAPPING,
-		name = "Enable orb swapping",
-		description = "Will allow swapping of the main data orbs via edit-mode while enabled. Disables custom-positioning",
-		section = layout,
-		position = 6
-	)
-	default boolean enableOrbSwapping()
-	{
-		return false;
-	}
-
-	@ConfigItem(
 		keyName = ConfigKeys.HIDE_MINIMAP_WITH_SIDE_PANEL,
 		name = "Hide orbs with inventory tab",
 		description = "Hide the compact layout when the side panel tab is hidden (only works in resizable-modern).",
@@ -323,7 +310,7 @@ public interface CompactOrbsConfig extends Config
 	}
 
 	@ConfigSection(
-		name = "Orb Visibility / Swapping",
+		name = "Orb Visibility",
 		description = "",
 		closedByDefault = true,
 		position = 100
@@ -331,7 +318,7 @@ public interface CompactOrbsConfig extends Config
 	String hideAndSwapUpdate = "hideAndSwapUpdate";
 	@ConfigItem(
 		keyName = "hideAndSwapUpdate",
-		name = "<html>Orb hiding/swapping has been moved to the in-game Edit-mode. <br/> <br/>" +
+		name = "<html>Orb hiding has been moved to the in-game Edit-mode. <br/> <br/>" +
 			"Enable Edit-mode (either works): <br/>" +
 			"- Right-click the toggle-button (eye) <br/>" +
 			"- Configure the Hotkey for Edit-mode </html>",
@@ -361,95 +348,6 @@ public interface CompactOrbsConfig extends Config
 	default boolean hideCompass()
 	{
 		return false;
-	}
-
-	//orb swapping
-	@ConfigItem(
-		keyName = ConfigKeys.HP_ORB_SLOT,
-		name = "Compact HP slot",
-		description = "",
-		hidden = true
-	)
-	default Orbs orbInHPSlot()
-	{
-		return Orbs.HP_ORB_CONTAINER;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.PRAYER_ORB_SLOT,
-		name = "Compact Prayer slot",
-		description = "",
-		hidden = true
-	)
-	default Orbs orbInPrayerSlot()
-	{
-		return Orbs.PRAYER_ORB_CONTAINER;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.RUN_ORB_SLOT,
-		name = "Compact Run slot",
-		description = "",
-		hidden = true
-	)
-	default Orbs orbInRunSlot()
-	{
-		return Orbs.RUN_ORB_CONTAINER;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.SPECIAL_ORB_SLOT,
-		name = "Compact Spec slot",
-		description = "",
-		hidden = true
-	)
-	default Orbs orbInSpecialSlot()
-	{
-		return Orbs.SPEC_ORB_CONTAINER;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.HP_ORB_SLOT_VANILLA,
-		name = "Vanilla HP slot",
-		description = "",
-		hidden = true
-	)
-	default Orbs orbInHpSlotVanilla()
-	{
-		return Orbs.HP_ORB_CONTAINER;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.PRAYER_ORB_SLOT_VANILLA,
-		name = "Vanilla Prayer slot",
-		description = "",
-		hidden = true
-	)
-	default Orbs orbInPrayerSlotVanilla()
-	{
-		return Orbs.PRAYER_ORB_CONTAINER;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.RUN_ORB_SLOT_VANILLA,
-		name = "Vanilla Run slot",
-		description = "",
-		hidden = true
-	)
-	default Orbs orbInRunSlotVanilla()
-	{
-		return Orbs.RUN_ORB_CONTAINER;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.SPECIAL_ORB_SLOT_VANILLA,
-		name = "Vanilla Spec slot",
-		description = "",
-		hidden = true
-	)
-	default Orbs orbInSpecialSlotVanilla()
-	{
-		return Orbs.SPEC_ORB_CONTAINER;
 	}
 
 	//orb hiding

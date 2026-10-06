@@ -70,16 +70,7 @@ public class CompactOrbsConstants
 		public static final String DISABLE_REORDERING = "disableReordering";
 		public static final String LEAVE_EMPTY_SPACE = "leaveEmptySpace";
 		public static final String ENABLE_NO_CLICKTHROUGH = "enableNoClickthrough";
-		public static final String ENABLE_ORB_SWAPPING = "enableOrbSwapping";
 		public static final String HIDE_MINIMAP_WITH_SIDE_PANEL = "hideMinimapWithSidePanel";
-		public static final String HP_ORB_SLOT = "hpOrbSlot";
-		public static final String PRAYER_ORB_SLOT = "prayerOrbSlot";
-		public static final String RUN_ORB_SLOT = "runOrbSlot";
-		public static final String SPECIAL_ORB_SLOT = "specialOrbSlot";
-		public static final String HP_ORB_SLOT_VANILLA = "hpOrbSlotVanilla";
-		public static final String PRAYER_ORB_SLOT_VANILLA = "prayerOrbSlotVanilla";
-		public static final String RUN_ORB_SLOT_VANILLA = "runOrbSlotVanilla";
-		public static final String SPECIAL_ORB_SLOT_VANILLA = "specialOrbSlotVanilla";
 		public static final String HIDE_HP = "hideHp";
 		public static final String HIDE_PRAYER = "hidePrayer";
 		public static final String HIDE_RUN = "hideRun";
@@ -149,9 +140,6 @@ public class CompactOrbsConstants
 	{
 		//trigger remapping without the need for a valid scriptId
 		public static final int FORCE_UPDATE = -1;
-
-		//script that swaps a graphic with another, ex: for orb frame hovering
-		public static final int GRAPHIC_SWAPPER = 44;
 
 		//scripts related to noclickthrough updating
 		public static final int ORBS_UPDATE_HEALTH = 446;

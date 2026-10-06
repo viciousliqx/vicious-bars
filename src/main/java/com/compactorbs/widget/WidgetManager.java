@@ -44,9 +44,7 @@ import com.compactorbs.util.SetValue;
 import com.compactorbs.util.ValueKey;
 import com.compactorbs.widget.elements.Orbs;
 import com.compactorbs.widget.layout.offset.OffsetManager;
-import com.compactorbs.widget.layout.slot.Slot;
 import com.compactorbs.widget.layout.slot.SlotManager;
-import com.compactorbs.widget.layout.slot.SlotRegistry;
 import java.util.Map;
 import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
@@ -74,9 +72,6 @@ public class WidgetManager
 
 	@Inject
 	private SlotManager slotManager;
-
-	@Inject
-	private SlotRegistry slotRegistry;
 
 	public void remapTargets(TargetWidget... targets)
 	{
@@ -134,28 +129,7 @@ public class WidgetManager
 
 	private TargetWidget getTarget(TargetWidget target)
 	{
-		if (target instanceof Orbs)
-		{
-			return getSlotTarget(target);
-		}
-
 		return target;
-	}
-
-	private TargetWidget getSlotTarget(TargetWidget target)
-	{
-		if (!Orbs.isSwappableOrb(target.getComponentId()) || !manager.enableOrbSwapping)
-		{
-			return target;
-		}
-
-		Slot slot = slotManager.findSlot(target);
-		if (slot == null)
-		{
-			return target;
-		}
-
-		return slot.getDefaultTarget();
 	}
 
 	private int getSavedValue(Widget widget, int index, ValueKey key, boolean useSavedPosition)

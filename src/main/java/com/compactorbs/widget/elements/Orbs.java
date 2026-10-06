@@ -452,18 +452,6 @@ public enum Orbs implements TargetWidget
 		SPEC_ORB_CONTAINER
 	};
 
-	public static boolean isSwappableOrb(int componentId)
-	{
-		for (TargetWidget orb : SWAPPABLE_ORBS)
-		{
-			if (orb.getComponentId() == componentId)
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
 	@Override
 	public boolean isLogoutX()
 	{

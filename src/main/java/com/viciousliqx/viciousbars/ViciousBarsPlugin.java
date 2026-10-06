@@ -20,7 +20,6 @@ import com.compactorbs.widget.layout.edit.DragListener;
 import com.compactorbs.widget.layout.edit.DragState;
 import com.compactorbs.widget.layout.edit.EditManager;
 import com.compactorbs.widget.layout.slot.SlotManager;
-import com.compactorbs.widget.layout.slot.SlotRegistry;
 import com.google.inject.Provides;
 import java.awt.event.KeyEvent;
 import java.util.Locale;
@@ -69,11 +68,16 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  * needs it to place things; only the multi-layout CONFIG CHOICE goes,
  * since Vicious Bars will only ever have one single layout, not four.
  * Already removed before reaching this integrated state: the detached
- * minimap overlay feature, and the wiki-plugin-conflict chat warning (see
- * git history for exact diffs). Still to be picked off: hotkeys, store/
- * activity orb toggles (not yet understood what these even are - worth
- * confirming before deciding whether to keep them), orb-swapping, and the
- * multi-layout config surface mentioned above.
+ * minimap overlay feature, the wiki-plugin-conflict chat warning, the dead
+ * "Detached Minimap" hotkey option, and orb-swapping in full (Compact Orbs'
+ * own feature - letting you reassign which named orb sits in which slot
+ * instead of freely dragging it. Vicious Bars is about bars, not
+ * rearranging orbs, so keeping this would make us a redundant subset of
+ * the real Compact Orbs rather than something distinct - see git history
+ * for exact diffs). Store/activity orb hide toggles turned out to be
+ * ordinary vanilla icons riding the same generic per-orb hide/reorder
+ * system HP/Prayer/Run/Spec already need, so nothing to cut there. Still
+ * to be picked off: the multi-layout config surface mentioned above.
  */
 @Slf4j
 @PluginDescriptor(
@@ -107,9 +111,6 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 
 	@Inject
 	private SlotManager slotManager;
-
-	@Inject
-	private SlotRegistry slotRegistry;
 
 	@Inject
 	private HideOrbRegistry orbRegistry;
@@ -148,7 +149,6 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 		manager.hideWorldMap = config.hideWorld();
 		manager.hideLogoutX = config.hideLogout();
 		manager.enableNoClickThrough = true;
-		manager.enableOrbSwapping = config.enableOrbSwapping();
 		manager.snapCornerRepositioned = manager.isSnapCornerRepositioned();
 
 		clientThread.invoke(() ->
@@ -249,10 +249,6 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 
 		switch (scriptId)
 		{
-			case Script.GRAPHIC_SWAPPER:
-				manager.resolveOrbFrameMismatch();
-				break;
-
 			case Script.TOPLEVEL_SUBCHANGE:
 				if (manager.isEditingLayout)
 				{
@@ -423,7 +419,7 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 			return;
 		}
 
-		if (slotRegistry.isSwapConfig(key) || orbRegistry.isHideConfig(key))
+		if (orbRegistry.isHideConfig(key))
 		{
 			if (!manager.isEditingLayout)
 			{
@@ -472,21 +468,10 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 				clientThread.invokeLater(manager::updateCustomChildren);
 				break;
 
-			case ConfigKeys.ENABLE_ORB_SWAPPING:
 			case ConfigKeys.ENABLE_NO_CLICKTHROUGH:
 				clientThread.invokeLater(() ->
 				{
-					if (key.equals(ConfigKeys.ENABLE_NO_CLICKTHROUGH))
-					{
-						manager.enableNoClickThrough = true;
-					}
-					else
-					{
-						manager.enableOrbSwapping = config.enableOrbSwapping();
-						slotManager.update();
-						manager.rebuildLayout();
-					}
-
+					manager.enableNoClickThrough = true;
 					manager.updateNoClickThrough();
 
 					if (!manager.isCompactLayout())

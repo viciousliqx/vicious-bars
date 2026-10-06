@@ -31,7 +31,6 @@ import com.compactorbs.CompactOrbsManager;
 import com.compactorbs.widget.TargetWidget;
 import com.compactorbs.widget.WidgetManager;
 import com.compactorbs.widget.elements.Minimap;
-import com.compactorbs.widget.layout.slot.SlotManager;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
@@ -61,9 +60,6 @@ public class DragListener implements MouseListener
 	@Inject
 	private BindingManager bindingManager;
 
-	@Inject
-	private SlotManager slotManager;
-
 	public void updateDrag()
 	{
 		Widget dragged = client.getDraggedWidget();
@@ -84,49 +80,31 @@ public class DragListener implements MouseListener
 						dragState.offset.y = dragState.origin.y - (container.getBounds().y + dragged.getRelativeY());
 					}
 
-					if (manager.isCustomLayout() || !manager.enableOrbSwapping)
-					{
-						if (!manager.isCompactLayout() || manager.isFixedMode())
-						{
-							container = client.getWidget(Minimap.ORBS_UNIVERSE.getComponentId());
-							if (container == null)
-							{
-								return;
-							}
-						}
-
-						if (bound != null)
-						{
-							Point pos = getDragPosition(dragged, container.getBounds());
-
-							Point handlerPos = toBoundPosition(dragged, bound, pos);
-							setPosition(dragged, handlerPos);
-
-							draggedOn = getIndicatorTarget(dragged, draggedOn, container);
-							setIndicatorTo(draggedOn);
-							updateDraggedIndicator(bound, handlerPos);
-
-							setPosition(bound, pos);
-							if (binding.getRelated() != null)
-							{
-								Widget related = widgetManager.getTargetWidget(binding.getRelated());
-								setPosition(related, pos);
-							}
-						}
-					}
-					else
+					if (!manager.isCompactLayout() || manager.isFixedMode())
 					{
 						container = client.getWidget(Minimap.ORBS_UNIVERSE.getComponentId());
-						if (container != null)
+						if (container == null)
 						{
-							setIndicatorTo(draggedOn);
-							if (bound != null)
-							{
-								Point pos = getDragPosition(dragged, container.getBounds());
-								setPosition(bound, pos);
+							return;
+						}
+					}
 
-								dragState.lastDraggedOn = draggedOn;
-							}
+					if (bound != null)
+					{
+						Point pos = getDragPosition(dragged, container.getBounds());
+
+						Point handlerPos = toBoundPosition(dragged, bound, pos);
+						setPosition(dragged, handlerPos);
+
+						draggedOn = getIndicatorTarget(dragged, draggedOn, container);
+						setIndicatorTo(draggedOn);
+						updateDraggedIndicator(bound, handlerPos);
+
+						setPosition(bound, pos);
+						if (binding.getRelated() != null)
+						{
+							Widget related = widgetManager.getTargetWidget(binding.getRelated());
+							setPosition(related, pos);
 						}
 					}
 				}
@@ -157,59 +135,13 @@ public class DragListener implements MouseListener
 					Widget bound = widgetManager.getTargetWidget(binding.get(manager));
 					if (bound != null)
 					{
-						if (manager.isCustomLayout() || !manager.enableOrbSwapping)
-						{
-							manager.saveCurrentLayoutPosition(bound, binding);
-						}
-						else
-						{
-							Point pos = toHandlerPosition(dragState.lastDraggedHandler, bound);
-							setPosition(bound, pos);
-
-							swapDraggedOrb();
-						}
+						manager.saveCurrentLayoutPosition(bound, binding);
 					}
 				}
 
 				resetDrag();
 			}
 		}
-	}
-
-	private void swapDraggedOrb()
-	{
-		if (dragState.lastDraggedOn == null)
-		{
-			return;
-		}
-
-		Binding draggedBinding = bindingManager.getByHandler(dragState.lastDraggedHandler);
-		Binding targetBinding = bindingManager.getByHandler(dragState.lastDraggedOn);
-		if (draggedBinding == null || targetBinding == null)
-		{
-			return;
-		}
-
-		TargetWidget draggedOrb = draggedBinding.get(manager);
-		TargetWidget targetOrb = targetBinding.get(manager);
-		if (draggedOrb == null || targetOrb == null)
-		{
-			return;
-		}
-
-		final int x = dragState.lastDraggedHandler.getOriginalX();
-		final int y = dragState.lastDraggedHandler.getOriginalY();
-
-		setPosition(dragState.lastDraggedHandler,
-			new Point(
-				dragState.lastDraggedOn.getOriginalX(),
-				dragState.lastDraggedOn.getOriginalY()
-			)
-		);
-
-		setPosition(dragState.lastDraggedOn, new Point(x, y));
-
-		slotManager.swap(draggedOrb, targetOrb);
 	}
 
 	private void resetDrag()

@@ -54,9 +54,6 @@ public class SlotManager
 	private WidgetManager widgetManager;
 
 	@Inject
-	private SlotRegistry registry;
-
-	@Inject
 	private HideOrbRegistry hideConfig;
 
 	public enum SlotLayoutMode
@@ -114,11 +111,7 @@ public class SlotManager
 
 			for (Slot slot : Slot.values())
 			{
-				TargetWidget target = manager.enableOrbSwapping
-					? registry.resolve(slot, mode, config)
-					: slot.getDefaultTarget();
-
-				layout.set(slot, target);
+				layout.set(slot, slot.getDefaultTarget());
 			}
 		}
 	}
@@ -149,23 +142,6 @@ public class SlotManager
 		}
 
 		return null;
-	}
-
-	public void swap(TargetWidget first, TargetWidget second)
-	{
-		Slot firstSlot = findSlot(first);
-		Slot secondSlot = findSlot(second);
-
-		if (firstSlot == null || secondSlot == null)
-		{
-			return;
-		}
-
-		getCurrentLayout().swap(firstSlot, secondSlot);
-
-		registry.save(currentLayoutMode, getCurrentLayout());
-
-		remapOrbPositions();
 	}
 
 	private void remapOrbPositions()

@@ -37,7 +37,6 @@ public class DragState
 	public Point offset = new Point(0, 0);
 
 	public Widget lastDraggedHandler;
-	public Widget lastDraggedOn;
 	public Widget handlerIndicator;
 	public Widget boundIndicator;
 
@@ -46,7 +45,6 @@ public class DragState
 	public void clear()
 	{
 		lastDraggedHandler = null;
-		lastDraggedOn = null;
 		handlerIndicator = null;
 		boundIndicator = null;
 		wasDragging = false;

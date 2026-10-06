@@ -34,7 +34,6 @@ import com.compactorbs.CompactOrbsConstants.ConfigKeys;
 import com.compactorbs.CompactOrbsConstants.Layout;
 import com.compactorbs.CompactOrbsConstants.MenuOp;
 import com.compactorbs.CompactOrbsConstants.Script;
-import com.compactorbs.CompactOrbsConstants.Sprite;
 import com.compactorbs.CompactOrbsConstants.VarClient;
 import com.compactorbs.CompactOrbsConstants.Varbit;
 import com.compactorbs.CompactOrbsConstants.Widgets.Classic;
@@ -66,7 +65,6 @@ import net.runelite.api.GameState;
 import net.runelite.api.Menu;
 import net.runelite.api.MenuAction;
 import net.runelite.api.MenuEntry;
-import net.runelite.api.Point;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.JavaScriptCallback;
 import net.runelite.api.widgets.Widget;
@@ -120,7 +118,6 @@ public class CompactOrbsManager
 	public boolean hideWorldMap;
 	public boolean hideLogoutX;
 	public boolean enableNoClickThrough;
-	public boolean enableOrbSwapping;
 	public boolean isLoggingIn;
 	public boolean isCutsceneActive;
 
@@ -181,7 +178,6 @@ public class CompactOrbsManager
 		hideLogoutX = false;
 		enableNoClickThrough = false;
 		isUpdatingProfile = false;
-		enableOrbSwapping = false;
 
 		bindingManager.clear();
 		orbHidden.clear();
@@ -208,7 +204,6 @@ public class CompactOrbsManager
 		hideWorldMap = config.hideWorld();
 		hideLogoutX = config.hideLogout();
 		enableNoClickThrough = true;
-		enableOrbSwapping = config.enableOrbSwapping();
 		isUpdatingProfile = false;
 
 		//update based on config
@@ -334,8 +329,7 @@ public class CompactOrbsManager
 			return;
 		}
 
-		boolean noClick = enableNoClickThrough ||
-			(enableOrbSwapping && isCompactLayout() && !getCurrentLayout().isCustom());
+		boolean noClick = enableNoClickThrough;
 
 		for (TargetWidget orb : Orbs.SWAPPABLE_ORBS)
 		{
@@ -383,50 +377,6 @@ public class CompactOrbsManager
 			noClick.revalidate();
 
 			noClickThroughChildren.put(target, noClick);
-		}
-	}
-
-	//TODO - test if stale state can happen to the XP orb when hovering into the HP orb in safe mode (poisoned)
-	//orb swapping seems to have introduced a possible de-sync under certain configurations, where an orbs backing frame
-	//will remain in a hovered state when moving into another orbs bounds (overlapped) while triggering the graphic swapper script (44)
-	//before it applied the correct state to the previous orb - to resolve this, ignore non-orb related swaps and reset the stale
-	//backing sprite if it exists
-	// - test example: swap order [HP, SPEC, RUN, PRAY], default view
-	// - hovering RUN -> PRAY = never becomes stale
-	// - hovering PRAY -> RUN = can become stale
-	public void resolveOrbFrameMismatch()
-	{
-		if (isCompactLayout() || !enableOrbSwapping)
-		{
-			return;
-		}
-
-		final int id = client.getIntStack()[1] - 1;
-
-		if (!Orbs.isSwappableOrb(id))
-		{
-			return;
-		}
-
-		final Point mouse = client.getMouseCanvasPosition();
-
-		for (TargetWidget target : Orbs.SWAPPABLE_ORBS)
-		{
-			final Widget backing = client.getWidget(target.getBackingId());
-			final Widget button = client.getWidget(target.getButtonId());
-
-			if (backing == null || button == null)
-			{
-				continue;
-			}
-
-			final int spriteId = backing.getSpriteId();
-			final boolean hovering = button.getBounds().contains(mouse.getX(), mouse.getY());
-
-			if (!hovering && spriteId == Sprite.FRAME_HOVERED)
-			{
-				backing.setSpriteId(Sprite.FRAME);
-			}
 		}
 	}
 
@@ -709,7 +659,7 @@ public class CompactOrbsManager
 
 	public boolean isVanillaCustom()
 	{
-		return !enableOrbSwapping && !isCompactLayout() && !isMinimapMinimized();
+		return !isCompactLayout() && !isMinimapMinimized();
 	}
 
 	public boolean isAnchorLeft()
@@ -774,7 +724,7 @@ public class CompactOrbsManager
 
 	public boolean shouldOffsetXpOrb()
 	{
-		return !isFixedMode() && (enableNoClickThrough || enableOrbSwapping);
+		return !isFixedMode() && enableNoClickThrough;
 	}
 
 	public boolean hideMinimapToggle()
@@ -1011,7 +961,7 @@ public class CompactOrbsManager
 
 	public boolean useSavedPosition(Widget widget, int index)
 	{
-		if (isCompactLayout() || enableOrbSwapping)
+		if (isCompactLayout())
 		{
 			return false;
 		}
