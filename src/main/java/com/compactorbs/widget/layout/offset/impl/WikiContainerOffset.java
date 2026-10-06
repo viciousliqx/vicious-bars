@@ -25,7 +25,6 @@
 
 package com.compactorbs.widget.layout.offset.impl;
 
-import com.compactorbs.CompactOrbsConstants.Layout;
 import com.compactorbs.CompactOrbsManager;
 import com.compactorbs.widget.elements.Orbs;
 import com.compactorbs.widget.layout.offset.OffsetTarget;
@@ -52,18 +51,6 @@ public class WikiContainerOffset implements OffsetTarget
 				x -= slotManager.getHiddenSize();
 			}
 
-			if (manager.getCurrentLayout().isHorizontalWide())
-			{
-				if (manager.hideMinimapToggle())
-				{
-					x += Layout.TOGGLE_BUTTON_SIZE;
-
-					if (manager.isXpDropHidden() || manager.hideWorldMap)
-					{
-						x += 9;
-					}
-				}
-			}
 		}
 
 		return x;

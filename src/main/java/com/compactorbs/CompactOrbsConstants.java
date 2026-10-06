@@ -60,9 +60,11 @@ public class CompactOrbsConstants
 		public static final String COMPASS = "hideCompass";
 		public static final String HOTKEY_KEYBIND = "hotkeyKeybind";
 		public static final String HOTKEY_TOGGLE_OPTION = "hotkeyToggleOption";
+
+		//not a real config choice - internal bookkeeping key only, see
+		//HideOrbRegistry's registration of this for why it still exists
 		public static final String MINIMAP_TOGGLE_BUTTON = "hideMinimapButton";
-		public static final String RIGHT_CLICK_TOGGLE_BUTTONS = "rightClickToggleButtons";
-		public static final String MINIMAP_BUTTON_PLACEMENT = "minimapButtonPlacement";
+
 		public static final String ORB_LAYOUT = "orbLayout";
 		public static final String VERTICAL_ANCHOR = "verticalAnchor";
 		public static final String HORIZONTAL_ANCHOR = "horizontalAnchor";
@@ -375,18 +377,15 @@ public class CompactOrbsConstants
 			public static final int COMPASS_CONTENT = 1339;
 		}
 
-		//minimap toggle button locations @ToggleLocation
-		public static final int DEFAULT_MINIMAP_BUTTON_X = 190;
-		public static final int DEFAULT_MINIMAP_BUTTON_Y = 176;
-
-		public static final int ABOVE_XP_MINIMAP_BUTTON_X = 8;
-		public static final int ABOVE_XP_MINIMAP_BUTTON_Y = 0;
-
+		//minimap toggle button location - always below the map now, the only
+		//placement choice Vicious Bars kept
 		public static final int BELOW_MAP_MINIMAP_BUTTON_X = 120;
 		public static final int BELOW_MAP_MINIMAP_BUTTON_Y = 155;
 
-		public static final int BELOW_X_MINIMAP_BUTTON_X = DEFAULT_MINIMAP_BUTTON_X;
-		public static final int BELOW_X_MINIMAP_BUTTON_Y = 15;
+		//vanilla/"original" Y fallback for the toggle button's own SetValue
+		//table (Button.java) - unrelated to the placement choice above,
+		//kept as-is
+		public static final int DEFAULT_MINIMAP_BUTTON_Y = 176;
 
 		//toggle button dimensions
 		public static final int TOGGLE_BUTTON_SIZE = 17;

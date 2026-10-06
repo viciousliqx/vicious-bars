@@ -74,11 +74,6 @@ public class CompassOffset implements OffsetTarget
 			{
 				if (manager.isClassicResizable() || manager.hideLogoutX)
 				{
-					if (manager.hideMinimapToggle() && (manager.isXpDropHidden() || manager.hideWorldMap))
-					{
-						x += Layout.TOGGLE_BUTTON_SIZE;
-					}
-
 					if (manager.isWikiHidden())
 					{
 						if (manager.isXpDropHidden())

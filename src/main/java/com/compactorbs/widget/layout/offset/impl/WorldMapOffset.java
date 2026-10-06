@@ -79,24 +79,9 @@ public class WorldMapOffset implements OffsetTarget
 			{
 				if (manager.isClassicResizable() || manager.hideLogoutX)
 				{
-					if (manager.isXpDropHidden())
+					if (manager.isXpDropHidden() && manager.isWikiHidden())
 					{
-						if (manager.hideMinimapToggle())
-						{
-							x += Layout.TOGGLE_BUTTON_SIZE + 9;
-
-							if (manager.isWikiHidden())
-							{
-								x += 4;
-							}
-						}
-						else
-						{
-							if (manager.isWikiHidden())
-							{
-								x += Layout.TOGGLE_BUTTON_SIZE + 13;
-							}
-						}
+						x += Layout.TOGGLE_BUTTON_SIZE + 13;
 					}
 				}
 			}

@@ -82,17 +82,9 @@ public class XPOrbOffset implements OffsetTarget
 				{
 					x += 125;
 
-					if (manager.hideWorldMap)
+					if (manager.hideWorldMap && !manager.isWikiHidden())
 					{
-						if (!manager.isWikiHidden())
-						{
-							x -= 31;
-
-							if (manager.hideMinimapToggle())
-							{
-								x += Layout.TOGGLE_BUTTON_SIZE + 9;
-							}
-						}
+						x -= 31;
 					}
 				}
 				else

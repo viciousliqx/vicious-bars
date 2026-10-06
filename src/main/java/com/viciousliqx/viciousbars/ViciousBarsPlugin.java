@@ -2,7 +2,6 @@ package com.viciousliqx.viciousbars;
 
 import com.compactorbs.CompactOrbsConfig;
 import com.compactorbs.CompactOrbsConfig.HotkeyOptions;
-import com.compactorbs.CompactOrbsConfig.TogglePlacement;
 import com.compactorbs.CompactOrbsConstants.ConfigGroup;
 import static com.compactorbs.CompactOrbsConstants.ConfigGroup.GROUP_NAME;
 import com.compactorbs.CompactOrbsConstants.ConfigKeys;
@@ -341,11 +340,7 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 				if (manager.allowReordering())
 				{
 					widgetManager.remapTargets(Orbs.values());
-
-					if (config.minimapTogglePlacement() == TogglePlacement.BELOW_MAP)
-					{
-						manager.updateMinimapToggleButton();
-					}
+					manager.updateMinimapToggleButton();
 				}
 				break;
 		}
@@ -457,14 +452,6 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 					widgetManager.remapTargets(Compass.values());
 					widgetManager.remapTargets(Orbs.values());
 				});
-				break;
-
-			case ConfigKeys.MINIMAP_BUTTON_PLACEMENT:
-				clientThread.invokeLater(manager::updateMinimapToggleButton);
-				break;
-
-			case ConfigKeys.RIGHT_CLICK_TOGGLE_BUTTONS:
-				clientThread.invokeLater(manager::updateCustomChildren);
 				break;
 
 			case ConfigKeys.ENABLE_NO_CLICKTHROUGH:
@@ -581,10 +568,9 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 			return;
 		}
 
-		if (config.toggleOption() == HotkeyOptions.MINIMAP_BUTTON
-			|| manager.isFixedMode() && config.toggleOption() != HotkeyOptions.EDIT_MODE)
+		if (manager.isFixedMode())
 		{
-			manager.saveConfig(ConfigKeys.MINIMAP_TOGGLE_BUTTON, !config.hideMinimapToggle());
+			clientThread.invokeLater(() -> editManager.toggleEditMode(true));
 			return;
 		}
 

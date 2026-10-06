@@ -118,21 +118,27 @@ public final class HideOrbRegistry
 			Orbs.XP_DROPS_CONTAINER
 		);
 
+		// Not a real config choice anymore (Vicious Bars' toggle button is
+		// always shown - see CompactOrbsConfig's removed hideMinimapToggle()).
+		// Still registered with a hardcoded false getter purely so
+		// EditManager#setupHandlerActions keeps wiring up the button
+		// handler's "Edit mode"/"Reset all" actions, which are gated on
+		// having a non-null HideOrbConfig for the target.
+		register(
+			ConfigKeys.MINIMAP_TOGGLE_BUTTON,
+			() -> false,
+			"Button",
+			Button.MINIMAP_BUTTON_CLASSIC,
+			Button.MINIMAP_BUTTON_MODERN,
+			Button.MINIMAP_BUTTON_FIXED
+		);
+
 		register(
 			ConfigKeys.HIDE_LOGOUT_X,
 			config::hideLogout,
 			"Logout",
 			Orbs.LOGOUT_X_ICON,
 			Orbs.LOGOUT_X_STONE
-		);
-
-		register(
-			ConfigKeys.MINIMAP_TOGGLE_BUTTON,
-			config::hideMinimapToggle,
-			"Button",
-			Button.MINIMAP_BUTTON_CLASSIC,
-			Button.MINIMAP_BUTTON_MODERN,
-			Button.MINIMAP_BUTTON_FIXED
 		);
 
 		register(

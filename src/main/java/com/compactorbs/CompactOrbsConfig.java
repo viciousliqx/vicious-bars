@@ -27,10 +27,8 @@ package com.compactorbs;
 
 import static com.compactorbs.CompactOrbsConstants.ConfigGroup.GROUP_NAME;
 import com.compactorbs.CompactOrbsConstants.ConfigKeys;
-import com.compactorbs.CompactOrbsConstants.Layout;
 import java.awt.event.KeyEvent;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -72,22 +70,8 @@ public interface CompactOrbsConfig extends Config
 	}
 
 	@Getter
-	@RequiredArgsConstructor
-	enum TogglePlacement
-	{
-		DEFAULT(Layout.DEFAULT_MINIMAP_BUTTON_X, Layout.DEFAULT_MINIMAP_BUTTON_Y),
-		ABOVE_XP(Layout.ABOVE_XP_MINIMAP_BUTTON_X, Layout.ABOVE_XP_MINIMAP_BUTTON_Y),
-		BELOW_MAP(Layout.BELOW_MAP_MINIMAP_BUTTON_X, Layout.BELOW_MAP_MINIMAP_BUTTON_Y),
-		BELOW_X(Layout.BELOW_X_MINIMAP_BUTTON_X, Layout.BELOW_X_MINIMAP_BUTTON_Y);
-
-		private final int x;
-		private final int y;
-	}
-
-	@Getter
 	enum HotkeyOptions
 	{
-		MINIMAP_BUTTON,
 		MINIMAP,
 		EDIT_MODE
 	}
@@ -190,50 +174,6 @@ public interface CompactOrbsConfig extends Config
 	default boolean hideMinimapWithSidePanel() { return false; }
 
 	@ConfigSection(
-		name = "Toggle Button",
-		description = "",
-		closedByDefault = true,
-		position = 2
-	)
-	String button = "button";
-
-	@ConfigItem(
-		keyName = ConfigKeys.MINIMAP_TOGGLE_BUTTON,
-		name = "Hide the toggle button",
-		description = "Hide/show the minimap toggle button",
-		section = button,
-		position = 0
-	)
-	default boolean hideMinimapToggle()
-	{
-		return false;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.RIGHT_CLICK_TOGGLE_BUTTONS,
-		name = "Right click the toggle button",
-		description = "Deprioritizes the toggle menu so it requires a right-click to interact with",
-		section = button,
-		position = 1
-	)
-	default boolean rightClickToggleButtons()
-	{
-		return false;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.MINIMAP_BUTTON_PLACEMENT,
-		name = "Toggle location",
-		description = "Select the desired location of the toggle button while the minimap is visible",
-		section = button,
-		position = 2
-	)
-	default TogglePlacement minimapTogglePlacement()
-	{
-		return TogglePlacement.DEFAULT;
-	}
-
-	@ConfigSection(
 		name = "Hotkey",
 		description = "",
 		closedByDefault = true,
@@ -263,7 +203,7 @@ public interface CompactOrbsConfig extends Config
 	)
 	default HotkeyOptions toggleOption()
 	{
-		return HotkeyOptions.MINIMAP_BUTTON;
+		return HotkeyOptions.MINIMAP;
 	}
 
 	@ConfigSection(

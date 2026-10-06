@@ -27,7 +27,6 @@ package com.compactorbs;
 
 import com.compactorbs.CompactOrbsConfig.HorizontalAnchor;
 import com.compactorbs.CompactOrbsConfig.HotkeyOptions;
-import com.compactorbs.CompactOrbsConfig.TogglePlacement;
 import com.compactorbs.CompactOrbsConfig.VerticalAnchor;
 import com.compactorbs.CompactOrbsConstants.ConfigGroup;
 import com.compactorbs.CompactOrbsConstants.ConfigKeys;
@@ -480,26 +479,24 @@ public class CompactOrbsManager
 			return;
 		}
 
-		minimapButton.setHidden(config.hideMinimapToggle() || isMinimapMinimized());
-		if (!config.rightClickToggleButtons() || isFixedMode())
+		minimapButton.setHidden(isMinimapMinimized());
+
+		int index = MenuOp.OP_INDEX_0;
+		if (isFixedMode())
 		{
-			int index = MenuOp.OP_INDEX_0;
-			if (isFixedMode())
-			{
-				index = MenuOp.EDIT_MODE_OP_INDEX;
-			}
-			minimapButton.setAction(
-				index == MenuOp.OP_INDEX_0
-					? MenuOp.EDIT_MODE_OP_INDEX
-					: MenuOp.OP_INDEX_0, "");
-
-			minimapButton.setAction(index,
-				isFixedMode()
-					? buildEditOp(false)
-					: buildToggleOp(isMinimapHidden(), MenuOp.MINIMAP_OP));
+			index = MenuOp.EDIT_MODE_OP_INDEX;
 		}
+		minimapButton.setAction(
+			index == MenuOp.OP_INDEX_0
+				? MenuOp.EDIT_MODE_OP_INDEX
+				: MenuOp.OP_INDEX_0, "");
 
-		minimapButton.setNoClickThrough(!config.rightClickToggleButtons());
+		minimapButton.setAction(index,
+			isFixedMode()
+				? buildEditOp(false)
+				: buildToggleOp(isMinimapHidden(), MenuOp.MINIMAP_OP));
+
+		minimapButton.setNoClickThrough(true);
 		widgetManager.remapTargets(
 			Button.MINIMAP_BUTTON_MODERN,
 			Button.MINIMAP_BUTTON_CLASSIC,
@@ -579,22 +576,10 @@ public class CompactOrbsManager
 		{
 			if (!isFixedMode())
 			{
-				if (!isEditingLayout)
-				{
-					if (config.rightClickToggleButtons())
-					{
-						entry
-							.setOption(buildToggleOp(isMinimapHidden(), MenuOp.MINIMAP_OP))
-							.setType(MenuAction.CC_OP_LOW_PRIORITY)
-							.setDeprioritized(true);
-					}
-
-				}
-
 				menu.createMenuEntry(-2)
 					.setOption(buildEditOp(false))
 					.setForceLeftClick(false)
-					.setDeprioritized(config.rightClickToggleButtons())
+					.setDeprioritized(false)
 					.setType(MenuAction.RUNELITE_LOW_PRIORITY)
 					.onClick(e ->
 						editManager.toggleEditMode(true)
@@ -706,19 +691,9 @@ public class CompactOrbsManager
 		return config.hideStore();
 	}
 
-	public TogglePlacement getTogglePlacement()
-	{
-		return config.minimapTogglePlacement();
-	}
-
 	public boolean shouldOffsetXpOrb()
 	{
 		return !isFixedMode() && enableNoClickThrough;
-	}
-
-	public boolean hideMinimapToggle()
-	{
-		return config.hideMinimapToggle();
 	}
 
 	//prevent unintended state changes for the logout-x since it is treated as a side icon/stone, i.e. don't unhide when it should be hidden
@@ -903,7 +878,6 @@ public class CompactOrbsManager
 				}
 
 				if (key.equals(ConfigKeys.HIDE_STORE)
-					&& config.minimapTogglePlacement() == TogglePlacement.BELOW_MAP
 					&& !isMinimapHidden()
 					&& isLoggedIn())
 				{

@@ -25,7 +25,6 @@
 
 package com.compactorbs.widget.layout.offset.impl;
 
-import com.compactorbs.CompactOrbsConfig.TogglePlacement;
 import com.compactorbs.CompactOrbsConstants.Layout;
 import com.compactorbs.CompactOrbsManager;
 import com.compactorbs.widget.elements.Orbs;
@@ -47,12 +46,11 @@ public class MinimapButtonOffset implements OffsetTarget
 				return x;
 			}
 
-			x = manager.getTogglePlacement().getX();
+			x = Layout.BELOW_MAP_MINIMAP_BUTTON_X;
 
 			if (manager.allowReordering() && !manager.isEditingLayout)
 			{
-				if (manager.getTogglePlacement() == TogglePlacement.BELOW_MAP
-					&& manager.isStoreHidden() && !manager.isStoreOrbDisabled())
+				if (manager.isStoreHidden() && !manager.isStoreOrbDisabled())
 				{
 					x -= 33;
 				}
@@ -91,24 +89,15 @@ public class MinimapButtonOffset implements OffsetTarget
 				return y;
 			}
 
-			y = manager.getTogglePlacement().getY();
+			y = Layout.BELOW_MAP_MINIMAP_BUTTON_Y;
 
 			if (!manager.isEditingLayout)
 			{
 				//offset when store is hidden and minimap is visible
-				if (manager.allowReordering() &&
-					manager.getTogglePlacement() == TogglePlacement.BELOW_MAP
+				if (manager.allowReordering()
 					&& manager.isStoreHidden() && !manager.isStoreOrbDisabled())
 				{
 					y -= 5;
-				}
-
-				if (manager.getTogglePlacement() == TogglePlacement.ABOVE_XP)
-				{
-					if (manager.shouldOffsetXpOrb())
-					{
-						y -= 2;
-					}
 				}
 			}
 
