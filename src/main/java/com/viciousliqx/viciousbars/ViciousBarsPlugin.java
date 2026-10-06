@@ -10,6 +10,7 @@ import net.runelite.api.Client;
 import net.runelite.api.events.BeforeRender;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetPositionMode;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
@@ -88,14 +89,40 @@ public class ViciousBarsPlugin extends Plugin
 		final int originalY;
 		final int originalWidth;
 		final int originalHeight;
+		// Captured ONCE, before this widget was ever grown: its own initial
+		// canvas edges relative to its PARENT's initial canvas position.
+		// Meaningless (left as 0) for MAP_CONTAINER, which is self-positioned
+		// instead - see growToCoverTargets()'s javadoc for why these two
+		// cases need different anchor math entirely.
+		final int initialLeftOffsetFromParent;
+		final int initialRightOffsetFromParent;
+		final int initialTopOffsetFromParent;
+		final int initialBottomOffsetFromParent;
 
-		GrownWidget(Widget widget)
+		GrownWidget(Widget widget, Widget parent)
 		{
 			this.widget = widget;
 			this.originalX = widget.getOriginalX();
 			this.originalY = widget.getOriginalY();
 			this.originalWidth = widget.getOriginalWidth();
 			this.originalHeight = widget.getOriginalHeight();
+
+			if (parent != null)
+			{
+				net.runelite.api.Point c = widget.getCanvasLocation();
+				net.runelite.api.Point p = parent.getCanvasLocation();
+				this.initialLeftOffsetFromParent = c.getX() - p.getX();
+				this.initialRightOffsetFromParent = (c.getX() + widget.getWidth()) - p.getX();
+				this.initialTopOffsetFromParent = c.getY() - p.getY();
+				this.initialBottomOffsetFromParent = (c.getY() + widget.getHeight()) - p.getY();
+			}
+			else
+			{
+				this.initialLeftOffsetFromParent = 0;
+				this.initialRightOffsetFromParent = 0;
+				this.initialTopOffsetFromParent = 0;
+				this.initialBottomOffsetFromParent = 0;
+			}
 		}
 	}
 
@@ -210,49 +237,50 @@ public class ViciousBarsPlugin extends Plugin
 		{
 			anyOrb = client.getWidget(InterfaceID.OrbsNomap.ORB_HEALTH);
 		}
-		Widget orbParent = anyOrb != null ? anyOrb.getParent() : null;
-
-		if (!anyBarTarget || orbParent == null)
+		if (!anyBarTarget || anyOrb == null)
 		{
 			restoreGrownWidgets();
 			return;
 		}
 
-		// Every level in the real chain clips its descendants to its own
-		// bounds, so all three - MAP_CONTAINER, ORBS (sits directly inside
-		// it), and the orb's real parent id=10485760 (sits directly inside
-		// ORBS) - need to grow. Order matters: MAP_CONTAINER is x=RIGHT, so
-		// growing IT shifts its OWN canvasLeft, which cascades down and
-		// shifts where ORBS and orbParent sit too. logChainSizes caught this
-		// directly - growing inner-to-outer (as this used to) meant each
-		// inner level's math ran against last frame's STALE inherited
-		// position, so by the time MAP_CONTAINER grew and shifted everything
-		// under it, the inner levels' right edges had already receded from
-		// their targets again next frame, demanding more growth, which
-		// demanded more from MAP_CONTAINER - a genuine feedback spiral
-		// (confirmed in the log: MAP_CONTAINER's width climbing by a fixed
-		// ~31px every single frame before suddenly collapsing and
-		// restarting). Growing outer-to-inner instead means each inner
-		// level's growToCoverTargets call reads its parent's
-		// ALREADY-updated position from earlier in this same frame -
-		// revalidate() is synchronous, so this converges within one frame
-		// instead of lagging and spiraling across frames.
-		// MAP_CONTAINER is irrelevant (and hidden) once the map is minimized
-		// - nothing to grow there, and no reason to even try.
+		// MAP_CONTAINER is self-positioned (see growToCoverTargets()'s
+		// javadoc) and irrelevant/hidden once the map is minimized - nothing
+		// to grow there in that case, and no reason to even try.
 		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
 		boolean changed = false;
 		if (mapContainer != null && !mapContainer.isHidden())
 		{
-			changed |= growToCoverTargets(mapContainer, barTargets);
+			changed |= growToCoverTargets(mapContainer, null, barTargets);
 		}
-		Widget orbsSlot = client.getWidget(InterfaceID.ToplevelPreEoc.ORBS);
-		if (orbsSlot != null && !orbsSlot.isHidden())
+
+		// Every ordinary level between the orb and MAP_CONTAINER clips its
+		// descendants to its own bounds, so all of them need to grow - but
+		// HOW MANY levels that is isn't fixed: normal Orbs mode is orb ->
+		// UNIVERSE -> ORBS slot (1 level), while the minimized OrbsNomap
+		// interface has an EXTRA level in between (orb -> CONTENT ->
+		// UNIVERSE -> ORBS slot - id=58654722/CONTENT doesn't even exist in
+		// normal Orbs, confirmed via logChainSizes). Walking generically via
+		// repeated getParent() instead of hardcoding a specific depth means
+		// this adapts automatically instead of silently leaving a level
+		// ungrown the way ORBS itself was originally missed. Collected
+		// first, then processed outermost-first (nearest MAP_CONTAINER) so
+		// each inner call reads its own parent's ALREADY-updated position
+		// from earlier in this same frame - growing inner-to-outer instead
+		// meant each level ran against last frame's stale inherited
+		// position, a confirmed feedback spiral (MAP_CONTAINER's width
+		// climbing a fixed ~31px every frame before collapsing and
+		// restarting).
+		List<Widget> chain = new ArrayList<>();
+		Widget w = anyOrb.getParent();
+		while (w != null && w != mapContainer && !w.isHidden())
 		{
-			changed |= growToCoverTargets(orbsSlot, barTargets);
+			chain.add(w);
+			w = w.getParent();
 		}
-		if (!orbParent.isHidden())
+		for (int i = chain.size() - 1; i >= 0; i--)
 		{
-			changed |= growToCoverTargets(orbParent, barTargets);
+			Widget widget = chain.get(i);
+			changed |= growToCoverTargets(widget, widget.getParent(), barTargets);
 		}
 
 		// TEMPORARY - debug-only. Dumps the full ancestor chain's live sizes
@@ -281,30 +309,38 @@ public class ViciousBarsPlugin extends Plugin
 	 * its real canvas rect covers every non-null target point (with a
 	 * margin).
 	 * <p>
-	 * Used to branch on {@code getXPositionMode()}/{@code getYPositionMode()}
-	 * to decide which edge a size change leaves fixed (ABSOLUTE_RIGHT/BOTTOM
-	 * meant to treat the FAR edge as the anchor and shrink the near one
-	 * instead). logChainSizes caught that branch running away: it computed
-	 * its "stable" edge as {@code currentLeft + widget.getWidth()}, but
-	 * {@code widget.getWidth()} there is OUR OWN last write, while
-	 * {@code currentLeft} (confirmed via the log - MAP_CONTAINER sat frozen
-	 * at the same canvas X for ten straight frames while its width alone
-	 * climbed by a fixed ~34px every single one) never actually recoils to
-	 * compensate, because once the user has manually repositioned this
-	 * panel the client tracks a stored absolute position immune to
-	 * layout-driven recompute from a plain size change - regardless of what
-	 * the declared position mode claims. Feeding our own prior write back in
-	 * as "the real edge" every frame is a textbook runaway integrator with
-	 * nothing to ever pull it back down.
+	 * Two genuinely different cases, distinguished by whether {@code parent}
+	 * is null:
 	 * <p>
-	 * currentLeft/currentTop, read fresh here every frame, are NOT subject
-	 * to that feedback - they only move in response to a genuine external
-	 * drag - so they're the one safe, convergent anchor regardless of
-	 * position mode: always grow the far edge (right/bottom) out to reach
-	 * the targets, floored at the saved vanilla size so it can still shrink
-	 * back down once a target moves closer.
+	 * {@code parent == null} - MAP_CONTAINER only, the one SELF-POSITIONED
+	 * widget in this chain. Once the user has manually repositioned this
+	 * panel, the client tracks a stored absolute canvas position immune to
+	 * layout-driven recompute from a plain size change - confirmed via the
+	 * log: it sat frozen at the same canvas X for ten straight frames while
+	 * its width alone climbed by a fixed ~34px every single one, regardless
+	 * of its declared ABSOLUTE_RIGHT mode. So its own live
+	 * {@code getCanvasLocation()}, read fresh every frame, IS the one safe,
+	 * convergent anchor here (it only moves on a genuine external drag) -
+	 * always grow the far edge out from it.
+	 * <p>
+	 * {@code parent != null} - every ordinary nested widget in the chain
+	 * (the orb's real parent, any level above it, the ORBS slot). These
+	 * genuinely DO follow their declared position mode's live formula -
+	 * confirmed the hard way: the minimized interface's extra CONTENT level
+	 * (id=58654722) is ABSOLUTE_RIGHT and its canvasLeft recedes in lockstep
+	 * with its own width (right edge constant at the same value every
+	 * frame), the literal OPPOSITE of MAP_CONTAINER's behavior. Reading
+	 * {@code widget.getCanvasLocation()} directly here would feed our own
+	 * last write back in as "the anchor" every frame - the same runaway
+	 * shape, just triggered by the opposite assumption. The fix: derive the
+	 * stable edge from the PARENT's live position (read fresh - already
+	 * updated this frame, since the caller processes outermost-first) plus
+	 * this widget's own OWN initial offset from that parent, captured once
+	 * before it was ever grown. That's immune to the widget's own size
+	 * entirely, while still tracking genuine parent movement (e.g. the user
+	 * dragging the map) on its own.
 	 */
-	private boolean growToCoverTargets(Widget widget, Point[] targets)
+	private boolean growToCoverTargets(Widget widget, Widget parent, Point[] targets)
 	{
 		GrownWidget saved = null;
 		for (GrownWidget g : grownWidgets)
@@ -317,13 +353,9 @@ public class ViciousBarsPlugin extends Plugin
 		}
 		if (saved == null)
 		{
-			saved = new GrownWidget(widget);
+			saved = new GrownWidget(widget, parent);
 			grownWidgets.add(saved);
 		}
-
-		net.runelite.api.Point canvas = widget.getCanvasLocation();
-		int currentLeft = canvas.getX();
-		int currentTop = canvas.getY();
 
 		// Never ask for more than the real client viewport can show -
 		// reported "spasm near the screen edge" is consistent with the
@@ -338,36 +370,125 @@ public class ViciousBarsPlugin extends Plugin
 
 		boolean changed = false;
 
-		int desiredRight = currentLeft + saved.originalWidth;
-		for (Point p : targets)
+		if (parent == null)
 		{
-			if (p != null)
-			{
-				desiredRight = Math.max(desiredRight, p.x + CONTAINER_MARGIN);
-			}
-		}
-		desiredRight = Math.min(desiredRight, canvasWidth - edgeMargin);
-		int newWidth = Math.max(saved.originalWidth, desiredRight - currentLeft);
-		if (widget.getOriginalWidth() != newWidth)
-		{
-			widget.setOriginalWidth(newWidth);
-			changed = true;
-		}
+			net.runelite.api.Point canvas = widget.getCanvasLocation();
+			int currentLeft = canvas.getX();
+			int currentTop = canvas.getY();
 
-		int desiredBottom = currentTop + saved.originalHeight;
-		for (Point p : targets)
-		{
-			if (p != null)
+			int desiredRight = currentLeft + saved.originalWidth;
+			for (Point p : targets)
 			{
-				desiredBottom = Math.max(desiredBottom, p.y + CONTAINER_MARGIN);
+				if (p != null)
+				{
+					desiredRight = Math.max(desiredRight, p.x + CONTAINER_MARGIN);
+				}
+			}
+			desiredRight = Math.min(desiredRight, canvasWidth - edgeMargin);
+			int newWidth = Math.max(saved.originalWidth, desiredRight - currentLeft);
+			if (widget.getOriginalWidth() != newWidth)
+			{
+				widget.setOriginalWidth(newWidth);
+				changed = true;
+			}
+
+			int desiredBottom = currentTop + saved.originalHeight;
+			for (Point p : targets)
+			{
+				if (p != null)
+				{
+					desiredBottom = Math.max(desiredBottom, p.y + CONTAINER_MARGIN);
+				}
+			}
+			desiredBottom = Math.min(desiredBottom, canvasHeight - edgeMargin);
+			int newHeight = Math.max(saved.originalHeight, desiredBottom - currentTop);
+			if (widget.getOriginalHeight() != newHeight)
+			{
+				widget.setOriginalHeight(newHeight);
+				changed = true;
 			}
 		}
-		desiredBottom = Math.min(desiredBottom, canvasHeight - edgeMargin);
-		int newHeight = Math.max(saved.originalHeight, desiredBottom - currentTop);
-		if (widget.getOriginalHeight() != newHeight)
+		else
 		{
-			widget.setOriginalHeight(newHeight);
-			changed = true;
+			net.runelite.api.Point parentCanvas = parent.getCanvasLocation();
+
+			if (widget.getXPositionMode() == WidgetPositionMode.ABSOLUTE_RIGHT)
+			{
+				int stableRight = parentCanvas.getX() + saved.initialRightOffsetFromParent;
+				int desiredLeft = stableRight - saved.originalWidth;
+				for (Point p : targets)
+				{
+					if (p != null)
+					{
+						desiredLeft = Math.min(desiredLeft, p.x - CONTAINER_MARGIN);
+					}
+				}
+				desiredLeft = Math.max(desiredLeft, edgeMargin);
+				int newWidth = Math.max(saved.originalWidth, stableRight - desiredLeft);
+				if (widget.getOriginalWidth() != newWidth)
+				{
+					widget.setOriginalWidth(newWidth);
+					changed = true;
+				}
+			}
+			else
+			{
+				int stableLeft = parentCanvas.getX() + saved.initialLeftOffsetFromParent;
+				int desiredRight = stableLeft + saved.originalWidth;
+				for (Point p : targets)
+				{
+					if (p != null)
+					{
+						desiredRight = Math.max(desiredRight, p.x + CONTAINER_MARGIN);
+					}
+				}
+				desiredRight = Math.min(desiredRight, canvasWidth - edgeMargin);
+				int newWidth = Math.max(saved.originalWidth, desiredRight - stableLeft);
+				if (widget.getOriginalWidth() != newWidth)
+				{
+					widget.setOriginalWidth(newWidth);
+					changed = true;
+				}
+			}
+
+			if (widget.getYPositionMode() == WidgetPositionMode.ABSOLUTE_BOTTOM)
+			{
+				int stableBottom = parentCanvas.getY() + saved.initialBottomOffsetFromParent;
+				int desiredTop = stableBottom - saved.originalHeight;
+				for (Point p : targets)
+				{
+					if (p != null)
+					{
+						desiredTop = Math.min(desiredTop, p.y - CONTAINER_MARGIN);
+					}
+				}
+				desiredTop = Math.max(desiredTop, edgeMargin);
+				int newHeight = Math.max(saved.originalHeight, stableBottom - desiredTop);
+				if (widget.getOriginalHeight() != newHeight)
+				{
+					widget.setOriginalHeight(newHeight);
+					changed = true;
+				}
+			}
+			else
+			{
+				int stableTop = parentCanvas.getY() + saved.initialTopOffsetFromParent;
+				int desiredBottom = stableTop + saved.originalHeight;
+				for (Point p : targets)
+				{
+					if (p != null)
+					{
+						desiredBottom = Math.max(desiredBottom, p.y + CONTAINER_MARGIN);
+					}
+				}
+				desiredBottom = Math.min(desiredBottom, canvasHeight - edgeMargin);
+				int newHeight = Math.max(saved.originalHeight, desiredBottom - stableTop);
+				if (widget.getOriginalHeight() != newHeight)
+				{
+					widget.setOriginalHeight(newHeight);
+					changed = true;
+				}
+			}
 		}
 
 		if (changed)
