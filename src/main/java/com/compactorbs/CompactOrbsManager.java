@@ -589,20 +589,9 @@ public class CompactOrbsManager
 							.setDeprioritized(true);
 					}
 
-					if (isMinimapHidden() && config.showToggleOnMinimapButton())
-					{
-						menu.createMenuEntry(-2)
-							.setOption(buildToggleOp(!config.showMinimapInCompactView(), MenuOp.DETACHED_OP))
-							.setDeprioritized(config.rightClickToggleButtons())
-							.setType(MenuAction.RUNELITE_LOW_PRIORITY)
-							.onClick(e ->
-								saveConfig(ConfigKeys.ENABLE_MINIMAP_OVERLAY, !config.showMinimapInCompactView())
-							);
-					}
 				}
 
-				int index = isCompactLayout() && config.showToggleOnMinimapButton() ? -3 : -2;
-				menu.createMenuEntry(index)
+				menu.createMenuEntry(-2)
 					.setOption(buildEditOp(false))
 					.setForceLeftClick(false)
 					.setDeprioritized(config.rightClickToggleButtons())

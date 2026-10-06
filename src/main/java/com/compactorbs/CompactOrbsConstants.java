@@ -82,9 +82,6 @@ public class CompactOrbsConstants
 		public static final String HIDE_WIKI = "hideWiki";
 		public static final String HIDE_LOGOUT_X = "hideLogoutX";
 		public static final String HIDE_GRID = "hideGrid";
-		public static final String ENABLE_MINIMAP_OVERLAY = "enableMinimapOverlay";
-		public static final String ENABLE_OVERLAY_TOGGLE_OPTION = "enableOverlayToggleOption";
-		public static final String ENABLE_LOGOUT_X_OVERLAY = "enableLogoutXOverlay";
 
 		//edit-modes custom positioning
 		public static final String CUSTOM_LAYOUT_PREFIX = "custom_layout_";
@@ -419,7 +416,6 @@ public class CompactOrbsConstants
 		public static final String HIDE = "Hide";
 
 		public static final String MINIMAP_OP = "Minimap";
-		public static final String DETACHED_OP = "Detached " + MINIMAP_OP;
 
 		public static final String LOGOUT_OP = "Logout";
 		public static final String WORLD_SWITCHER_OP = "World switcher";

@@ -135,17 +135,19 @@ public interface CompactOrbsConfig extends Config
 		return VerticalAnchor.BOTTOM;
 	}
 
-	// TODO: confirmed dead no-op for Orbs.UNIVERSE on our hardcoded
-	// HORIZONTAL_WIDE layout - OrbContainerOffset.xOffset() only adds
-	// getRightOffset(), which is a constant 0 for this layout; Left has no
-	// branch at all. See compact_orbs_walkthrough.md's horizontal-anchor
-	// keeper finding. Once a design settles, cut this the same way
-	// layout()/enableNoClickthrough() were: remove this method and
-	// hardcode whichever side at the call sites.
+	// Confirmed dead no-op for Orbs.UNIVERSE on our hardcoded HORIZONTAL_WIDE
+	// layout - OrbContainerOffset.xOffset() only adds getRightOffset(),
+	// which is a constant 0 for this layout; Left has no branch at all. The
+	// ONLY place this still does anything is CompassOffset.xOffset()'s
+	// HORIZONTAL_WIDE-right branch, which nudges the compass replacement
+	// graphic to compensate for hidden toggle icons - hence the renamed
+	// label below. See compact_orbs_walkthrough.md's horizontal-anchor
+	// keeper finding. Once a design settles, this can still be hardcoded
+	// away the same way layout()/enableNoClickthrough() were.
 	@ConfigItem(
 		keyName = ConfigKeys.HORIZONTAL_ANCHOR,
-		name = "Horizontal anchor",
-		description = "Where the layout will snap to, and the direction orbs move while reordering",
+		name = "Compass fix",
+		description = "Has no effect on orb position - only nudges the compass replacement graphic to compensate for hidden toggle icons (minimap button, XP drops, world map, wiki)",
 		section = layout,
 		position = 3
 	)
@@ -262,51 +264,6 @@ public interface CompactOrbsConfig extends Config
 	default HotkeyOptions toggleOption()
 	{
 		return HotkeyOptions.MINIMAP_BUTTON;
-	}
-
-	@ConfigSection(
-		name = "Detached Minimap",
-		description = "",
-		closedByDefault = true,
-		position = 99
-	)
-	String minimapOverlay = "minimapOverlay";
-
-	@ConfigItem(
-		keyName = ConfigKeys.ENABLE_MINIMAP_OVERLAY,
-		name = "Show while in compact view",
-		description = "Show a functional minimap that is detached from the orbs while in compact view <br>" +
-			"Warning: this minimap is not supported by plugins that display overlays on the minimap (names, marker tiles, lines, etc.)",
-		section = minimapOverlay,
-		position = 0
-	)
-	default boolean showMinimapInCompactView()
-	{
-		return false;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.ENABLE_OVERLAY_TOGGLE_OPTION,
-		name = "Show toggle on the minimap button",
-		description = "Display an option on the minimap button to hide/show the detached minimap",
-		section = minimapOverlay,
-		position = 1
-	)
-	default boolean showToggleOnMinimapButton()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.ENABLE_LOGOUT_X_OVERLAY,
-		name = "Show Logout-X",
-		description = "Show a functional Logout-X on the detached minimap (only works in resizable-modern) <br>",
-		section = minimapOverlay,
-		position = 2
-	)
-	default boolean showOverlayLogoutX()
-	{
-		return false;
 	}
 
 	@ConfigSection(

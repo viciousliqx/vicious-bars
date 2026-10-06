@@ -460,7 +460,6 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 				break;
 
 			case ConfigKeys.MINIMAP_BUTTON_PLACEMENT:
-			case ConfigKeys.ENABLE_OVERLAY_TOGGLE_OPTION:
 				clientThread.invokeLater(manager::updateMinimapToggleButton);
 				break;
 
