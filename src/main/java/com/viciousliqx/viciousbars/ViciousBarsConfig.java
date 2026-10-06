@@ -1590,4 +1590,29 @@ public interface ViciousBarsConfig extends Config
 	{
 		return 4;
 	}
+
+	// ------------------------------------------------------------------
+	// Debug (temporary - sorting out the minimap/orb growth work, not for
+	// shipping - see DebugWidgetBoundsOverlay's javadoc)
+	// ------------------------------------------------------------------
+
+	@ConfigSection(
+		name = "Debug (temporary)",
+		description = "Temporary diagnostics for the minimap/orb alignment work - not for shipping",
+		position = 8,
+		closedByDefault = true
+	)
+	String debugSection = "debugSection";
+
+	@ConfigItem(
+		keyName = "debugHideMinimapGraphic",
+		name = "Hide minimap graphic",
+		description = "Hides just the round minimap drawing surface - not the orbs, not MAP_CONTAINER - so the orb-to-bar alignment and the debug outlines are easier to see without the map underneath them.",
+		section = debugSection,
+		position = 0
+	)
+	default boolean debugHideMinimapGraphic()
+	{
+		return false;
+	}
 }

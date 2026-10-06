@@ -145,6 +145,14 @@ public class ViciousBarsPlugin extends Plugin
 
 		restoreGrownWidgets();
 
+		// TEMPORARY - undo the debug minimap-graphic hide, in case the
+		// plugin stops while that toggle is on.
+		Widget mapMinimap = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_MINIMAP);
+		if (mapMinimap != null)
+		{
+			mapMinimap.setHidden(false);
+		}
+
 		log.debug("Vicious Bars stopped!");
 	}
 
@@ -213,6 +221,13 @@ public class ViciousBarsPlugin extends Plugin
 		if (mapContainer != null)
 		{
 			growToCoverTargets(mapContainer, barTargets);
+		}
+
+		// TEMPORARY - debug-only, see ViciousBarsConfig#debugHideMinimapGraphic.
+		Widget mapMinimap = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_MINIMAP);
+		if (mapMinimap != null && mapMinimap.isHidden() != config.debugHideMinimapGraphic())
+		{
+			mapMinimap.setHidden(config.debugHideMinimapGraphic());
 		}
 	}
 
