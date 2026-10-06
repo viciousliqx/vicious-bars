@@ -136,6 +136,13 @@ public interface CompactOrbsConfig extends Config
 		return VerticalAnchor.BOTTOM;
 	}
 
+	// TODO: confirmed dead no-op for Orbs.UNIVERSE on our hardcoded
+	// HORIZONTAL_WIDE layout - OrbContainerOffset.xOffset() only adds
+	// getRightOffset(), which is a constant 0 for this layout; Left has no
+	// branch at all. See compact_orbs_walkthrough.md's horizontal-anchor
+	// keeper finding. Once a design settles, cut this the same way
+	// layout()/enableNoClickthrough() were: remove this method and
+	// hardcode whichever side at the call sites.
 	@ConfigItem(
 		keyName = ConfigKeys.HORIZONTAL_ANCHOR,
 		name = "Horizontal anchor",
