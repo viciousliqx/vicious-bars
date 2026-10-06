@@ -39,11 +39,18 @@ class DebugWidgetBoundsOverlay extends Overlay
 		Color.PINK, Color.RED, new Color(120, 180, 255), Color.WHITE,
 	};
 
+	// Both widget interfaces - minimizing the minimap swaps Orbs for the
+	// entirely separate InterfaceID.OrbsNomap, own distinct component ids -
+	// so both need checking to see anything while minimized.
 	private static final int[] ORB_COMPONENTS = {
 		InterfaceID.Orbs.ORB_HEALTH,
 		InterfaceID.Orbs.ORB_PRAYER,
 		InterfaceID.Orbs.ORB_RUNENERGY,
 		InterfaceID.Orbs.ORB_SPECENERGY,
+		InterfaceID.OrbsNomap.ORB_HEALTH,
+		InterfaceID.OrbsNomap.ORB_PRAYER,
+		InterfaceID.OrbsNomap.ORB_RUNENERGY,
+		InterfaceID.OrbsNomap.ORB_SPECENERGY,
 	};
 
 	// Same widgets MinimapDragDiagnostic already tracks, so labels in both

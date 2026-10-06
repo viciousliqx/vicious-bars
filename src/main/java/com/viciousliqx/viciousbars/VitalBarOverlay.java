@@ -9,6 +9,7 @@ import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import net.runelite.api.Client;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetPositionMode;
 import net.runelite.client.ui.FontManager;
@@ -71,8 +72,16 @@ public abstract class VitalBarOverlay extends Overlay
 
 	// Saved once per bar, the first time this bar's orb gets moved onto it -
 	// same restore-on-the-way-out shape as Orb Mover's own RestoreEntry,
-	// just scoped to a single orb instead of a list of them.
-	private boolean orbPositionSaved;
+	// just scoped to a single orb instead of a list of them. Keyed to the
+	// WIDGET INSTANCE rather than a plain boolean flag: minimizing the
+	// minimap swaps in a completely different widget interface
+	// (InterfaceID.OrbsNomap instead of InterfaceID.Orbs, confirmed via the
+	// real jar constants - entirely different component ids, e.g. ORB_HEALTH
+	// is 10485767 in one and 58654725 in the other), which means a brand
+	// new Widget object - so a saved X/Y/mode from the OLD widget must never
+	// get applied to the NEW one. Tracking the actual instance lets that
+	// mismatch be detected and handled by just starting fresh.
+	private Widget alignedOrbWidget;
 	private int savedOrbX;
 	private int savedOrbY;
 	private int savedOrbXMode;
@@ -241,6 +250,60 @@ public abstract class VitalBarOverlay extends Overlay
 	}
 
 	/**
+	 * The widget interfaces are swapped entirely - not merely resized -
+	 * when the user toggles the minimap's minimize button: the compact
+	 * orb-only layout is a totally separate interface
+	 * ({@link InterfaceID.OrbsNomap}) with its own distinct component ids,
+	 * not just a smaller version of {@link InterfaceID.Orbs}. Maps a normal
+	 * {@code Orbs.*} component to its {@code OrbsNomap.*} counterpart -
+	 * confirmed by hand against the real jar constants, since the two
+	 * interfaces' child ordering isn't identical (OrbsNomap has no
+	 * map-related children) so there's no reliable arithmetic shortcut
+	 * between the two id spaces.
+	 */
+	private static int nomapEquivalent(int orbsComponent)
+	{
+		if (orbsComponent == InterfaceID.Orbs.ORB_HEALTH)
+		{
+			return InterfaceID.OrbsNomap.ORB_HEALTH;
+		}
+		if (orbsComponent == InterfaceID.Orbs.ORB_PRAYER)
+		{
+			return InterfaceID.OrbsNomap.ORB_PRAYER;
+		}
+		if (orbsComponent == InterfaceID.Orbs.ORB_RUNENERGY)
+		{
+			return InterfaceID.OrbsNomap.ORB_RUNENERGY;
+		}
+		if (orbsComponent == InterfaceID.Orbs.ORB_SPECENERGY)
+		{
+			return InterfaceID.OrbsNomap.ORB_SPECENERGY;
+		}
+		return -1;
+	}
+
+	/**
+	 * This bar's real orb widget, whichever interface is actually loaded
+	 * right now - the normal {@code Orbs.*} one, or (map minimized)
+	 * {@code OrbsNomap.*}. Null for bars with no orb at all.
+	 */
+	private Widget resolveOrbWidget()
+	{
+		int component = getOrbWidgetComponent();
+		if (component < 0)
+		{
+			return null;
+		}
+		Widget orb = client.getWidget(component);
+		if (orb != null)
+		{
+			return orb;
+		}
+		int nomapComponent = nomapEquivalent(component);
+		return nomapComponent < 0 ? null : client.getWidget(nomapComponent);
+	}
+
+	/**
 	 * Moves the real orb to sit centered on {@code iconCanvasCenter} (a real
 	 * canvas-space point). Same real mechanism the Hub-accepted Orb Mover
 	 * plugin uses: switch both position modes to absolute, write the target
@@ -248,33 +311,25 @@ public abstract class VitalBarOverlay extends Overlay
 	 * the orb's own parent bounds exactly like Orb Mover clamps, so this
 	 * never asks the orb to move somewhere its parent container doesn't
 	 * reach. The orb's original position is captured once, lazily, the
-	 * first time it actually gets moved.
+	 * first time THIS SPECIFIC widget instance actually gets moved - see
+	 * {@link #alignedOrbWidget}'s javadoc for why identity (not just a
+	 * boolean flag) matters here.
 	 */
-	private void alignRealOrb(Point iconCanvasCenter)
+	private void alignRealOrb(Widget orb, Point iconCanvasCenter)
 	{
-		int component = getOrbWidgetComponent();
-		if (component < 0)
-		{
-			return;
-		}
-		Widget orb = client.getWidget(component);
-		if (orb == null)
-		{
-			return;
-		}
 		Widget parent = orb.getParent();
 		if (parent == null)
 		{
 			return;
 		}
 
-		if (!orbPositionSaved)
+		if (alignedOrbWidget != orb)
 		{
 			savedOrbX = orb.getOriginalX();
 			savedOrbY = orb.getOriginalY();
 			savedOrbXMode = orb.getXPositionMode();
 			savedOrbYMode = orb.getYPositionMode();
-			orbPositionSaved = true;
+			alignedOrbWidget = orb;
 		}
 
 		if (orb.getXPositionMode() != WidgetPositionMode.ABSOLUTE_LEFT)
@@ -319,24 +374,16 @@ public abstract class VitalBarOverlay extends Overlay
 	 */
 	void restoreRealOrbPosition()
 	{
-		if (!orbPositionSaved)
+		if (alignedOrbWidget == null)
 		{
 			return;
 		}
-		int component = getOrbWidgetComponent();
-		if (component >= 0)
-		{
-			Widget orb = client.getWidget(component);
-			if (orb != null)
-			{
-				orb.setXPositionMode(savedOrbXMode);
-				orb.setYPositionMode(savedOrbYMode);
-				orb.setOriginalX(savedOrbX);
-				orb.setOriginalY(savedOrbY);
-				orb.revalidate();
-			}
-		}
-		orbPositionSaved = false;
+		alignedOrbWidget.setXPositionMode(savedOrbXMode);
+		alignedOrbWidget.setYPositionMode(savedOrbYMode);
+		alignedOrbWidget.setOriginalX(savedOrbX);
+		alignedOrbWidget.setOriginalY(savedOrbY);
+		alignedOrbWidget.revalidate();
+		alignedOrbWidget = null;
 	}
 
 	/** This frame's real canvas-space orb target, or null if not applicable this frame (no orb, bar isn't Docked, or isn't rendering). */
@@ -469,7 +516,7 @@ public abstract class VitalBarOverlay extends Overlay
 			drawIconAndCounter(graphics, width, height, orientation, current, max, iconHighlight);
 		}
 
-		Widget orb = fixedPos != null && orbComponent >= 0 ? client.getWidget(orbComponent) : null;
+		Widget orb = fixedPos != null && orbComponent >= 0 ? resolveOrbWidget() : null;
 		if (orb != null)
 		{
 			// The orb is the label now - centered on whatever slot its own
@@ -483,7 +530,7 @@ public abstract class VitalBarOverlay extends Overlay
 			int centerX = orientation == Orientation.VERTICAL ? anchor.x + slotThickness / 2 : anchor.x + slotLength / 2;
 			int centerY = orientation == Orientation.VERTICAL ? anchor.y + slotLength / 2 : anchor.y + slotThickness / 2;
 			lastIconCanvasCenter = new Point(fixedPos.x + centerX, fixedPos.y + centerY);
-			alignRealOrb(lastIconCanvasCenter);
+			alignRealOrb(orb, lastIconCanvasCenter);
 		}
 		else
 		{

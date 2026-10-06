@@ -197,7 +197,19 @@ public class ViciousBarsPlugin extends Plugin
 			}
 		}
 
+		// Minimizing the minimap swaps in a completely different widget
+		// interface (InterfaceID.OrbsNomap instead of InterfaceID.Orbs - own
+		// distinct component ids, confirmed via the real jar constants), so
+		// the normal lookup alone goes null and silently stops growing
+		// anything the moment the map is minimized. Falling back to the
+		// Nomap id keeps this working either way - orbParent then resolves
+		// dynamically via getParent() same as always, no extra special-casing
+		// needed below.
 		Widget anyOrb = client.getWidget(InterfaceID.Orbs.ORB_HEALTH);
+		if (anyOrb == null)
+		{
+			anyOrb = client.getWidget(InterfaceID.OrbsNomap.ORB_HEALTH);
+		}
 		Widget orbParent = anyOrb != null ? anyOrb.getParent() : null;
 
 		if (!anyBarTarget || orbParent == null)
@@ -225,18 +237,23 @@ public class ViciousBarsPlugin extends Plugin
 		// ALREADY-updated position from earlier in this same frame -
 		// revalidate() is synchronous, so this converges within one frame
 		// instead of lagging and spiraling across frames.
+		// MAP_CONTAINER is irrelevant (and hidden) once the map is minimized
+		// - nothing to grow there, and no reason to even try.
 		Widget mapContainer = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_CONTAINER);
 		boolean changed = false;
-		if (mapContainer != null)
+		if (mapContainer != null && !mapContainer.isHidden())
 		{
 			changed |= growToCoverTargets(mapContainer, barTargets);
 		}
 		Widget orbsSlot = client.getWidget(InterfaceID.ToplevelPreEoc.ORBS);
-		if (orbsSlot != null)
+		if (orbsSlot != null && !orbsSlot.isHidden())
 		{
 			changed |= growToCoverTargets(orbsSlot, barTargets);
 		}
-		changed |= growToCoverTargets(orbParent, barTargets);
+		if (!orbParent.isHidden())
+		{
+			changed |= growToCoverTargets(orbParent, barTargets);
+		}
 
 		// TEMPORARY - debug-only. Dumps the full ancestor chain's live sizes
 		// in one line, but ONLY on a frame where something actually got
