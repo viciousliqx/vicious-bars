@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.events.BeforeRender;
 import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.gameval.SpriteID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetType;
 import net.runelite.client.config.ConfigManager;
@@ -23,6 +24,17 @@ import net.runelite.client.ui.overlay.OverlayManager;
  * going on - no bars, no docking, no config beyond the one toggle below -
  * so this foundation can be gotten right on its own before anything else
  * is layered back on top of it.
+ * <p>
+ * The hide mechanism here is ported feature-for-feature from Compact Orbs'
+ * real source (its-cue/compact-orbs, BSD-2-Clause) after a full line-by-line
+ * read documented in compact_orbs_walkthrough.md at the hangar root - not
+ * re-derived from guessing. Two corrections that read came from: (1) their
+ * REGULAR hide-minimap toggle uses a plain setHidden(true) on seven widgets,
+ * not the GRAPHIC<->LAYER content-type trick (that trick is specific to
+ * their separate edit-mode code path); (2) they don't preserve the real
+ * compass ring when hiding those seven widgets - they hide it right along
+ * with everything else, then draw their OWN small independent replacement
+ * ring graphic on top.
  */
 @Slf4j
 @PluginDescriptor(
@@ -30,6 +42,30 @@ import net.runelite.client.ui.overlay.OverlayManager;
 )
 public class ViciousBarsPlugin extends Plugin
 {
+	// Compact Orbs' CompassFrame: 43x43, SpriteID.COMPASS_OUTLINE, drawn as
+	// a child of COMPASS_PARENT (= InterfaceID.ToplevelPreEoc.MAP_MINIMAP,
+	// confirmed against their CompactOrbsConstants.java) at the default
+	// (0,0) local position - which lands it exactly over the real compass
+	// needle for free, since that's the same container the needle itself
+	// already lives in.
+	private static final int COMPASS_FRAME_SIZE = 43;
+
+	// The seven widgets Compact Orbs' real hide-minimap toggle plain-hides
+	// (CompactOrbsManager#setupMinimapContainer -> Minimap.COMPONENTS):
+	// the terrain graphic, the circular frame/border (which also backs the
+	// real compass ring - hence the replacement graphic below), and six
+	// invisible click-blocker regions left over from the full-size map.
+	private static final int[] HIDE_TARGETS = {
+		InterfaceID.ToplevelPreEoc.MINIMAP,
+		InterfaceID.ToplevelPreEoc.MAP_MINIMAP_GRAPHIC9,
+		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_0,
+		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_1,
+		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_2,
+		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_3,
+		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_4,
+		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_5,
+	};
+
 	@Inject
 	private Client client;
 
@@ -45,73 +81,54 @@ public class ViciousBarsPlugin extends Plugin
 	@Inject
 	private OrbZoneDebugOverlay orbZoneDebugOverlay;
 
-	// Lazily-saved real state of the minimap's actual graphic/mask widget,
-	// so the hide below can be reversed exactly. Confirmed against Compact
-	// Orbs' real source: it targets InterfaceID.ToplevelPreEoc.MINIMAP
-	// specifically, by flipping its WidgetType from GRAPHIC to LAYER and
-	// clearing its sprite - not a hide, not a resize, nothing about the
-	// surrounding hierarchy ever changes.
-	private boolean minimapRenderingSaved;
-	private int savedMinimapType;
-	private int savedMinimapContentType;
-	private int savedMinimapSpriteId;
+	// Our own replacement compass ring, created once lazily and then just
+	// shown/hidden - same shape as Compact Orbs' own compassFrame field.
+	private Widget compassFrame;
 
-	// The first hide alone left the full circular frame/border visible -
-	// MINIMAP (the content-type swap above) is only the TERRAIN graphic.
-	// Confirmed against Compact Orbs' real source (CompactOrbsManager#
-	// setupMinimapContainer, hiding its Minimap.COMPONENTS group) that a
-	// separate widget is also involved - but MAP_MINIMAP_GRAPHIC9
-	// specifically turned out to ALSO back the compass's own stone ring,
-	// which Compact Orbs does NOT hide (it draws its own independent
-	// replacement compass graphic instead - manager.compassFrame /
-	// Sprite.COMPASS_FRAME - rather than reusing or hiding the vanilla
-	// one). Pulled out for now until the actual frame-only widget is
-	// identified. The six invisible click-blocker widgets, MAP_NOCLICK_0
-	// through MAP_NOCLICK_5, stay - hidden with a plain setHidden(true)/
-	// false, no type/sprite tricks needed for these.
-	private static final int[] EXTRA_HIDE_TARGETS = {
-		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_0,
-		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_1,
-		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_2,
-		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_3,
-		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_4,
-		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_5,
-	};
-
-	private void setMinimapRenderingHidden(boolean hidden)
+	private void setMinimapHidden(boolean hidden)
 	{
-		Widget minimap = client.getWidget(InterfaceID.ToplevelPreEoc.MINIMAP);
-		if (minimap != null)
-		{
-			if (hidden)
-			{
-				if (!minimapRenderingSaved)
-				{
-					savedMinimapType = minimap.getType();
-					savedMinimapContentType = minimap.getContentType();
-					savedMinimapSpriteId = minimap.getSpriteId();
-					minimapRenderingSaved = true;
-				}
-				minimap.setType(WidgetType.LAYER);
-				minimap.setContentType(0);
-				minimap.setSpriteId(-1);
-			}
-			else if (minimapRenderingSaved)
-			{
-				minimap.setType(savedMinimapType);
-				minimap.setContentType(savedMinimapContentType);
-				minimap.setSpriteId(savedMinimapSpriteId);
-				minimapRenderingSaved = false;
-			}
-		}
-
-		for (int componentId : EXTRA_HIDE_TARGETS)
+		for (int componentId : HIDE_TARGETS)
 		{
 			Widget widget = client.getWidget(componentId);
 			if (widget != null)
 			{
 				widget.setHidden(hidden);
 			}
+		}
+
+		updateCompassFrame(hidden);
+	}
+
+	private void updateCompassFrame(boolean minimapHidden)
+	{
+		if (compassFrame == null && minimapHidden)
+		{
+			Widget parent = client.getWidget(InterfaceID.ToplevelPreEoc.MAP_MINIMAP);
+			if (parent == null)
+			{
+				return;
+			}
+			compassFrame = parent.createChild(-1, WidgetType.GRAPHIC)
+				.setOriginalWidth(COMPASS_FRAME_SIZE)
+				.setOriginalHeight(COMPASS_FRAME_SIZE)
+				.setSpriteId(SpriteID.COMPASS_OUTLINE)
+				.setOpacity(0)
+				.setHidden(false);
+			compassFrame.revalidate();
+		}
+
+		if (compassFrame != null)
+		{
+			compassFrame.setHidden(!minimapHidden);
+		}
+	}
+
+	private void clearCompassFrame()
+	{
+		if (compassFrame != null)
+		{
+			compassFrame.setHidden(true);
+			compassFrame = null;
 		}
 	}
 
@@ -128,14 +145,15 @@ public class ViciousBarsPlugin extends Plugin
 	{
 		eventBus.unregister(this);
 		overlayManager.remove(orbZoneDebugOverlay);
-		setMinimapRenderingHidden(false);
+		setMinimapHidden(false);
+		clearCompassFrame();
 		log.debug("Vicious Bars stopped");
 	}
 
 	@Subscribe
 	public void onBeforeRender(BeforeRender event)
 	{
-		setMinimapRenderingHidden(config.hideMinimap());
+		setMinimapHidden(config.hideMinimap());
 	}
 
 	@Provides
