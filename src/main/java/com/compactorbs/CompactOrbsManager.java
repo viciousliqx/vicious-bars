@@ -558,7 +558,7 @@ public class CompactOrbsManager
 	}
 
 	//clear any created children and reset previous parent id
-	void clearCustomChildren()
+	public void clearCustomChildren()
 	{
 		widgetManager.clearChild(minimapButton);
 		widgetManager.clearChild(compassFrame);

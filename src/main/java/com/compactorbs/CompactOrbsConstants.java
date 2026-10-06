@@ -38,7 +38,11 @@ public class CompactOrbsConstants
 {
 	public static final class ConfigGroup
 	{
-		public static final String GROUP_NAME = "compactorbs";
+		// Retargeted to Vicious Bars' own existing config group, so this
+		// whole copied-and-being-gutted system integrates as THIS plugin's
+		// real config (shows up under "Vicious Bars" in the plugin panel),
+		// not as a separate parallel "Compact Orbs" entry.
+		public static final String GROUP_NAME = "vicious-bars";
 		public static final int CONFIG_VERSION = 2;
 
 		public static final class Core
