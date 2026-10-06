@@ -56,33 +56,60 @@ public class ViciousBarsPlugin extends Plugin
 	private int savedMinimapContentType;
 	private int savedMinimapSpriteId;
 
+	// The first hide alone left the full circular frame/border visible -
+	// MINIMAP (the content-type swap above) is only the TERRAIN graphic.
+	// Confirmed against Compact Orbs' real source (CompactOrbsManager#
+	// setupMinimapContainer, hiding its Minimap.COMPONENTS group): the
+	// actual frame/border is a SEPARATE widget, MAP_MINIMAP_GRAPHIC9 (their
+	// own constant for it is even just named "MINIMAP", confusingly
+	// distinct from their "MINIMAP_MASK" which is our MINIMAP target
+	// above) - plus six invisible click-blocker widgets, MAP_NOCLICK_0
+	// through MAP_NOCLICK_5. All seven are hidden with a plain
+	// setHidden(true)/false, no type/sprite tricks needed for these.
+	private static final int[] EXTRA_HIDE_TARGETS = {
+		InterfaceID.ToplevelPreEoc.MAP_MINIMAP_GRAPHIC9,
+		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_0,
+		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_1,
+		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_2,
+		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_3,
+		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_4,
+		InterfaceID.ToplevelPreEoc.MAP_NOCLICK_5,
+	};
+
 	private void setMinimapRenderingHidden(boolean hidden)
 	{
 		Widget minimap = client.getWidget(InterfaceID.ToplevelPreEoc.MINIMAP);
-		if (minimap == null)
+		if (minimap != null)
 		{
-			return;
+			if (hidden)
+			{
+				if (!minimapRenderingSaved)
+				{
+					savedMinimapType = minimap.getType();
+					savedMinimapContentType = minimap.getContentType();
+					savedMinimapSpriteId = minimap.getSpriteId();
+					minimapRenderingSaved = true;
+				}
+				minimap.setType(WidgetType.LAYER);
+				minimap.setContentType(0);
+				minimap.setSpriteId(-1);
+			}
+			else if (minimapRenderingSaved)
+			{
+				minimap.setType(savedMinimapType);
+				minimap.setContentType(savedMinimapContentType);
+				minimap.setSpriteId(savedMinimapSpriteId);
+				minimapRenderingSaved = false;
+			}
 		}
 
-		if (hidden)
+		for (int componentId : EXTRA_HIDE_TARGETS)
 		{
-			if (!minimapRenderingSaved)
+			Widget widget = client.getWidget(componentId);
+			if (widget != null)
 			{
-				savedMinimapType = minimap.getType();
-				savedMinimapContentType = minimap.getContentType();
-				savedMinimapSpriteId = minimap.getSpriteId();
-				minimapRenderingSaved = true;
+				widget.setHidden(hidden);
 			}
-			minimap.setType(WidgetType.LAYER);
-			minimap.setContentType(0);
-			minimap.setSpriteId(-1);
-		}
-		else if (minimapRenderingSaved)
-		{
-			minimap.setType(savedMinimapType);
-			minimap.setContentType(savedMinimapContentType);
-			minimap.setSpriteId(savedMinimapSpriteId);
-			minimapRenderingSaved = false;
 		}
 	}
 
