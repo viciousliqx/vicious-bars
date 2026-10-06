@@ -90,7 +90,6 @@ public interface CompactOrbsConfig extends Config
 	{
 		MINIMAP_BUTTON,
 		MINIMAP,
-		DETACHED_MINIMAP,
 		EDIT_MODE
 	}
 
