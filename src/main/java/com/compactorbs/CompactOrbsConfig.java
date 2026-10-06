@@ -94,16 +94,17 @@ public interface CompactOrbsConfig extends Config
 		EDIT_MODE
 	}
 
-	//visible on the config panel
-	@ConfigItem(
-		keyName = ConfigKeys.ORB_LAYOUT,
-		name = "Layout type",
-		description = "Select the desired layout when the minimap is minimized",
-		position = 0
-	)
+	// Vicious Bars only ever has ONE layout - no user-facing choice here
+	// (the @ConfigItem that made this a dropdown is deliberately gone) -
+	// but the underlying layout SYSTEM (CompactOrbsLayout, the Slot/Offset
+	// machinery that reads this) stays, since positioning still needs it.
+	// HORIZONTAL_WIDE picked as the starting base per the reference
+	// screenshots during this session's testing - likely to get replaced
+	// with Vicious-Bars-specific constants once that work happens, but
+	// keeping a real, working preset for now rather than an undesigned one.
 	default CompactOrbsLayout layout()
 	{
-		return CompactOrbsLayout.VERTICAL;
+		return CompactOrbsLayout.HORIZONTAL_WIDE;
 	}
 
 	@ConfigSection(
