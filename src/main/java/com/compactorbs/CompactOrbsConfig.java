@@ -174,6 +174,90 @@ public interface CompactOrbsConfig extends Config
 	default boolean hideMinimapWithSidePanel() { return false; }
 
 	@ConfigSection(
+		name = "Bar",
+		description = "",
+		position = 2
+	)
+	String bar = "bar";
+
+	// Dev-only, temporary - exists purely so the width can be dialed in
+	// live in-game instead of guessed blind through code changes. Once a
+	// value is settled it gets hardcoded in HpVialOverlay and this item
+	// removed entirely, the same way ORB_LAYOUT/ENABLE_NO_CLICKTHROUGH
+	// already were - the stone cap's own fixed size means width isn't
+	// meant to be a real per-user setting.
+	@Range(min = 10, max = 40)
+	@ConfigItem(
+		keyName = ConfigKeys.BAR_WIDTH,
+		name = "Width (temp)",
+		description = "Dev-only - dial this in, then report the final value back to hardcode. Goes away once settled.",
+		section = bar,
+		position = 0
+	)
+	default int barWidth()
+	{
+		return 20;
+	}
+
+	@Range(min = 20, max = 400)
+	@ConfigItem(
+		keyName = ConfigKeys.BAR_LENGTH,
+		name = "Length",
+		description = "How long the bar is, end to end.",
+		section = bar,
+		position = 1
+	)
+	default int barLength()
+	{
+		return 60;
+	}
+
+	// Dev-only, temporary - same reasoning as Width above.
+	@Range(min = -120, max = 40)
+	@ConfigItem(
+		keyName = ConfigKeys.BAR_VERTICAL_OFFSET,
+		name = "Orb/Vial offset (temp)",
+		description = "Dev-only - nudges the bar down (+) away from the collar, or up (-) into more overlap with its tab. Goes away once settled.",
+		section = bar,
+		position = 2
+	)
+	default int barVerticalOffset()
+	{
+		return 0;
+	}
+
+	// Dev-only, temporary - same reasoning as Orb/Vial offset above.
+	@Range(min = -40, max = 40)
+	@ConfigItem(
+		keyName = ConfigKeys.BAR_HORIZONTAL_OFFSET,
+		name = "Orb/Bar horizontal offset (temp)",
+		description = "Dev-only - nudges the bar left (-) or right (+), independent of the collar, which stays centered on the icon regardless. Goes away once settled.",
+		section = bar,
+		position = 4
+	)
+	default int barHorizontalOffset()
+	{
+		return 0;
+	}
+
+
+	// Dev-only, temporary - same reasoning as Width above. The inner vial
+	// fill has no slider of its own - it always fills whatever's left
+	// inside the frame, so this one control governs both.
+	@Range(min = 1, max = 10)
+	@ConfigItem(
+		keyName = ConfigKeys.BAR_FRAME_WIDTH,
+		name = "Frame width (temp)",
+		description = "Dev-only - thickness of the stone frame ring. The vial fill always fills whatever's left inside it. Goes away once settled.",
+		section = bar,
+		position = 3
+	)
+	default int barFrameWidth()
+	{
+		return 2;
+	}
+
+	@ConfigSection(
 		name = "Hotkey",
 		description = "",
 		closedByDefault = true,

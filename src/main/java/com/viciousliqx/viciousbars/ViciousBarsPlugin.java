@@ -26,6 +26,8 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.widgets.Widget;
 import net.runelite.api.events.ClientTick;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.MenuEntryAdded;
@@ -132,12 +134,27 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	@Inject
 	private HpVialOverlay hpVialOverlay;
 
+	@Inject
+	private PrayerVialOverlay prayerVialOverlay;
+
+	@Inject
+	private RunVialOverlay runVialOverlay;
+
+	@Inject
+	private SpecVialOverlay specVialOverlay;
+
+	@Inject
+	private net.runelite.client.game.SpriteManager spriteManager;
+
 	@Override
 	protected void startUp() throws Exception
 	{
 		manager.migrateConfigs();
 		overlayManager.add(orbZoneDebugOverlay);
 		overlayManager.add(hpVialOverlay);
+		overlayManager.add(prayerVialOverlay);
+		overlayManager.add(runVialOverlay);
+		overlayManager.add(specVialOverlay);
 		keyManager.registerKeyListener(this);
 		mouseManager.registerMouseListener(dragListener);
 		orbRegistry.registerAll();
@@ -174,6 +191,13 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	{
 		overlayManager.remove(orbZoneDebugOverlay);
 		overlayManager.remove(hpVialOverlay);
+		hpVialOverlay.shutDown();
+		overlayManager.remove(prayerVialOverlay);
+		prayerVialOverlay.shutDown();
+		overlayManager.remove(runVialOverlay);
+		runVialOverlay.shutDown();
+		overlayManager.remove(specVialOverlay);
+		specVialOverlay.shutDown();
 		keyManager.unregisterKeyListener(this);
 		mouseManager.unregisterMouseListener(dragListener);
 		clientThread.invoke(manager::reset);
@@ -547,9 +571,35 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	{
 	}
 
+	// Throwaway diagnostic, not permanent: F9 dumps every sprite used
+	// anywhere in the side/inventory panel's widget tree, so the panel's
+	// REAL border/corner sprite(s) can be identified directly instead of
+	// guessed at - SpriteID.Steelborder was tried once already and
+	// confirmed wrong (see HpVialOverlay's frame comment / git history).
+	private static final int SIDE_PANEL_SPRITE_DUMP_KEY = KeyEvent.VK_F9;
+
+	// Also throwaway: F8 dumps EVERY child of the real HP orb container
+	// (not just the named backing/indicator/icon/button/empty sub-ids
+	// Orbs.HP_ORB_CONTAINER already tracks), looking for the "96" level
+	// number's own widget - it's not any of those 5, so it must be an
+	// untracked child, likely TEXT type.
+	private static final int ORB_CHILDREN_DUMP_KEY = KeyEvent.VK_F8;
+
 	@Override
 	public void keyPressed(KeyEvent e)
 	{
+		if (e.getKeyCode() == SIDE_PANEL_SPRITE_DUMP_KEY)
+		{
+			clientThread.invokeLater(this::dumpSidePanelSprites);
+			return;
+		}
+
+		if (e.getKeyCode() == ORB_CHILDREN_DUMP_KEY)
+		{
+			clientThread.invokeLater(this::dumpOrbChildren);
+			return;
+		}
+
 		if (manager.isEditingLayout)
 		{
 			if (e.getKeyCode() == KeyEvent.VK_ESCAPE || config.hotkeyKeybind().matches(e))
@@ -594,5 +644,161 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	@Override
 	public void keyReleased(KeyEvent e)
 	{
+	}
+
+	private void dumpSidePanelSprites()
+	{
+		// SIDE_CONTAINER is a separate, sibling widget - not a descendant
+		// of SIDE_BACKGROUND - which is why the first sweep (walking only
+		// SIDE_BACKGROUND's own subtree) never found it. Checking both
+		// explicitly by id this time instead of just recursing from one root.
+		dumpNamedWidget("SIDE_BACKGROUND", InterfaceID.ToplevelPreEoc.SIDE_BACKGROUND);
+		dumpNamedWidget("SIDE_CONTAINER", InterfaceID.ToplevelPreEoc.SIDE_CONTAINER);
+
+		// The real 9-slice border kit, confirmed via the widget inspector
+		// (821 = left edge) and the dump above: 4 corners (824-827, 32x32
+		// each) + 4 edges (820 top, 822 bottom, 821 left, 823 right -
+		// edges are 140x32/32x211, meant to tile/stretch along their run).
+		for (int spriteId : new int[]{820, 821, 822, 823, 824, 825, 826, 827})
+		{
+			saveSprite(spriteId);
+		}
+	}
+
+	private void saveSprite(int spriteId)
+	{
+		java.awt.image.BufferedImage sprite = spriteManager.getSprite(spriteId, 0);
+		if (sprite == null)
+		{
+			log.info("[sprite dump] sprite {} not loaded/cached yet", spriteId);
+			return;
+		}
+
+		String fileName = "debug_sprite_" + spriteId + ".png";
+		try
+		{
+			javax.imageio.ImageIO.write(sprite, "png",
+				new java.io.File("C:\\Users\\Harri\\RL_MOD_DEV\\plugins\\vicious-bars\\" + fileName));
+			log.info("[sprite dump] Saved sprite {} to {} ({}x{})", spriteId, fileName, sprite.getWidth(), sprite.getHeight());
+		}
+		catch (java.io.IOException e)
+		{
+			log.info("[sprite dump] Failed to save sprite {}: {}", spriteId, e.getMessage());
+		}
+	}
+
+	private void dumpNamedWidget(String label, int componentId)
+	{
+		Widget widget = client.getWidget(componentId);
+		if (widget == null)
+		{
+			log.info("[sprite dump] {} not found (not logged in, or wrong layout)", label);
+			return;
+		}
+
+		log.info("[sprite dump] --- {} (id={}) ---", label, widget.getId());
+		dumpWidgetSprites(widget, 0);
+		log.info("[sprite dump] --- end {} ---", label);
+
+		if (widget.getSpriteId() == -1)
+		{
+			return;
+		}
+
+		java.awt.image.BufferedImage sprite = spriteManager.getSprite(widget.getSpriteId(), 0);
+		if (sprite == null)
+		{
+			return;
+		}
+
+		String fileName = "debug_sprite_" + label.toLowerCase(java.util.Locale.ROOT) + ".png";
+		try
+		{
+			javax.imageio.ImageIO.write(sprite, "png",
+				new java.io.File("C:\\Users\\Harri\\RL_MOD_DEV\\plugins\\vicious-bars\\" + fileName));
+			log.info("[sprite dump] Saved {}'s sprite {} to {} ({}x{})",
+				label, widget.getSpriteId(), fileName, sprite.getWidth(), sprite.getHeight());
+		}
+		catch (java.io.IOException e)
+		{
+			log.info("[sprite dump] Failed to save {}'s sprite: {}", label, e.getMessage());
+		}
+	}
+
+	private void dumpWidgetSprites(Widget widget, int depth)
+	{
+		if (widget == null || depth > 12)
+		{
+			return;
+		}
+
+		if (widget.getSpriteId() != -1)
+		{
+			log.info("[sprite dump] {}spriteId={} id={} pos=({},{}) size={}x{} hidden={}",
+				"  ".repeat(depth), widget.getSpriteId(), widget.getId(),
+				widget.getRelativeX(), widget.getRelativeY(),
+				widget.getWidth(), widget.getHeight(), widget.isHidden());
+		}
+
+		for (Widget[] children : new Widget[][]{
+			widget.getChildren(), widget.getStaticChildren(), widget.getDynamicChildren(), widget.getNestedChildren()})
+		{
+			if (children == null)
+			{
+				continue;
+			}
+			for (Widget child : children)
+			{
+				dumpWidgetSprites(child, depth + 1);
+			}
+		}
+	}
+
+	private void dumpOrbChildren()
+	{
+		dumpOneOrbChildren("HP", Orbs.HP_ORB_CONTAINER);
+		dumpOneOrbChildren("Prayer", Orbs.PRAYER_ORB_CONTAINER);
+		dumpOneOrbChildren("Run", Orbs.RUN_ORB_CONTAINER);
+		dumpOneOrbChildren("Spec", Orbs.SPEC_ORB_CONTAINER);
+	}
+
+	private void dumpOneOrbChildren(String label, com.compactorbs.widget.TargetWidget target)
+	{
+		Widget container = widgetManager.getTargetWidget(target);
+		if (container == null)
+		{
+			log.info("[orb dump] {} orb container not found", label);
+			return;
+		}
+
+		log.info("[orb dump] --- {} orb container (id={}, {}x{}) ---", label, container.getId(), container.getWidth(), container.getHeight());
+		dumpAllChildren(container, 0);
+		log.info("[orb dump] --- end {} ---", label);
+	}
+
+	private void dumpAllChildren(Widget widget, int depth)
+	{
+		if (widget == null || depth > 12)
+		{
+			return;
+		}
+
+		log.info("[orb dump] {}type={} id={} spriteId={} text='{}' pos=({},{}) size={}x{} hidden={}",
+			"  ".repeat(depth), widget.getType(), widget.getId(), widget.getSpriteId(), widget.getText(),
+			widget.getRelativeX(), widget.getRelativeY(),
+			widget.getWidth(), widget.getHeight(), widget.isHidden());
+
+		for (Widget[] children : new Widget[][]{
+			widget.getChildren(), widget.getStaticChildren(), widget.getDynamicChildren(), widget.getNestedChildren()})
+		{
+			if (children == null)
+			{
+				continue;
+			}
+			for (Widget child : children)
+			{
+				dumpAllChildren(child, depth + 1);
+			}
+		}
 	}
 }

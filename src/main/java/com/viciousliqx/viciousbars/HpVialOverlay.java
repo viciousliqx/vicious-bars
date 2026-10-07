@@ -1,144 +1,50 @@
 package com.viciousliqx.viciousbars;
 
+import com.compactorbs.CompactOrbsConfig;
 import com.compactorbs.CompactOrbsManager;
+import com.compactorbs.widget.TargetWidget;
 import com.compactorbs.widget.WidgetManager;
 import com.compactorbs.widget.elements.Orbs;
 import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics2D;
-import java.awt.geom.Area;
-import java.awt.geom.RoundRectangle2D;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
-import net.runelite.api.Point;
 import net.runelite.api.Skill;
-import net.runelite.api.widgets.Widget;
-import net.runelite.client.ui.overlay.Overlay;
-import net.runelite.client.ui.overlay.OverlayPosition;
+import net.runelite.client.game.SpriteManager;
 
-/**
- * Step one of resurrecting the bars: just the stone frame + vial look from
- * the old (deleted, recoverable via git history) VitalBarOverlay, landed on
- * screen with real HP data, visible only while Vicious Bars mode is
- * actually on. No icon/counter - that content now lives on the real orb,
- * which docks as the bar's "label" near the top (see LABEL_FRACTION).
- *
- * Positioning only ever READS the orb's live canvas location - never
- * writes to it. That's deliberate: it's the same parent-derived,
- * never-self-referential read pattern confirmed safe earlier this
- * project (see compact_orbs_walkthrough.md), and it means the bar just
- * follows wherever Compact Orbs' own layout/edit-mode logic has already
- * put the orb, with zero positioning conflict between the two systems.
- */
+/** HP's vial bar - see VialOverlay for all the shared logic (frame, collar, vial fill, number repositioning). */
 @Singleton
-class HpVialOverlay extends Overlay
+class HpVialOverlay extends VialOverlay
 {
-	private static final int WIDTH = 20;
-	private static final int HEIGHT = 60;
-	private static final int BORDER_WIDTH = 2;
-	private static final int FRAME_ARC = 6;
-	private static final float INNER_ARC_FRACTION = 0.75f;
-	private static final int BACKGROUND_ALPHA = 150;
-
-	// How far down from the bar's own top edge the orb's center should
-	// sit - i.e. how much of the bar shows ABOVE the orb/label. 0.18 is
-	// the middle of the requested 15-20% range.
-	private static final float LABEL_FRACTION = 0.18f;
-
-	private static final Color FRAME_FILL_COLOR = new Color(96, 82, 64);
-	private static final Color FRAME_OUTLINE_COLOR = new Color(20, 17, 14);
 	private static final Color FILL_COLOR = new Color(220, 40, 40);
 
-	private final Client client;
-	private final CompactOrbsManager manager;
-	private final WidgetManager widgetManager;
-
 	@Inject
-	private HpVialOverlay(Client client, CompactOrbsManager manager, WidgetManager widgetManager)
+	private HpVialOverlay(Client client, CompactOrbsManager manager, CompactOrbsConfig config, WidgetManager widgetManager, SpriteManager spriteManager)
 	{
-		this.client = client;
-		this.manager = manager;
-		this.widgetManager = widgetManager;
-		setPosition(OverlayPosition.DYNAMIC);
-		setMovable(false);
+		super(client, manager, config, widgetManager, spriteManager);
 	}
 
 	@Override
-	public Dimension render(Graphics2D graphics)
+	protected TargetWidget orbContainer()
 	{
-		if (!manager.isCompactLayout())
-		{
-			return null;
-		}
-
-		Widget orb = widgetManager.getTargetWidget(Orbs.HP_ORB_CONTAINER);
-		if (orb == null)
-		{
-			return null;
-		}
-
-		Point orbCanvas = orb.getCanvasLocation();
-		int orbCenterX = orbCanvas.getX() + orb.getWidth() / 2;
-		int orbCenterY = orbCanvas.getY() + orb.getHeight() / 2;
-
-		int barX = orbCenterX - WIDTH / 2;
-		int barY = orbCenterY - Math.round(HEIGHT * LABEL_FRACTION);
-
-		// See VitalBarOverlay's old comment on this exact pair of calls
-		// (git history) - a non-movable DYNAMIC overlay still needs its
-		// stored bounds cleared each frame, or RuneLite's OverlayRenderer
-		// re-applies a stale location on top of our own translate.
-		setPreferredLocation(null);
-		getBounds().setLocation(0, 0);
-		graphics.translate(barX, barY);
-
-		int max = Math.max(client.getRealSkillLevel(Skill.HITPOINTS), 1);
-		int current = Math.max(0, Math.min(client.getBoostedSkillLevel(Skill.HITPOINTS), max));
-
-		int innerWidth = WIDTH - 2 * BORDER_WIDTH;
-		int innerHeight = HEIGHT - 2 * BORDER_WIDTH;
-		int innerArc = Math.round(innerWidth * INNER_ARC_FRACTION);
-
-		drawFrame(graphics, innerWidth, innerHeight, innerArc);
-		drawVial(graphics, innerWidth, innerHeight, innerArc, current, max);
-
-		return new Dimension(WIDTH, HEIGHT);
+		return Orbs.HP_ORB_CONTAINER;
 	}
 
-	/** The stone-toned ring between the bar's outer footprint and its inner vial - never filled under the vial itself. */
-	private void drawFrame(Graphics2D graphics, int innerWidth, int innerHeight, int innerArc)
+	@Override
+	protected int currentValue()
 	{
-		RoundRectangle2D.Float outerShape = new RoundRectangle2D.Float(0, 0, WIDTH, HEIGHT, FRAME_ARC, FRAME_ARC);
-		RoundRectangle2D.Float innerShapeAtInset = new RoundRectangle2D.Float(
-			BORDER_WIDTH, BORDER_WIDTH, innerWidth, innerHeight, innerArc, innerArc);
-
-		Area frameRing = new Area(outerShape);
-		frameRing.subtract(new Area(innerShapeAtInset));
-
-		graphics.setColor(FRAME_FILL_COLOR);
-		graphics.fill(frameRing);
-
-		graphics.setColor(FRAME_OUTLINE_COLOR);
-		graphics.draw(new RoundRectangle2D.Float(0, 0, WIDTH - 1, HEIGHT - 1, FRAME_ARC, FRAME_ARC));
-		graphics.draw(new RoundRectangle2D.Float(BORDER_WIDTH, BORDER_WIDTH, innerWidth - 1, innerHeight - 1, innerArc, innerArc));
+		return client.getBoostedSkillLevel(Skill.HITPOINTS);
 	}
 
-	/** Background + colored current/max fill, confined to the inner capsule. */
-	private void drawVial(Graphics2D graphics, int innerWidth, int innerHeight, int innerArc, int current, int max)
+	@Override
+	protected int maxValue()
 	{
-		Graphics2D vialGraphics = (Graphics2D) graphics.create();
-		vialGraphics.translate(BORDER_WIDTH, BORDER_WIDTH);
-		vialGraphics.setClip(new RoundRectangle2D.Float(0, 0, innerWidth, innerHeight, innerArc, innerArc));
+		return client.getRealSkillLevel(Skill.HITPOINTS);
+	}
 
-		vialGraphics.setColor(new Color(0, 0, 0, BACKGROUND_ALPHA));
-		vialGraphics.fillRect(0, 0, innerWidth, innerHeight);
-
-		double ratio = (double) current / max;
-		int fillHeight = (int) Math.round(ratio * innerHeight);
-		vialGraphics.setColor(FILL_COLOR);
-		vialGraphics.fillRect(0, innerHeight - fillHeight, innerWidth, fillHeight);
-
-		vialGraphics.dispose();
+	@Override
+	protected Color fillColor()
+	{
+		return FILL_COLOR;
 	}
 }

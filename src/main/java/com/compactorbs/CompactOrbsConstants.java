@@ -85,6 +85,40 @@ public class CompactOrbsConstants
 		public static final String HIDE_LOGOUT_X = "hideLogoutX";
 		public static final String HIDE_GRID = "hideGrid";
 
+		// Vicious Bars' own, new to this plugin (not inherited from Compact
+		// Orbs). BAR_WIDTH is temporary - it's here purely so the width can
+		// be dialed in live in-game instead of guessed blind through code
+		// changes; once settled it gets hardcoded and this key removed, the
+		// same way ORB_LAYOUT/ENABLE_NO_CLICKTHROUGH already were. BAR_LENGTH
+		// is meant to stay as a real, permanent user-facing setting.
+		public static final String BAR_WIDTH = "barWidth";
+		public static final String BAR_LENGTH = "barLength";
+
+		// Also temporary, same reasoning as BAR_WIDTH - extra pixels added
+		// to the bar's top edge beyond where it's calculated to meet the
+		// collar's tab (positive = further down/away, negative = pulled up
+		// into more overlap).
+		public static final String BAR_VERTICAL_OFFSET = "barVerticalOffset";
+
+		// Also temporary, same reasoning as BAR_VERTICAL_OFFSET - extra
+		// pixels added to the bar's X position (positive = right, negative
+		// = left), independent of the collar, which stays centered on the
+		// icon regardless.
+		public static final String BAR_HORIZONTAL_OFFSET = "barHorizontalOffset";
+
+		// Also temporary, same reasoning as BAR_WIDTH - thickness of the
+		// stone frame ring. The inner vial fill isn't its own slider - it
+		// always fills whatever's left inside the frame.
+		public static final String BAR_FRAME_WIDTH = "barFrameWidth";
+
+		// Also temporary, same reasoning as BAR_WIDTH - the HP level number
+		// (repositioned below the icon, see HpVialOverlay) isn't perfectly
+		// centered under it natively; this nudges it left (-) or right (+)
+		// to compensate.
+		// BAR_NUMBER_HORIZONTAL_OFFSET/BAR_NUMBER_VERTICAL_OFFSET were here
+		// temporarily for dialing in the HP number's position - settled at
+		// 4/4 and hardcoded directly in HpVialOverlay, config removed.
+
 		//edit-modes custom positioning
 		public static final String CUSTOM_LAYOUT_PREFIX = "custom_layout_";
 		public static final String VANILLA_LAYOUT_PREFIX = "vanilla_layout_";
