@@ -1,6 +1,8 @@
 package com.viciousliqx.viciousbars;
 
 import com.compactorbs.CompactOrbsManager;
+import com.compactorbs.widget.WidgetManager;
+import com.compactorbs.widget.elements.Orbs;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -9,7 +11,9 @@ import java.awt.geom.RoundRectangle2D;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
+import net.runelite.api.Point;
 import net.runelite.api.Skill;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayPosition;
 
@@ -18,9 +22,14 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  * the old (deleted, recoverable via git history) VitalBarOverlay, landed on
  * screen with real HP data, visible only while Vicious Bars mode is
  * actually on. No icon/counter - that content now lives on the real orb,
- * which will eventually dock onto this bar instead of the bar drawing its
- * own label. No docking yet either - this is a fixed-position proof of
- * life, not the final placement.
+ * which docks as the bar's "label" near the top (see LABEL_FRACTION).
+ *
+ * Positioning only ever READS the orb's live canvas location - never
+ * writes to it. That's deliberate: it's the same parent-derived,
+ * never-self-referential read pattern confirmed safe earlier this
+ * project (see compact_orbs_walkthrough.md), and it means the bar just
+ * follows wherever Compact Orbs' own layout/edit-mode logic has already
+ * put the orb, with zero positioning conflict between the two systems.
  */
 @Singleton
 class HpVialOverlay extends Overlay
@@ -32,19 +41,27 @@ class HpVialOverlay extends Overlay
 	private static final float INNER_ARC_FRACTION = 0.75f;
 	private static final int BACKGROUND_ALPHA = 150;
 
+	// How far down from the bar's own top edge the orb's center should
+	// sit - i.e. how much of the bar shows ABOVE the orb/label. 0.18 is
+	// the middle of the requested 15-20% range.
+	private static final float LABEL_FRACTION = 0.18f;
+
 	private static final Color FRAME_FILL_COLOR = new Color(96, 82, 64);
 	private static final Color FRAME_OUTLINE_COLOR = new Color(20, 17, 14);
 	private static final Color FILL_COLOR = new Color(220, 40, 40);
 
 	private final Client client;
 	private final CompactOrbsManager manager;
+	private final WidgetManager widgetManager;
 
 	@Inject
-	private HpVialOverlay(Client client, CompactOrbsManager manager)
+	private HpVialOverlay(Client client, CompactOrbsManager manager, WidgetManager widgetManager)
 	{
 		this.client = client;
 		this.manager = manager;
-		setPosition(OverlayPosition.TOP_LEFT);
+		this.widgetManager = widgetManager;
+		setPosition(OverlayPosition.DYNAMIC);
+		setMovable(false);
 	}
 
 	@Override
@@ -54,6 +71,27 @@ class HpVialOverlay extends Overlay
 		{
 			return null;
 		}
+
+		Widget orb = widgetManager.getTargetWidget(Orbs.HP_ORB_CONTAINER);
+		if (orb == null)
+		{
+			return null;
+		}
+
+		Point orbCanvas = orb.getCanvasLocation();
+		int orbCenterX = orbCanvas.getX() + orb.getWidth() / 2;
+		int orbCenterY = orbCanvas.getY() + orb.getHeight() / 2;
+
+		int barX = orbCenterX - WIDTH / 2;
+		int barY = orbCenterY - Math.round(HEIGHT * LABEL_FRACTION);
+
+		// See VitalBarOverlay's old comment on this exact pair of calls
+		// (git history) - a non-movable DYNAMIC overlay still needs its
+		// stored bounds cleared each frame, or RuneLite's OverlayRenderer
+		// re-applies a stale location on top of our own translate.
+		setPreferredLocation(null);
+		getBounds().setLocation(0, 0);
+		graphics.translate(barX, barY);
 
 		int max = Math.max(client.getRealSkillLevel(Skill.HITPOINTS), 1);
 		int current = Math.max(0, Math.min(client.getBoostedSkillLevel(Skill.HITPOINTS), max));
