@@ -129,11 +129,15 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	@Inject
 	private OrbZoneDebugOverlay orbZoneDebugOverlay;
 
+	@Inject
+	private HpVialOverlay hpVialOverlay;
+
 	@Override
 	protected void startUp() throws Exception
 	{
 		manager.migrateConfigs();
 		overlayManager.add(orbZoneDebugOverlay);
+		overlayManager.add(hpVialOverlay);
 		keyManager.registerKeyListener(this);
 		mouseManager.registerMouseListener(dragListener);
 		orbRegistry.registerAll();
@@ -169,6 +173,7 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	protected void shutDown() throws Exception
 	{
 		overlayManager.remove(orbZoneDebugOverlay);
+		overlayManager.remove(hpVialOverlay);
 		keyManager.unregisterKeyListener(this);
 		mouseManager.unregisterMouseListener(dragListener);
 		clientThread.invoke(manager::reset);
