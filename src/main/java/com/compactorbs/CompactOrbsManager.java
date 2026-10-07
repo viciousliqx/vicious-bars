@@ -594,9 +594,15 @@ public class CompactOrbsManager
 	// on unboxing the moment anything calls it. Confirmed live: this is
 	// exactly what broke plugin startup the first time this was tried via
 	// config.layout() with the @ConfigItem removed.
+	//
+	// CUSTOM (not a preset like HORIZONTAL_WIDE) is the right hardcode for
+	// Vicious Bars: each bar anchors to its own orb's natural position
+	// (see HpVialOverlay), so there's no grid of slots to lay out - and
+	// isCustomLayout() (EditManager's gate for whether an orb's edit-mode
+	// handler is draggable at all) is only ever true when this is CUSTOM.
 	public CompactOrbsLayout getCurrentLayout()
 	{
-		return CompactOrbsLayout.HORIZONTAL_WIDE;
+		return CompactOrbsLayout.CUSTOM;
 	}
 
 	//invert for readability
