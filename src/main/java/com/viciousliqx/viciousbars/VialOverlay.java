@@ -45,6 +45,19 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  * project (see compact_orbs_walkthrough.md), and it means the bar just
  * follows wherever Compact Orbs' own layout/edit-mode logic has already
  * put the orb, with zero positioning conflict between the two systems.
+ *
+ * Four cardinal orientations (CompactOrbsConfig.BarOrientation): the bar
+ * mounts at a point offset from the icon's own center (Orb/Vial
+ * horizontal + vertical offsets - plain mountX/mountY added to
+ * iconCenterX/Y) and extends outward from there. The collar (the real
+ * backing widget's sprite) always stays tied to the icon's actual,
+ * unmoved center though, never to the mount point - it's a fixed-size
+ * connector, not an elastic one, so it's drawn snug against the real orb
+ * regardless of how far the user has mounted the bar away from it.
+ * SOUTH is the original, hand-tuned layout (vanilla never lays anything
+ * out vertically for us, hence it alone repositions the number/icon).
+ * WEST/EAST/NORTH all deliberately leave the icon/number wherever
+ * vanilla's own default horizontal orb row already put them.
  */
 abstract class VialOverlay extends Overlay
 {
@@ -60,18 +73,67 @@ abstract class VialOverlay extends Overlay
 	private static final int NUMBER_HORIZONTAL_OFFSET = 4;
 	private static final int NUMBER_VERTICAL_OFFSET = 4;
 
+	// EAST's own number placement - dialed in live via temporary config
+	// sliders (eastNumberXOffset/eastNumberYOffset), settled at -2/4, then
+	// hardcoded and the config removed, same workflow as the SOUTH-only
+	// pair above.
+	private static final int EAST_NUMBER_X_OFFSET = -2;
+	private static final int EAST_NUMBER_Y_OFFSET = 4;
+
+	// NORTH's own number placement - dialed in live via temporary config
+	// sliders (northNumberXOffset/northNumberYOffset), settled at -5/3,
+	// then hardcoded and the config removed, same workflow as EAST's pair.
+	private static final int NORTH_NUMBER_X_OFFSET = -5;
+	private static final int NORTH_NUMBER_Y_OFFSET = 3;
+
+	// Confirmed live via F8 + targeted testing: a -2,-2 nudge on the icon
+	// group DID reach the widgets correctly (verified in the dump), but
+	// made no visible difference, because drawRotatedNorthBacking() below
+	// computes the collar's position FROM the icon's live canvas location -
+	// nudging the icon just drags the collar along with it by the same
+	// amount, so their RELATIVE alignment never changes. Reverted; the
+	// real fix is NORTH_COLLAR_X/Y_NUDGE below instead, same lesson EAST's
+	// own collar nudge already taught.
+
+	// Small manual correction on NORTH's rotated-collar draw position -
+	// same reasoning as EAST_COLLAR_X_NUDGE below, mirrored for the
+	// rotated (not flipped) collar. -1 was also backwards here (same
+	// sign-inversion EAST's own collar nudge hit) - flipped to +1.
+	private static final int NORTH_COLLAR_X_NUDGE = 1;
+	private static final int NORTH_COLLAR_Y_NUDGE = 1;
+
+	// Small manual correction on EAST's flipped-collar draw position - the
+	// one piece of EAST's layout with no existing nudge constant, unlike
+	// NORTH/SOUTH's COLLAR_VERTICAL_NUDGE. -1 moved it RIGHT instead of
+	// left (confirmed live) - sign was backwards, flipped to +1.
+	private static final int EAST_COLLAR_X_NUDGE = 1;
+
 	// Dialed in alongside the above: left padding bumped up and right
 	// padding trimmed down by the same amount, shifting the whole
 	// icon+number content cluster right to actually center it in the
 	// (now content-hugging) container instead of leaving it left-heavy.
 	private static final int CONTENT_LEFT_PADDING = 4;
+
+	// NORTH's own left padding - confirmed live that left-aligned (not
+	// centered) is correct, just with less gap than SOUTH/EAST's value.
+	// A guess pending live dial-in, not yet confirmed.
+	private static final int NORTH_CONTENT_LEFT_PADDING = 1;
 	private static final int CONTENT_RIGHT_PADDING = 0;
 
 	// Small manual correction on top of the sprite-measured centering
 	// (rotatedBackingBodyRadius) - confirmed live as still "1-2px off"
 	// after that fix, nudging the collar (and, to stay consistent, the
-	// bar's top edge right below it) down by this much.
+	// bar's top edge right below it) down by this much. Reused as-is for
+	// NORTH's own rotated collar - not independently verified there yet,
+	// a candidate to re-dial if NORTH's collar looks off by a pixel or two.
 	private static final int COLLAR_VERTICAL_NUDGE = 1;
+
+	// Small along-axis gap between the icon's own edge and the bar's near
+	// end for WEST/EAST, dialed in live the same way the vertical collar's
+	// gap always was (via the existing offset sliders) rather than derived
+	// precisely. EAST adds the flipped collar's own body radius on top of
+	// this, same reasoning as the rotated-collar gap NORTH/SOUTH use.
+	private static final int HORIZONTAL_GAP = 2;
 
 	// Fallback-only now - used when the real border kit below isn't loaded
 	// yet. SpriteID.Steelborder (310-313) was tried first and confirmed to
@@ -98,14 +160,28 @@ abstract class VialOverlay extends Overlay
 	// Confirmed live (logged each piece's WidgetType): the backing/tab
 	// piece is WidgetType.GRAPHIC with modelId -1, not MODEL - so
 	// Widget#setRotationX/Y/Z (which only the client's MODEL rendering
-	// path consumes) would be a silent no-op on it. Rotating it for real
-	// means drawing our own rotated copy of its sprite and hiding the
-	// real one - which is also why the icon never needs touching: it's a
-	// separate real widget we just never hide or draw over, so it stays
-	// upright for free instead of needing an explicit counter-rotation.
-	private BufferedImage rotatedBacking;
-	private int rotatedBackingSpriteId = -1;
-	private int rotatedBackingBodyRadius;
+	// path consumes) would be a silent no-op on it. Rotating/flipping it
+	// for real means drawing our own transformed copy of its sprite and
+	// hiding the real one - which is also why the icon never needs
+	// touching: it's a separate real widget we just never hide or draw
+	// over, so it stays upright for free instead of needing an explicit
+	// counter-transform.
+	//
+	// Four caches below, one per direction that needs a replacement
+	// collar - WEST is the odd one out: the source sprite's tab already
+	// points west (left) unrotated, so WEST never replaces anything at
+	// all and has no cache of its own.
+	private BufferedImage rotatedSouthBacking;
+	private int rotatedSouthBackingSpriteId = -1;
+	private int rotatedSouthBackingBodyRadius;
+
+	private BufferedImage rotatedNorthBacking;
+	private int rotatedNorthBackingSpriteId = -1;
+	private int rotatedNorthBackingBodyRadius;
+
+	private BufferedImage flippedEastBacking;
+	private int flippedEastBackingSpriteId = -1;
+	private int flippedEastBackingBodyRadius;
 
 	// Cached once per sprite id - these are static decorative art, never
 	// change for the life of the client.
@@ -116,7 +192,7 @@ abstract class VialOverlay extends Overlay
 	// dump it's a plain untracked TEXT child, sitting to the LEFT of the
 	// icon by default (the horizontal "default" orb layout, not ours).
 	// Saved once per widget instance, same instance-identity reasoning as
-	// rotatedBackingSpriteId - minimizing swaps interfaces entirely (new
+	// the collar caches above - minimizing swaps interfaces entirely (new
 	// Widget objects), so re-capturing on a mismatch avoids ever applying
 	// a stale saved position to the wrong instance.
 	private Widget numberWidget;
@@ -136,6 +212,30 @@ abstract class VialOverlay extends Overlay
 	private int containerOriginalHeight;
 	private int containerOriginalWidth;
 
+	// NORTH-only - separate from the pair above since NORTH touches the
+	// container's Y (never touched by SOUTH/EAST). Kept as its own
+	// widget-instance-keyed pair rather than folded into containerWidget's,
+	// to avoid tangling SOUTH/EAST's width/height semantics with NORTH's
+	// width/Y-shift ones on the same shared fields. The icon (and its
+	// layered siblings)'s own Y-shift reuses contentWidgets/contentOriginalY
+	// instead - see repositionNumberNorth()'s own comment on that loop.
+	// Width joined this pair too - confirmed live the container stayed at
+	// its full native ~57px (roughly double a 26px icon) regardless of
+	// where the icon sat inside it, since nothing had ever shrunk it for
+	// NORTH the way resizeContainer() does for SOUTH. Deliberately its own
+	// field rather than reusing containerWidget/containerOriginalWidth
+	// (growContainerWidth()'s pair, EAST-only) - both would otherwise fight
+	// over the same widget's height via two different "native" snapshots.
+	private Widget northContainerWidget;
+	private int northContainerOriginalY;
+	private int northContainerOriginalWidth;
+	private int northContainerOriginalHeight;
+
+	// Null until the first render() call - deliberately NOT defaulted to
+	// one of the four real orientations, so the very first frame never
+	// looks like a "switch" and triggers a pointless restore-then-reapply.
+	private CompactOrbsConfig.BarOrientation lastOrientation;
+
 	// The icon isn't drawn alone - F8's dump showed several sibling
 	// graphics (indicator, the "empty"-fill wrapper, a hover-state
 	// wrapper) all stacked at the SAME x as the icon, presumably swapped
@@ -143,9 +243,23 @@ abstract class VialOverlay extends Overlay
 	// happens to be visible at the moment - need to move together, or
 	// whichever one the game shows next would still be sitting at the old
 	// x. Captured once (same original-x snapshot, before any edits) the
-	// first time this container instance is seen.
+	// first time this container instance is seen - tracked by contentWidget
+	// below, its OWN staleness check, deliberately separate from
+	// containerWidget (resizeContainer()/growContainerWidth()'s field):
+	// NORTH's shiftContent() call never touches width/height at all, so it
+	// never sets containerWidget - reusing that field as this cache's
+	// staleness check would re-snapshot every single frame for NORTH,
+	// which silently corrupts contentOriginalX into the already-shifted
+	// position instead of the true native one by the second frame -
+	// confirmed live as West breaking after merely visiting North, since
+	// restoreNumber() then "restores" to that corrupted value instead of
+	// native. Confirmed via code review once the live symptom (icon out of
+	// alignment with the real, untouched stone cap) pointed at a drifted
+	// baseline, not a positioning formula bug.
 	private Widget[] contentWidgets;
 	private int[] contentOriginalX;
+	private int[] contentOriginalY;
+	private Widget contentWidget;
 
 	protected VialOverlay(Client client, CompactOrbsManager manager, CompactOrbsConfig config, WidgetManager widgetManager, SpriteManager spriteManager)
 	{
@@ -180,6 +294,24 @@ abstract class VialOverlay extends Overlay
 			return null;
 		}
 
+		// CompactOrbsManager#hideMinimapOnTabClose() hides getOrbsParent()
+		// (the shared ancestor ALL four orbs live under) whenever the side
+		// panel/inventory tab closes - that stops the GAME's own native
+		// rendering of everything inside it, real backing included, but has
+		// zero effect on OUR OWN Graphics2D drawing, which only ever checks
+		// isCompactLayout() above. Confirmed live (screenshots): without
+		// this, the bar (and for SOUTH/EAST/NORTH, the self-drawn collar
+		// too) kept showing regardless - the whole point of hiding orbs
+		// with the inventory tab is that EVERYTHING disappears together,
+		// not just the real widgets we don't draw ourselves.
+		Widget orbsParent = widgetManager.getOrbsParent();
+		if (orbsParent != null && orbsParent.isHidden())
+		{
+			restoreBacking();
+			restoreNumber();
+			return null;
+		}
+
 		Widget orb = widgetManager.getTargetWidget(orbContainer());
 		if (orb == null)
 		{
@@ -188,6 +320,45 @@ abstract class VialOverlay extends Overlay
 			return null;
 		}
 
+		CompactOrbsConfig.BarOrientation orientation = config.barOrientation();
+
+		// Switching orientation mid-session otherwise leaks whatever the
+		// PREVIOUS orientation touched into the new one - confirmed live
+		// (screenshot): EAST's width-grow was still active after switching
+		// to NORTH, since NORTH never grows/shrinks width itself and
+		// nothing ever told the old grow to let go. restoreNumber() already
+		// resets every orientation-specific change this class makes
+		// (container width/height, the content shift, NORTH's container/
+		// icon Y-shift, the number itself) - it just needs to actually run
+		// once AT the switch, not only when the icon can't be found.
+		if (orientation != lastOrientation)
+		{
+			restoreBacking();
+			restoreNumber();
+			lastOrientation = orientation;
+		}
+
+		if (orientation == CompactOrbsConfig.BarOrientation.SOUTH)
+		{
+			return renderSouth(graphics, orb);
+		}
+
+		Widget icon = client.getWidget(orbContainer().getIconId());
+		switch (orientation)
+		{
+			case EAST:
+				return renderEast(graphics, orb, icon);
+			case NORTH:
+				return renderNorth(graphics, orb, icon);
+			case WEST:
+			default:
+				return renderWest(graphics, orb, icon);
+		}
+	}
+
+	/** The original, hand-built layout - bar hangs below the icon, which (unlike the other three) vanilla never laid out for us, hence the number/content repositioning below. */
+	private Dimension renderSouth(Graphics2D graphics, Widget orb)
+	{
 		int width = config.barWidth();
 		int height = config.barLength();
 
@@ -218,14 +389,18 @@ abstract class VialOverlay extends Overlay
 		int iconCenterX = iconCanvas != null ? iconCanvas.getX() + icon.getWidth() / 2 : orbCenterX;
 		int iconCenterY = iconCanvas != null ? iconCanvas.getY() + icon.getHeight() / 2 : orbCenterY;
 
-		int barX = iconCenterX - width / 2 + config.barHorizontalOffset();
+		// Cross-axis offset (horizontal, perpendicular to SOUTH's own
+		// vertical extension) capped to the bar's own width/thickness;
+		// along-axis offset (vertical, the direction the bar extends in)
+		// capped to its length - see clampOffset()'s own javadoc.
+		int barX = iconCenterX - width / 2 + clampOffset(config.barHorizontalOffset(), width);
 		// The bar's top starts exactly where the collar's round BODY ends
 		// (iconCenterY + its radius), not where the collar's center is -
 		// the body sits entirely above the bar, while the tab (the
 		// "handle" hanging below the body) overlaps down into the bar's
 		// top. +COLLAR_VERTICAL_NUDGE to stay flush with the same nudge
 		// applied to the collar's own draw position.
-		int barY = iconCenterY + rotatedBackingBodyRadius + COLLAR_VERTICAL_NUDGE + config.barVerticalOffset();
+		int barY = iconCenterY + rotatedSouthBackingBodyRadius + COLLAR_VERTICAL_NUDGE + clampOffset(config.barVerticalOffset(), height);
 
 		// A separate, never-translated copy of the graphics context - the
 		// collar is drawn through it AFTER the frame/vial below (see the
@@ -252,12 +427,222 @@ abstract class VialOverlay extends Overlay
 		int innerArc = Math.round(innerWidth * INNER_ARC_FRACTION);
 
 		drawFrame(graphics, width, height, frameWidth, innerWidth, innerHeight, innerArc);
-		drawVial(graphics, frameWidth, innerWidth, innerHeight, innerArc, current, max);
+		drawVial(graphics, frameWidth, innerWidth, innerHeight, innerArc, current, max, true);
 
-		drawRotatedBacking(absoluteGraphics, icon, client.getWidget(orbContainer().getBackingId()), iconCenterX, iconCenterY);
+		drawRotatedSouthBacking(absoluteGraphics, icon, client.getWidget(orbContainer().getBackingId()), iconCenterX, iconCenterY);
 		absoluteGraphics.dispose();
 
 		return new Dimension(width, height);
+	}
+
+	/**
+	 * Bar extends LEFT from the mount point. The source collar sprite's
+	 * tab already points west (left) unrotated - exactly right already -
+	 * so this is the one direction that never replaces the real backing
+	 * at all, just leaves it fully alone.
+	 */
+	private Dimension renderWest(Graphics2D graphics, Widget orb, Widget icon)
+	{
+		restoreNumber();
+		restoreBacking();
+
+		Point orbCanvas = orb.getCanvasLocation();
+		int orbCenterX = orbCanvas.getX() + orb.getWidth() / 2;
+		int orbCenterY = orbCanvas.getY() + orb.getHeight() / 2;
+
+		Point iconCanvas = icon != null ? icon.getCanvasLocation() : null;
+		int iconCenterX = iconCanvas != null ? iconCanvas.getX() + icon.getWidth() / 2 : orbCenterX;
+		int iconCenterY = iconCanvas != null ? iconCanvas.getY() + icon.getHeight() / 2 : orbCenterY;
+
+		int length = config.barLength();
+		int thickness = config.barWidth();
+
+		// The mount point - plain offset from the icon's own center,
+		// capped dynamically to the bar's own footprint (see
+		// clampOffset()'s javadoc): along-axis (horizontal, the direction
+		// WEST extends in) to length, cross-axis (vertical) to thickness.
+		// The bar extends outward from here; the collar (left alone above -
+		// its native, unrotated sprite already points the right way) always
+		// stays tied to iconCenterX/Y instead, never to this point, since
+		// it's a fixed-size connector that can't stretch to meet a
+		// freely-repositioned bar.
+		int anchorX = iconCenterX + clampOffset(config.barHorizontalOffset(), length);
+		int anchorY = iconCenterY + clampOffset(config.barVerticalOffset(), thickness);
+
+		int barX = anchorX - HORIZONTAL_GAP - length;
+		int barY = anchorY - thickness / 2;
+
+		setPreferredLocation(null);
+		getBounds().setLocation(0, 0);
+		graphics.translate(barX, barY);
+
+		int max = Math.max(maxValue(), 1);
+		int current = Math.max(0, Math.min(currentValue(), max));
+
+		int frameWidth = config.barFrameWidth();
+		int innerLength = length - 2 * frameWidth;
+		int innerThickness = thickness - 2 * frameWidth;
+		int innerArc = Math.round(innerThickness * INNER_ARC_FRACTION);
+
+		drawFrame(graphics, length, thickness, frameWidth, innerLength, innerThickness, innerArc);
+		drawVialHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, current, max, false);
+
+		return new Dimension(length, thickness);
+	}
+
+	/** Bar extends RIGHT from the mount point - mirror of renderWest(), with a horizontally-flipped collar replacing the real one (whose native tab points the wrong way for this direction). Unlike WEST, vanilla's native number position (left of icon) doesn't suit this direction, so it gets repositioned too - see repositionNumberEast(). */
+	private Dimension renderEast(Graphics2D graphics, Widget orb, Widget icon)
+	{
+		if (icon != null)
+		{
+			repositionNumberEast(orb, icon);
+		}
+		else
+		{
+			restoreNumber();
+		}
+
+		Point orbCanvas = orb.getCanvasLocation();
+		int orbCenterX = orbCanvas.getX() + orb.getWidth() / 2;
+		int orbCenterY = orbCanvas.getY() + orb.getHeight() / 2;
+
+		Point iconCanvas = icon != null ? icon.getCanvasLocation() : null;
+		int iconCenterX = iconCanvas != null ? iconCanvas.getX() + icon.getWidth() / 2 : orbCenterX;
+		int iconCenterY = iconCanvas != null ? iconCanvas.getY() + icon.getHeight() / 2 : orbCenterY;
+
+		int length = config.barLength();
+		int thickness = config.barWidth();
+
+		// Along-axis (horizontal, the direction EAST extends in) capped to
+		// length, cross-axis (vertical) capped to thickness - see
+		// clampOffset()'s javadoc.
+		int anchorX = iconCenterX + clampOffset(config.barHorizontalOffset(), length);
+		int anchorY = iconCenterY + clampOffset(config.barVerticalOffset(), thickness);
+
+		Widget backing = client.getWidget(orbContainer().getBackingId());
+		boolean drawingFlippedCollar = backing != null && getFlippedEastBacking(backing.getSpriteId()) != null;
+		if (drawingFlippedCollar)
+		{
+			widgetManager.setHidden(orbContainer().getBackingId(), true);
+		}
+		else
+		{
+			restoreBacking();
+		}
+
+		int gap = HORIZONTAL_GAP + (drawingFlippedCollar ? flippedEastBackingBodyRadius : 0);
+		int barX = anchorX + gap;
+		int barY = anchorY - thickness / 2;
+
+		Graphics2D absoluteGraphics = (Graphics2D) graphics.create();
+
+		setPreferredLocation(null);
+		getBounds().setLocation(0, 0);
+		graphics.translate(barX, barY);
+
+		int max = Math.max(maxValue(), 1);
+		int current = Math.max(0, Math.min(currentValue(), max));
+
+		int frameWidth = config.barFrameWidth();
+		int innerLength = length - 2 * frameWidth;
+		int innerThickness = thickness - 2 * frameWidth;
+		int innerArc = Math.round(innerThickness * INNER_ARC_FRACTION);
+
+		drawFrame(graphics, length, thickness, frameWidth, innerLength, innerThickness, innerArc);
+		drawVialHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, current, max, true);
+
+		if (drawingFlippedCollar)
+		{
+			drawFlippedEastBacking(absoluteGraphics, icon, backing, iconCenterX, iconCenterY);
+		}
+		absoluteGraphics.dispose();
+
+		return new Dimension(length, thickness);
+	}
+
+	/** Bar extends UP from the mount point - mirror of renderSouth(), with an oppositely-rotated collar (tab pointing up instead of down) replacing the real one. Like EAST (and unlike WEST), vanilla's native number position doesn't suit this direction either, so it gets repositioned too - see repositionNumberNorth(). */
+	private Dimension renderNorth(Graphics2D graphics, Widget orb, Widget icon)
+	{
+		if (icon != null)
+		{
+			repositionNumberNorth(orb, icon);
+		}
+		else
+		{
+			restoreNumber();
+		}
+
+		Point orbCanvas = orb.getCanvasLocation();
+		int orbCenterX = orbCanvas.getX() + orb.getWidth() / 2;
+		int orbCenterY = orbCanvas.getY() + orb.getHeight() / 2;
+
+		Point iconCanvas = icon != null ? icon.getCanvasLocation() : null;
+		int iconCenterX = iconCanvas != null ? iconCanvas.getX() + icon.getWidth() / 2 : orbCenterX;
+		int iconCenterY = iconCanvas != null ? iconCanvas.getY() + icon.getHeight() / 2 : orbCenterY;
+
+		int length = config.barLength();
+		int thickness = config.barWidth();
+
+		// Along-axis (vertical, the direction NORTH extends in) capped to
+		// length, cross-axis (horizontal) capped to thickness - mirrors
+		// SOUTH's own clamp, see clampOffset()'s javadoc.
+		int anchorX = iconCenterX + clampOffset(config.barHorizontalOffset(), thickness);
+		int anchorY = iconCenterY + clampOffset(config.barVerticalOffset(), length);
+
+		Widget backing = client.getWidget(orbContainer().getBackingId());
+		boolean drawingRotatedCollar = backing != null && getRotatedNorthBacking(backing.getSpriteId()) != null;
+		if (drawingRotatedCollar)
+		{
+			widgetManager.setHidden(orbContainer().getBackingId(), true);
+		}
+		else
+		{
+			restoreBacking();
+		}
+
+		int gap = (drawingRotatedCollar ? rotatedNorthBackingBodyRadius : 0) + COLLAR_VERTICAL_NUDGE;
+		int barX = anchorX - thickness / 2;
+		int barY = anchorY - gap - length;
+
+		Graphics2D absoluteGraphics = (Graphics2D) graphics.create();
+
+		setPreferredLocation(null);
+		getBounds().setLocation(0, 0);
+		graphics.translate(barX, barY);
+
+		int max = Math.max(maxValue(), 1);
+		int current = Math.max(0, Math.min(currentValue(), max));
+
+		int frameWidth = config.barFrameWidth();
+		int innerWidth = thickness - 2 * frameWidth;
+		int innerHeight = length - 2 * frameWidth;
+		int innerArc = Math.round(innerWidth * INNER_ARC_FRACTION);
+
+		drawFrame(graphics, thickness, length, frameWidth, innerWidth, innerHeight, innerArc);
+		drawVial(graphics, frameWidth, innerWidth, innerHeight, innerArc, current, max, false);
+
+		if (drawingRotatedCollar)
+		{
+			drawRotatedNorthBacking(absoluteGraphics, icon, backing, iconCenterX, iconCenterY);
+		}
+		absoluteGraphics.dispose();
+
+		return new Dimension(thickness, length);
+	}
+
+	/**
+	 * Dynamically caps a mount-point offset to the bar's own current
+	 * footprint, rather than a fixed design-time range - bound is whichever
+	 * of length/thickness applies to that axis for the active orientation
+	 * (see each render* method's own call site). Keeps the bar from being
+	 * mounted arbitrarily far from the icon as Length/Width get dialed in
+	 * or changed, without needing a second, orientation-aware @Range on
+	 * the config items themselves (RuneLite's Range is a fixed, static
+	 * bound - it can't vary with another config value at runtime).
+	 */
+	private static int clampOffset(int offset, int bound)
+	{
+		return Math.max(-bound, Math.min(bound, offset));
 	}
 
 	/**
@@ -342,16 +727,16 @@ abstract class VialOverlay extends Overlay
 	 * Hides the real backing (stone orb + tab) widget and draws a 90°
 	 * counter-clockwise-rotated copy of its own sprite in its place, so the
 	 * tab that normally protrudes left now points down - acting as a
-	 * "collar" sitting ABOVE the bar (see barY in render()), with only its
-	 * tab/handle actually overlapping the bar's top. Called through a
+	 * "collar" sitting ABOVE the bar (see barY in renderSouth()), with only
+	 * its tab/handle actually overlapping the bar's top. Called through a
 	 * separate, never-translated copy of the graphics context AFTER the
-	 * frame/vial are drawn (see render()), so the whole collar - tab
-	 * included - stays fully visible, painted on top rather than under.
-	 * Everything else on the real orb (icon, button hitbox, indicator) is
-	 * left completely alone - in particular the icon, which is a separate
-	 * real widget, so it stays upright with no counter-rotation needed,
-	 * and stays real/clickable with whatever menu entries it already has -
-	 * nothing new added here.
+	 * frame/vial are drawn, so the whole collar - tab included - stays
+	 * fully visible, painted on top rather than under. Everything else on
+	 * the real orb (icon, button hitbox, indicator) is left completely
+	 * alone - in particular the icon, which is a separate real widget, so
+	 * it stays upright with no counter-rotation needed, and stays
+	 * real/clickable with whatever menu entries it already has - nothing
+	 * new added here.
 	 *
 	 * Positioned on the ICON's own canvas center (not the container's,
 	 * and not backing.getCanvasLocation()) - the icon is the thing the
@@ -365,14 +750,14 @@ abstract class VialOverlay extends Overlay
 	 * cluster's original spot. backing is only ever used here for its
 	 * sprite art, never its own position.
 	 */
-	private void drawRotatedBacking(Graphics2D graphics, Widget icon, Widget backing, int iconCenterX, int iconCenterY)
+	private void drawRotatedSouthBacking(Graphics2D graphics, Widget icon, Widget backing, int iconCenterX, int iconCenterY)
 	{
 		if (icon == null || backing == null)
 		{
 			return;
 		}
 
-		BufferedImage rotated = getRotatedBacking(backing.getSpriteId());
+		BufferedImage rotated = getRotatedSouthBacking(backing.getSpriteId());
 		if (rotated == null)
 		{
 			return;
@@ -387,12 +772,12 @@ abstract class VialOverlay extends Overlay
 		// coincide. Y can't use the same trick: the tab's extra length
 		// only exists along this axis post-rotation, so the body's true
 		// vertical center is offset from the bounding box's by half that
-		// extra length - rotatedBackingBodyRadius (half the SOURCE height,
-		// measured directly off the sprite: 57x34, body fills the full
-		// 34) already accounts for this, where rotated.getHeight()/2
+		// extra length - rotatedSouthBackingBodyRadius (half the SOURCE
+		// height, measured directly off the sprite: 57x34, body fills the
+		// full 34) already accounts for this, where rotated.getHeight()/2
 		// (half of 57) doesn't.
 		int drawX = iconCenterX - rotated.getWidth() / 2;
-		int drawY = iconCenterY - rotatedBackingBodyRadius + COLLAR_VERTICAL_NUDGE;
+		int drawY = iconCenterY - rotatedSouthBackingBodyRadius + COLLAR_VERTICAL_NUDGE;
 		graphics.drawImage(rotated, drawX, drawY, null);
 	}
 
@@ -414,7 +799,8 @@ abstract class VialOverlay extends Overlay
 	 * to sit centered below the icon instead, matching our vertical bar.
 	 * Position-only, same as everything else this overlay touches - the
 	 * number is still the same real, fully functional widget, just
-	 * relocated, never hidden or given new behavior.
+	 * relocated, never hidden or given new behavior. SOUTH-only - see the
+	 * class javadoc for why the other three directions never call this.
 	 */
 	private void repositionNumber(Widget container, Widget icon)
 	{
@@ -433,7 +819,7 @@ abstract class VialOverlay extends Overlay
 			numberWidget = number;
 		}
 
-		shiftContentLeft(container, icon);
+		shiftContent(container, icon, CONTENT_LEFT_PADDING);
 
 		if (number.getXPositionMode() != WidgetPositionMode.ABSOLUTE_LEFT)
 		{
@@ -467,16 +853,221 @@ abstract class VialOverlay extends Overlay
 	}
 
 	/**
+	 * EAST counterpart to repositionNumber() - moves the real level number
+	 * to sit beside the icon on the bar's own side (right) instead of
+	 * vanilla's native left, vertically centered on the icon.
+	 * <p>
+	 * Originally skipped shiftContentLeft() entirely, reasoning "nothing on
+	 * the right needs closing up" - wrong framing. The number VACATES the
+	 * LEFT side (vanilla's native number-left-of-icon layout), the same gap
+	 * SOUTH's shiftContentLeft() exists to close - EAST just never closed
+	 * it, so the container carried BOTH the old, now-empty number slot on
+	 * the left AND the new number space added on the right, confirmed live
+	 * (screenshot) as a container box visibly "too big for just the orb."
+	 * Calling shiftContentLeft() here first - exact same mechanism SOUTH
+	 * already uses - reclaims that left-side space before the number's
+	 * target X is computed, so growContainerWidth() below only ever grows
+	 * past the container's true native footprint when the icon+number
+	 * genuinely don't fit inside it, not because of a stale unused gap.
+	 */
+	private void repositionNumberEast(Widget container, Widget icon)
+	{
+		Widget number = findNumberWidget(container);
+		if (number == null)
+		{
+			return;
+		}
+
+		if (numberWidget != number)
+		{
+			numberOriginalX = number.getOriginalX();
+			numberOriginalY = number.getOriginalY();
+			numberOriginalXMode = number.getXPositionMode();
+			numberOriginalYMode = number.getYPositionMode();
+			numberWidget = number;
+		}
+
+		shiftContent(container, icon, CONTENT_LEFT_PADDING);
+
+		if (number.getXPositionMode() != WidgetPositionMode.ABSOLUTE_LEFT)
+		{
+			number.setXPositionMode(WidgetPositionMode.ABSOLUTE_LEFT);
+		}
+		if (number.getYPositionMode() != WidgetPositionMode.ABSOLUTE_TOP)
+		{
+			number.setYPositionMode(WidgetPositionMode.ABSOLUTE_TOP);
+		}
+
+		int targetX = icon.getRelativeX() + icon.getWidth() + EAST_NUMBER_X_OFFSET;
+		int targetY = icon.getRelativeY() + icon.getHeight() / 2 - number.getHeight() / 2 + EAST_NUMBER_Y_OFFSET;
+
+		if (number.getOriginalX() != targetX || number.getOriginalY() != targetY)
+		{
+			number.setOriginalX(targetX);
+			number.setOriginalY(targetY);
+			number.revalidate();
+		}
+
+		growContainerWidth(container, targetX + number.getWidth() + CONTENT_RIGHT_PADDING);
+	}
+
+	/**
+	 * NORTH counterpart to repositionNumber() - moves the real level
+	 * number to sit above the icon instead of vanilla's native left,
+	 * horizontally centered.
+	 * <p>
+	 * Confirmed live: a first pass that just set the number's Y negative
+	 * made it vanish entirely rather than merely overlap - the container
+	 * clips children to [0, height), and unlike EAST's clipping risk
+	 * (fixable by simply growing width, since EAST's content never needs
+	 * to move below y=0), nothing about negative Y is inside that box no
+	 * matter how tall the container gets.
+	 * <p>
+	 * The actual fix: shift the CONTAINER's own Y up by the number's
+	 * height + a gap (carving out empty room above where the icon used to
+	 * sit), grow its height by the same amount so its bottom edge doesn't
+	 * move, then shift the WHOLE icon sibling group's Y down by that same
+	 * amount so their SCREEN position stays exactly where vanilla put it -
+	 * net zero movement, but now there's real, unclipped space above for
+	 * the number to live in, at local y=0.
+	 * <p>
+	 * That Y-shift was originally applied to `icon` alone, not its layered
+	 * siblings (the indicator/empty-fill/hover graphics that compose the
+	 * SAME visual orb together with it - see the field comment on
+	 * contentWidgets). Confirmed live via F8's widget dump + targeted
+	 * logging: `icon` itself genuinely did shift to the right Y, but its
+	 * siblings stayed at their native one, splitting one coherent-looking
+	 * graphic into misaligned pieces - not an icon-vs-collar problem like
+	 * it first looked. Shifting the whole contentWidgets group (below)
+	 * instead of just icon fixes it.
+	 * <p>
+	 * Also calls shiftContent() to CENTER that same group horizontally
+	 * (not CONTENT_LEFT_PADDING like SOUTH/EAST use) - see that call's own
+	 * comment for why NORTH needs a different target X.
+	 */
+	private void repositionNumberNorth(Widget container, Widget icon)
+	{
+		Widget number = findNumberWidget(container);
+		if (number == null)
+		{
+			return;
+		}
+
+		if (numberWidget != number)
+		{
+			numberOriginalX = number.getOriginalX();
+			numberOriginalY = number.getOriginalY();
+			numberOriginalXMode = number.getXPositionMode();
+			numberOriginalYMode = number.getYPositionMode();
+			numberWidget = number;
+		}
+
+		// Left-aligned, same idea as SOUTH/EAST - centering was tried first
+		// and confirmed live to be the wrong call (left-aligned already
+		// looked right, just with too much gap at CONTENT_LEFT_PADDING's
+		// value) - NORTH_CONTENT_LEFT_PADDING is its own, smaller constant
+		// rather than reusing CONTENT_LEFT_PADDING directly, since there's
+		// no guarantee the right gap is the same for both.
+		shiftContent(container, icon, NORTH_CONTENT_LEFT_PADDING);
+
+		if (number.getXPositionMode() != WidgetPositionMode.ABSOLUTE_LEFT)
+		{
+			number.setXPositionMode(WidgetPositionMode.ABSOLUTE_LEFT);
+		}
+		if (number.getYPositionMode() != WidgetPositionMode.ABSOLUTE_TOP)
+		{
+			number.setYPositionMode(WidgetPositionMode.ABSOLUTE_TOP);
+		}
+
+		if (northContainerWidget != container)
+		{
+			northContainerOriginalY = container.getOriginalY();
+			northContainerOriginalWidth = container.getOriginalWidth();
+			northContainerOriginalHeight = container.getOriginalHeight();
+			northContainerWidget = container;
+		}
+
+		int margin = number.getHeight() + 2;
+
+		int targetContainerY = northContainerOriginalY - margin;
+		int targetContainerHeight = northContainerOriginalHeight + margin;
+		// Shrinks to fit the icon group's true footprint (left padding +
+		// icon's own width + a small right pad), same shrink-to-content
+		// idea as resizeContainer() uses for SOUTH - mirrored here instead
+		// of reused, see the field comment on northContainerOriginalWidth.
+		int requiredWidth = NORTH_CONTENT_LEFT_PADDING + icon.getOriginalWidth() + CONTENT_RIGHT_PADDING;
+		int targetContainerWidth = Math.min(northContainerOriginalWidth, Math.max(1, requiredWidth));
+		boolean containerChanged = false;
+		if (container.getOriginalY() != targetContainerY)
+		{
+			container.setOriginalY(targetContainerY);
+			containerChanged = true;
+		}
+		if (container.getOriginalWidth() != targetContainerWidth)
+		{
+			container.setOriginalWidth(targetContainerWidth);
+			containerChanged = true;
+		}
+		if (container.getOriginalHeight() != targetContainerHeight)
+		{
+			container.setOriginalHeight(targetContainerHeight);
+			containerChanged = true;
+		}
+		if (containerChanged)
+		{
+			container.revalidate();
+		}
+
+		// Shifts the WHOLE sibling group shiftContent() just moved
+		// horizontally (icon plus every layered indicator/empty-fill/hover
+		// graphic sharing its original x - see that field's comment) down
+		// by the same margin, not just the icon alone. Confirmed live via
+		// F8's widget dump + targeted logging: the first version of this
+		// only moved `icon` itself, leaving its layered siblings (which
+		// compose the SAME visual orb together with it) stuck at their
+		// native Y - splitting one coherent-looking graphic into
+		// misaligned pieces, not an icon-vs-collar problem at all.
+		for (int i = 0; i < contentWidgets.length; i++)
+		{
+			Widget content = contentWidgets[i];
+			int targetContentY = contentOriginalY[i] + margin;
+			if (content.getOriginalY() != targetContentY)
+			{
+				content.setOriginalY(targetContentY);
+				content.revalidate();
+			}
+		}
+
+		int targetX = icon.getRelativeX() + icon.getWidth() / 2 - number.getWidth() / 2 + NORTH_NUMBER_X_OFFSET;
+		int targetY = NORTH_NUMBER_Y_OFFSET;
+
+		if (number.getOriginalX() != targetX || number.getOriginalY() != targetY)
+		{
+			number.setOriginalX(targetX);
+			number.setOriginalY(targetY);
+			number.revalidate();
+		}
+	}
+
+	/**
 	 * Shifts the icon and every sibling sharing its original x (the
 	 * layered indicator/empty-fill/hover graphics - see field comment)
-	 * over to a small left padding, closing up the dead space the number
-	 * used to occupy beside them. Captured and shifted as one group so
-	 * whichever sibling the game happens to be showing right now still
-	 * lines up with the others.
+	 * to targetX as one group, so whichever sibling the game happens to be
+	 * showing right now still lines up with the others. Captured once per
+	 * container instance.
+	 * <p>
+	 * targetX varies by caller: SOUTH/EAST pass CONTENT_LEFT_PADDING, since
+	 * both of them also shrink/cap the container to hug the content
+	 * afterward, making a small fixed left padding read as "snug." NORTH
+	 * never touches the container's width at all - passing that same fixed
+	 * padding there left the icon justified hard against the left edge of
+	 * an otherwise full-width box instead of centered in it (confirmed
+	 * live, screenshot) - see repositionNumberNorth()'s own call site for
+	 * the centering math it passes instead.
 	 */
-	private void shiftContentLeft(Widget container, Widget icon)
+	private void shiftContent(Widget container, Widget icon, int targetX)
 	{
-		if (contentWidgets == null || containerWidget != container)
+		if (contentWidgets == null || contentWidget != container)
 		{
 			int originalIconX = icon.getOriginalX();
 			List<Widget> matches = new ArrayList<>();
@@ -489,13 +1080,15 @@ abstract class VialOverlay extends Overlay
 			}
 			contentWidgets = matches.toArray(new Widget[0]);
 			contentOriginalX = new int[contentWidgets.length];
+			contentOriginalY = new int[contentWidgets.length];
 			for (int i = 0; i < contentWidgets.length; i++)
 			{
 				contentOriginalX[i] = contentWidgets[i].getOriginalX();
+				contentOriginalY[i] = contentWidgets[i].getOriginalY();
 			}
+			contentWidget = container;
 		}
 
-		int targetX = CONTENT_LEFT_PADDING;
 		for (Widget content : contentWidgets)
 		{
 			if (content.getOriginalX() != targetX)
@@ -535,6 +1128,34 @@ abstract class VialOverlay extends Overlay
 		}
 	}
 
+	/**
+	 * EAST-only counterpart to resizeContainer() - grows width only, never
+	 * shrinks it (no SOUTH-style content shift happens on this side to
+	 * justify trimming down), and never touches height at all. Shares the
+	 * same containerWidget/containerOriginalWidth/containerOriginalHeight
+	 * fields as resizeContainer() - restoreNumber() already restores both
+	 * generically, and containerOriginalWidth is only ever snapshotted
+	 * once per widget instance, so switching orientations mid-session
+	 * always grows/shrinks from the true native baseline, never a
+	 * previously-adjusted value.
+	 */
+	private void growContainerWidth(Widget container, int requiredWidth)
+	{
+		if (containerWidget != container)
+		{
+			containerOriginalWidth = container.getOriginalWidth();
+			containerOriginalHeight = container.getOriginalHeight();
+			containerWidget = container;
+		}
+
+		int targetWidth = Math.max(containerOriginalWidth, requiredWidth);
+		if (container.getOriginalWidth() != targetWidth)
+		{
+			container.setOriginalWidth(targetWidth);
+			container.revalidate();
+		}
+	}
+
 	/** Safe to call unconditionally any time we're not actively repositioning the number - a no-op once nothing's saved. */
 	private void restoreNumber()
 	{
@@ -551,10 +1172,22 @@ abstract class VialOverlay extends Overlay
 			for (int i = 0; i < contentWidgets.length; i++)
 			{
 				contentWidgets[i].setOriginalX(contentOriginalX[i]);
+				contentWidgets[i].setOriginalY(contentOriginalY[i]);
 				contentWidgets[i].revalidate();
 			}
 			contentWidgets = null;
 			contentOriginalX = null;
+			contentOriginalY = null;
+			contentWidget = null;
+		}
+
+		if (northContainerWidget != null)
+		{
+			northContainerWidget.setOriginalY(northContainerOriginalY);
+			northContainerWidget.setOriginalWidth(northContainerOriginalWidth);
+			northContainerWidget.setOriginalHeight(northContainerOriginalHeight);
+			northContainerWidget.revalidate();
+			northContainerWidget = null;
 		}
 
 		if (numberWidget == null)
@@ -588,11 +1221,11 @@ abstract class VialOverlay extends Overlay
 		return null;
 	}
 
-	private BufferedImage getRotatedBacking(int spriteId)
+	private BufferedImage getRotatedSouthBacking(int spriteId)
 	{
-		if (rotatedBacking != null && rotatedBackingSpriteId == spriteId)
+		if (rotatedSouthBacking != null && rotatedSouthBackingSpriteId == spriteId)
 		{
-			return rotatedBacking;
+			return rotatedSouthBacking;
 		}
 
 		BufferedImage source = spriteManager.getSprite(spriteId, 0);
@@ -601,10 +1234,10 @@ abstract class VialOverlay extends Overlay
 			return null;
 		}
 
-		rotatedBacking = rotateCounterClockwise90(source);
-		rotatedBackingBodyRadius = source.getHeight() / 2;
-		rotatedBackingSpriteId = spriteId;
-		return rotatedBacking;
+		rotatedSouthBacking = rotateCounterClockwise90(source);
+		rotatedSouthBackingBodyRadius = source.getHeight() / 2;
+		rotatedSouthBackingSpriteId = spriteId;
+		return rotatedSouthBacking;
 	}
 
 	/**
@@ -631,8 +1264,152 @@ abstract class VialOverlay extends Overlay
 		return rotated;
 	}
 
-	/** Background + colored current/max fill, confined to the inner capsule. */
-	private void drawVial(Graphics2D graphics, int frameWidth, int innerWidth, int innerHeight, int innerArc, int current, int max)
+	private BufferedImage getRotatedNorthBacking(int spriteId)
+	{
+		if (rotatedNorthBacking != null && rotatedNorthBackingSpriteId == spriteId)
+		{
+			return rotatedNorthBacking;
+		}
+
+		BufferedImage source = spriteManager.getSprite(spriteId, 0);
+		if (source == null)
+		{
+			return null;
+		}
+
+		rotatedNorthBacking = rotateClockwise90(source);
+		rotatedNorthBackingBodyRadius = source.getHeight() / 2;
+		rotatedNorthBackingSpriteId = spriteId;
+		return rotatedNorthBacking;
+	}
+
+	/**
+	 * Mirror image of rotateCounterClockwise90() - 90° the OTHER way, so
+	 * the tab (naturally pointing left, small x) lands near the TOP of the
+	 * result instead of the bottom: pixel mapping (x,y) -> (h-1-y, x) for
+	 * a source of height h, giving "tab pointing left" -> "tab pointing
+	 * up", the NORTH counterpart to CCW90's "tab pointing down".
+	 */
+	private static BufferedImage rotateClockwise90(BufferedImage source)
+	{
+		int w = source.getWidth();
+		int h = source.getHeight();
+
+		BufferedImage rotated = new BufferedImage(h, w, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = rotated.createGraphics();
+		g.drawImage(source, new AffineTransform(0, 1, -1, 0, h - 1, 0), null);
+		g.dispose();
+
+		return rotated;
+	}
+
+	/**
+	 * Draws the rotated collar for NORTH - counterpart to
+	 * drawRotatedSouthBacking(), mirrored vertically: the body (diameter =
+	 * source height, same as SOUTH) now sits at the BOTTOM of the rotated
+	 * image instead of the top (since the tab - pointing up this time -
+	 * occupies the top portion instead), so drawY is anchored from the
+	 * bottom of the rotated image instead of the top.
+	 */
+	private void drawRotatedNorthBacking(Graphics2D graphics, Widget icon, Widget backing, int iconCenterX, int iconCenterY)
+	{
+		if (icon == null || backing == null)
+		{
+			return;
+		}
+
+		BufferedImage rotated = getRotatedNorthBacking(backing.getSpriteId());
+		if (rotated == null)
+		{
+			return;
+		}
+
+		int drawX = iconCenterX - rotated.getWidth() / 2 + NORTH_COLLAR_X_NUDGE;
+		int drawY = iconCenterY - rotated.getHeight() + rotatedNorthBackingBodyRadius - COLLAR_VERTICAL_NUDGE + NORTH_COLLAR_Y_NUDGE;
+		graphics.drawImage(rotated, drawX, drawY, null);
+	}
+
+	/**
+	 * Mirror image of getRotatedSouthBacking() - same cache-by-sprite-id
+	 * shape, a pure horizontal flip instead of a 90° rotation. The source
+	 * sprite's tab naturally points LEFT (unrotated) - exactly right for
+	 * WEST already, which is why that direction never calls this at all
+	 * and just leaves the real backing alone. EAST needs the tab pointing
+	 * the other way, hence the flip.
+	 */
+	private BufferedImage getFlippedEastBacking(int spriteId)
+	{
+		if (flippedEastBacking != null && flippedEastBackingSpriteId == spriteId)
+		{
+			return flippedEastBacking;
+		}
+
+		BufferedImage source = spriteManager.getSprite(spriteId, 0);
+		if (source == null)
+		{
+			return null;
+		}
+
+		flippedEastBacking = flipHorizontal(source);
+		flippedEastBackingBodyRadius = source.getHeight() / 2;
+		flippedEastBackingSpriteId = spriteId;
+		return flippedEastBacking;
+	}
+
+	/** Plain horizontal mirror - dimensions unchanged, just x -> w-1-x. */
+	private static BufferedImage flipHorizontal(BufferedImage source)
+	{
+		int w = source.getWidth();
+		int h = source.getHeight();
+
+		BufferedImage flipped = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = flipped.createGraphics();
+		g.drawImage(source, new AffineTransform(-1, 0, 0, 1, w - 1, 0), null);
+		g.dispose();
+
+		return flipped;
+	}
+
+	/**
+	 * Draws the flipped collar for EAST - counterpart to
+	 * drawRotatedSouthBacking(), but simpler: a pure flip doesn't swap
+	 * width/height the way a 90° rotation does, so the body (diameter =
+	 * source height, same 57x34 sprite as SOUTH) still fills the full
+	 * height edge-to-edge and now sits in the LEFT half of the image
+	 * (post-flip) rather than centered in the whole bounding box. drawX is
+	 * therefore anchored so the body's own center - not the image's -
+	 * lands on iconCenterX, leaving the tab to protrude rightward from
+	 * there. The caller has already hidden the real backing widget before
+	 * calling this (see renderEast()).
+	 */
+	private void drawFlippedEastBacking(Graphics2D graphics, Widget icon, Widget backing, int iconCenterX, int iconCenterY)
+	{
+		if (icon == null || backing == null)
+		{
+			return;
+		}
+
+		BufferedImage flipped = getFlippedEastBacking(backing.getSpriteId());
+		if (flipped == null)
+		{
+			return;
+		}
+
+		int drawX = iconCenterX - flippedEastBackingBodyRadius + EAST_COLLAR_X_NUDGE;
+		int drawY = iconCenterY - flipped.getHeight() / 2;
+		graphics.drawImage(flipped, drawX, drawY, null);
+	}
+
+	/**
+	 * Background + colored current/max fill, confined to the inner
+	 * capsule, filling along Y. anchorBottom controls which edge is the
+	 * FIXED one (the end farthest from the icon): true for SOUTH (icon is
+	 * above, far end is at the bottom), false for NORTH (icon is below,
+	 * far end is at the top). Either way the bar always empties starting
+	 * from the near-icon end first - the remaining "liquid" recedes toward
+	 * the far end as the value drops, never the reverse.
+	 */
+	private void drawVial(Graphics2D graphics, int frameWidth, int innerWidth, int innerHeight, int innerArc, int current, int max, boolean anchorBottom)
 	{
 		Graphics2D vialGraphics = (Graphics2D) graphics.create();
 		vialGraphics.translate(frameWidth, frameWidth);
@@ -644,7 +1421,33 @@ abstract class VialOverlay extends Overlay
 		double ratio = (double) current / max;
 		int fillHeight = (int) Math.round(ratio * innerHeight);
 		vialGraphics.setColor(fillColor());
-		vialGraphics.fillRect(0, innerHeight - fillHeight, innerWidth, fillHeight);
+		int fillY = anchorBottom ? innerHeight - fillHeight : 0;
+		vialGraphics.fillRect(0, fillY, innerWidth, fillHeight);
+
+		vialGraphics.dispose();
+	}
+
+	/**
+	 * Horizontal counterpart to drawVial() - fills along X instead of Y.
+	 * anchorRight controls which edge is the FIXED one (the end farthest
+	 * from the icon): true for EAST (far end is on the right), false for
+	 * WEST (far end is on the left). Matches drawVial()'s own rule
+	 * exactly, just rotated 90°.
+	 */
+	private void drawVialHorizontal(Graphics2D graphics, int frameWidth, int innerLength, int innerThickness, int innerArc, int current, int max, boolean anchorRight)
+	{
+		Graphics2D vialGraphics = (Graphics2D) graphics.create();
+		vialGraphics.translate(frameWidth, frameWidth);
+		vialGraphics.setClip(new RoundRectangle2D.Float(0, 0, innerLength, innerThickness, innerArc, innerArc));
+
+		vialGraphics.setColor(new Color(0, 0, 0, BACKGROUND_ALPHA));
+		vialGraphics.fillRect(0, 0, innerLength, innerThickness);
+
+		double ratio = (double) current / max;
+		int fillLength = (int) Math.round(ratio * innerLength);
+		vialGraphics.setColor(fillColor());
+		int fillX = anchorRight ? innerLength - fillLength : 0;
+		vialGraphics.fillRect(fillX, 0, fillLength, innerThickness);
 
 		vialGraphics.dispose();
 	}

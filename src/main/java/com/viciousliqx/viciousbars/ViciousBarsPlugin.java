@@ -13,6 +13,7 @@ import com.compactorbs.CompactOrbsConstants.Widgets.Orb;
 import com.compactorbs.CompactOrbsManager;
 import com.compactorbs.widget.WidgetManager;
 import com.compactorbs.widget.elements.Compass;
+import com.compactorbs.widget.elements.Minimap;
 import com.compactorbs.widget.elements.Orbs;
 import com.compactorbs.widget.layout.HideOrbRegistry;
 import com.compactorbs.widget.layout.edit.DragListener;
@@ -198,6 +199,7 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 		runVialOverlay.shutDown();
 		overlayManager.remove(specVialOverlay);
 		specVialOverlay.shutDown();
+		restoreBarZoneSize();
 		keyManager.unregisterKeyListener(this);
 		mouseManager.unregisterMouseListener(dragListener);
 		clientThread.invoke(manager::reset);
@@ -210,9 +212,32 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 		return configManager.getConfig(CompactOrbsConfig.class);
 	}
 
+	// Dev-only, temporary - see CompactOrbsConfig#barZoneWidthOffset and
+	// #barZoneHeightOffset. Two widgets, one offset per axis: F7's
+	// diagnostic dump confirmed getOrbsParent() and getMapParent() are
+	// separate, nested widgets at the exact same native size (both plain
+	// absolute sizing - original==current, safe to edit), so both get
+	// resized together here. The orb's own direct parent (ORBS_UNIVERSE) is
+	// a THIRD, different widget - original width 0, sized some other way at
+	// render time - and is deliberately NOT touched any more: editing it
+	// directly is what caused the screen-edge blowup from +1 and the
+	// hide/show-to-settle glitch.
+	// Saved against the widget INSTANCE, same reasoning as every other
+	// save/restore-on-toggle-off pair in this plugin - minimizing the
+	// minimap swaps in a brand new widget, so a stale saved size must
+	// never get applied to the wrong instance.
+	private Widget orbsZoneWidget;
+	private int orbsZoneOriginalWidth;
+	private int orbsZoneOriginalHeight;
+	private Widget orbMapParentWidget;
+	private int orbMapParentOriginalWidth;
+	private int orbMapParentOriginalHeight;
+
 	@Subscribe
 	public void onClientTick(ClientTick event)
 	{
+		applyBarZoneSize();
+
 		if (!manager.isEditingLayout)
 		{
 			return;
@@ -223,6 +248,114 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 		if (client.getMouseCurrentButton() == 0 && dragState.wasDragging)
 		{
 			dragListener.finalizeDrag();
+		}
+	}
+
+	/** Resizes getOrbsParent() and getMapParent() together, on both axes - see the field comment above for why these two and not ORBS_UNIVERSE. */
+	private void applyBarZoneSize()
+	{
+		int widthOffset = config.barZoneWidthOffset();
+		int heightOffset = config.barZoneHeightOffset();
+
+		if (!manager.isCompactLayout() || (widthOffset == 0 && heightOffset == 0))
+		{
+			restoreBarZoneSize();
+			return;
+		}
+
+		Widget orbsParent = widgetManager.getOrbsParent();
+		if (orbsParent != null)
+		{
+			if (orbsZoneWidget != orbsParent)
+			{
+				orbsZoneOriginalWidth = orbsParent.getOriginalWidth();
+				orbsZoneOriginalHeight = orbsParent.getOriginalHeight();
+				orbsZoneWidget = orbsParent;
+			}
+
+			int targetWidth = orbsZoneOriginalWidth + widthOffset;
+			int targetHeight = orbsZoneOriginalHeight + heightOffset;
+			if (orbsParent.getOriginalWidth() != targetWidth || orbsParent.getOriginalHeight() != targetHeight)
+			{
+				orbsParent.setOriginalWidth(targetWidth);
+				orbsParent.setOriginalHeight(targetHeight);
+				orbsParent.revalidate();
+			}
+		}
+
+		Widget mapParent = widgetManager.getMapParent();
+		if (mapParent != null)
+		{
+			if (orbMapParentWidget != mapParent)
+			{
+				orbMapParentOriginalWidth = mapParent.getOriginalWidth();
+				orbMapParentOriginalHeight = mapParent.getOriginalHeight();
+				orbMapParentWidget = mapParent;
+			}
+
+			int targetWidth = orbMapParentOriginalWidth + widthOffset;
+			int targetHeight = orbMapParentOriginalHeight + heightOffset;
+			if (mapParent.getOriginalWidth() != targetWidth || mapParent.getOriginalHeight() != targetHeight)
+			{
+				mapParent.setOriginalWidth(targetWidth);
+				mapParent.setOriginalHeight(targetHeight);
+				mapParent.revalidate();
+			}
+		}
+
+		// ORBS_UNIVERSE's own width/height MODE resolves against GAMEFRAME (the
+		// full client canvas) whenever it naturally revalidates - confirmed by
+		// CompactOrbsManager#setupMinimapContainer()'s own pre-existing TODO
+		// comment, and exactly the screen-edge blowup we hit trying to edit it
+		// directly earlier. That method already works around it by forcing
+		// ORBS_UNIVERSE's LIVE width/height (not original/mode) to match
+		// getOrbsParent()'s current size - but only runs that patch on
+		// startup/profile-change/real-resize, which is why toggling the
+		// RuneLite side panel incidentally "fixed" the scrambled layout (it's
+		// one of those triggers, and by then getOrbsParent() was already
+		// widened). Doing the same sync here, every tick, removes the
+		// dependency on that incidental trigger entirely.
+		if (orbsParent != null)
+		{
+			Widget orbsUniverse = client.getWidget(Minimap.ORBS_UNIVERSE.getComponentId());
+			if (orbsUniverse != null)
+			{
+				widgetManager.updateValue(orbsUniverse::getWidth, orbsUniverse::setWidth, orbsParent.getWidth());
+				widgetManager.updateValue(orbsUniverse::getHeight, orbsUniverse::setHeight, orbsParent.getHeight());
+			}
+
+			// The edit-mode red overlay box has the exact same disease: its
+			// widthMode/heightMode were copied from ORBS_UNIVERSE ONCE, at the
+			// moment EditManager first created it (EditManager#updateBackground()),
+			// and never touched again in compact layout - so it never re-resolves
+			// against our widened zone on its own, same as ORBS_UNIVERSE itself
+			// didn't. Forcing its live size here too, every tick, is the same fix.
+			Widget editBackground = editManager.getEditBackground();
+			if (editBackground != null)
+			{
+				widgetManager.updateValue(editBackground::getWidth, editBackground::setWidth, orbsParent.getWidth());
+				widgetManager.updateValue(editBackground::getHeight, editBackground::setHeight, orbsParent.getHeight());
+			}
+		}
+	}
+
+	/** Safe to call unconditionally any time we're not actively resizing the zone - a no-op once nothing's saved. */
+	private void restoreBarZoneSize()
+	{
+		if (orbsZoneWidget != null)
+		{
+			orbsZoneWidget.setOriginalWidth(orbsZoneOriginalWidth);
+			orbsZoneWidget.setOriginalHeight(orbsZoneOriginalHeight);
+			orbsZoneWidget.revalidate();
+			orbsZoneWidget = null;
+		}
+
+		if (orbMapParentWidget != null)
+		{
+			orbMapParentWidget.setOriginalWidth(orbMapParentOriginalWidth);
+			orbMapParentWidget.setOriginalHeight(orbMapParentOriginalHeight);
+			orbMapParentWidget.revalidate();
+			orbMapParentWidget = null;
 		}
 	}
 
@@ -501,11 +634,6 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 				break;
 
 			case ConfigKeys.ORB_LAYOUT:
-			case ConfigKeys.VERTICAL_Y_ADJUSTMENT:
-			case ConfigKeys.HORIZONTAL_ANCHOR:
-			case ConfigKeys.VERTICAL_ANCHOR:
-			case ConfigKeys.DISABLE_REORDERING:
-			case ConfigKeys.LEAVE_EMPTY_SPACE:
 				clientThread.invokeLater(() ->
 				{
 					if (!manager.isFixedMode())
@@ -585,6 +713,16 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	// untracked child, likely TEXT type.
 	private static final int ORB_CHILDREN_DUMP_KEY = KeyEvent.VK_F8;
 
+	// Also throwaway: F7 dumps id + original/current size for every zone
+	// widget candidate the 3 zone-width sliders have guessed at so far
+	// (getOrbsParent(), the orb's own direct parent, getMapParent(),
+	// ORBS_UNIVERSE), plus a full ancestor-chain walk from the orb, so the
+	// ones that are literally the same widget (same id) or the same native
+	// size can be read off directly instead of guessed at one at a time.
+	// Set all 3 orb*ZoneWidthOffset sliders to 0 first so this reports true
+	// native sizes, not ones we're already mid-modifying.
+	private static final int ZONE_WIDGET_DUMP_KEY = KeyEvent.VK_F7;
+
 	@Override
 	public void keyPressed(KeyEvent e)
 	{
@@ -597,6 +735,12 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 		if (e.getKeyCode() == ORB_CHILDREN_DUMP_KEY)
 		{
 			clientThread.invokeLater(this::dumpOrbChildren);
+			return;
+		}
+
+		if (e.getKeyCode() == ZONE_WIDGET_DUMP_KEY)
+		{
+			clientThread.invokeLater(this::dumpZoneWidgets);
 			return;
 		}
 
@@ -774,6 +918,39 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 		log.info("[orb dump] --- {} orb container (id={}, {}x{}) ---", label, container.getId(), container.getWidth(), container.getHeight());
 		dumpAllChildren(container, 0);
 		log.info("[orb dump] --- end {} ---", label);
+	}
+
+	private void dumpZoneWidgets()
+	{
+		Widget orb = widgetManager.getTargetWidget(Orbs.HP_ORB_CONTAINER);
+
+		dumpOneZoneWidget("getOrbsParent()", widgetManager.getOrbsParent());
+		dumpOneZoneWidget("orb.getParent() [inner]", orb != null ? orb.getParent() : null);
+		dumpOneZoneWidget("getMapParent()", widgetManager.getMapParent());
+		dumpOneZoneWidget("ORBS_UNIVERSE", client.getWidget(Minimap.ORBS_UNIVERSE.getComponentId()));
+
+		log.info("[zone dump] --- full ancestor chain from HP orb ---");
+		Widget w = orb != null ? orb.getParent() : null;
+		int depth = 0;
+		while (w != null && depth < 8)
+		{
+			log.info("[zone dump] chain depth={} id={} original={}x{} current={}x{}",
+				depth, w.getId(), w.getOriginalWidth(), w.getOriginalHeight(), w.getWidth(), w.getHeight());
+			w = w.getParent();
+			depth++;
+		}
+		log.info("[zone dump] --- end chain ---");
+	}
+
+	private void dumpOneZoneWidget(String label, Widget widget)
+	{
+		if (widget == null)
+		{
+			log.info("[zone dump] {} -> null", label);
+			return;
+		}
+		log.info("[zone dump] {} -> id={} original={}x{} current={}x{}",
+			label, widget.getId(), widget.getOriginalWidth(), widget.getOriginalHeight(), widget.getWidth(), widget.getHeight());
 	}
 
 	private void dumpAllChildren(Widget widget, int depth)

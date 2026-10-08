@@ -76,6 +76,26 @@ public interface CompactOrbsConfig extends Config
 		EDIT_MODE
 	}
 
+	// Each direction mounts the bar at a point offset from the orb icon's
+	// own center (the Orb/Vial horizontal + vertical offsets below - plain
+	// mountX/mountY added to iconCenterX/Y), then extends the bar outward
+	// from that mount point. WEST is the default: vanilla's own horizontal
+	// orb row already has each icon's native backing/tab pointing west
+	// (left), so WEST needs no collar replacement at all - the real one
+	// already connects. EAST mirrors it with a horizontally-flipped collar
+	// copy. SOUTH is the original hand-tuned layout (vanilla never lays
+	// anything out vertically for us, hence it alone repositions the
+	// number/icon - see VialOverlay#renderSouth()). NORTH mirrors SOUTH
+	// with an oppositely-rotated collar copy. WEST/EAST/NORTH all
+	// deliberately leave the icon/number wherever vanilla already put them.
+	enum BarOrientation
+	{
+		WEST,
+		EAST,
+		NORTH,
+		SOUTH
+	}
+
 	// Vicious Bars only ever has ONE layout (hardcoded as
 	// CompactOrbsLayout.HORIZONTAL_WIDE directly in
 	// CompactOrbsManager#getCurrentLayout()) and always prevents orb
@@ -87,6 +107,16 @@ public interface CompactOrbsConfig extends Config
 	// plugin startup entirely. Hardcoding at the call site instead avoids
 	// the Config interface for these two entirely.
 
+	// First section in the panel, deliberately - everything here is
+	// dev-only/experimental, kept separate from the permanent settings
+	// below it so it's obvious at a glance which is which.
+	@ConfigSection(
+		name = "Testing",
+		description = "Dev-only, experimental settings - not permanent, goes away once each one settles.",
+		position = 0
+	)
+	String testing = "testing";
+
 	@ConfigSection(
 		name = "Layout Options",
 		description = "",
@@ -94,75 +124,26 @@ public interface CompactOrbsConfig extends Config
 	)
 	String layout = "layout";
 
-	@Range(min = 0, max = 200)
-	@ConfigItem(
-		keyName = ConfigKeys.VERTICAL_Y_ADJUSTMENT,
-		name = "Vertical offset",
-		description = "Reduce the vertical position of the current layout by the set value (min: 0, max:200)",
-		section = layout,
-		position = 1
-	)
-	default int verticalYAdjustment()
-	{
-		return 0;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.VERTICAL_ANCHOR,
-		name = "Vertical anchor",
-		description = "Where the layout will snap to, and the direction orbs move while reordering",
-		section = layout,
-		position = 2
-	)
-	default VerticalAnchor verticalAnchor()
-	{
-		return VerticalAnchor.BOTTOM;
-	}
-
+	// Dropped from the panel - verticalYAdjustment (Vertical offset) stayed
+	// 0 the whole time it was visible; verticalAnchor (Vertical anchor)
+	// stayed Top; horizontalAnchor (Compass fix) was never touched and -
+	// per the keeper finding below, now moved here - never affected orb
+	// position at all for our hardcoded layout; disableReordering (Disable
+	// orb reordering) had no perceptible live effect either. All four
+	// hardcoded at their CompactOrbsManager call sites instead (isAnchorTop/
+	// Bottom/Left/Right, allowReordering) - same "already were" pattern as
+	// layout()/enableNoClickthrough(). The enum TYPES (HorizontalAnchor/
+	// VerticalAnchor) and these four ConfigKeys stay - migrateConfigs()
+	// still references them for legacy key migration, a different concern
+	// from whether a user-facing panel control exists.
+	//
 	// Confirmed dead no-op for Orbs.UNIVERSE on our hardcoded HORIZONTAL_WIDE
 	// layout - OrbContainerOffset.xOffset() only adds getRightOffset(),
 	// which is a constant 0 for this layout; Left has no branch at all. The
 	// ONLY place this still does anything is CompassOffset.xOffset()'s
 	// HORIZONTAL_WIDE-right branch, which nudges the compass replacement
-	// graphic to compensate for hidden toggle icons - hence the renamed
-	// label below. See compact_orbs_walkthrough.md's horizontal-anchor
-	// keeper finding. Once a design settles, this can still be hardcoded
-	// away the same way layout()/enableNoClickthrough() were.
-	@ConfigItem(
-		keyName = ConfigKeys.HORIZONTAL_ANCHOR,
-		name = "Compass fix",
-		description = "Has no effect on orb position - only nudges the compass replacement graphic to compensate for hidden toggle icons (minimap button, XP drops, world map, wiki)",
-		section = layout,
-		position = 3
-	)
-	default HorizontalAnchor horizontalAnchor()
-	{
-		return HorizontalAnchor.RIGHT;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.DISABLE_REORDERING,
-		name = "Disable orb reordering",
-		description = "Disable the reordering logic when orbs are hidden",
-		section = layout,
-		position = 4
-	)
-	default boolean disableReordering()
-	{
-		return false;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.LEAVE_EMPTY_SPACE,
-		name = "Leave empty space",
-		description = "Prevent other elements from shifting towards orbs that have been reordered (retains the gap between)",
-		section = layout,
-		position = 5
-	)
-	default boolean leaveEmptySpace()
-	{
-		return false;
-	}
+	// graphic to compensate for hidden toggle icons. See
+	// compact_orbs_walkthrough.md's horizontal-anchor keeper finding.
 
 	@ConfigItem(
 		keyName = ConfigKeys.HIDE_MINIMAP_WITH_SIDE_PANEL,
@@ -173,30 +154,68 @@ public interface CompactOrbsConfig extends Config
 	)
 	default boolean hideMinimapWithSidePanel() { return false; }
 
+	// No longer dev-only/temp - a confirmed staple now. F7's diagnostic
+	// dump (see ViciousBarsPlugin) confirmed getOrbsParent() and
+	// getMapParent() are two separate widgets nested one inside the other
+	// at the EXACT same native size (228x207, original==current - plain
+	// absolute sizing, safe to edit), while the orb's own direct parent
+	// (ORBS_UNIVERSE) is a THIRD, different widget - original width 0,
+	// size resolved some other way at render time - which is why editing
+	// IT directly blew up to the screen edges from +1 and needed a
+	// hide/show to visually settle. Widening just these two safe widgets
+	// together is the whole fix; ORBS_UNIVERSE is left alone entirely now.
+	@Range(min = 0, max = 300)
+	@ConfigItem(
+		keyName = ConfigKeys.BAR_ZONE_WIDTH_OFFSET,
+		name = "Bar zone width",
+		description = "Extra pixels added to both getOrbsParent() and getMapParent() (confirmed to be the same native size, nested widgets) - this is the actual boundary DragListener clamps orb positions against, and widening both together gives the bars more room without touching the orb's own relatively-sized parent.",
+		section = layout,
+		position = 8
+	)
+	default int barZoneWidthOffset()
+	{
+		return 0;
+	}
+
+	// Vertical counterpart to Bar zone width above. Same two widgets
+	// (getOrbsParent(), getMapParent()), same reasoning, just the height
+	// field instead of width - lets the zone grow/shrink independently on
+	// each axis to fit whatever layout a user picks.
+	@Range(min = 0, max = 300)
+	@ConfigItem(
+		keyName = ConfigKeys.BAR_ZONE_HEIGHT_OFFSET,
+		name = "Bar zone height",
+		description = "Extra pixels added to both getOrbsParent() and getMapParent()'s height, same mechanism as Bar zone width.",
+		section = layout,
+		position = 9
+	)
+	default int barZoneHeightOffset()
+	{
+		return 0;
+	}
+
+	// No longer dev-only/temp - confirmed working baseline (anchor-point
+	// mounting + four-direction orientation) as of live testing. This
+	// section is the single master layout control for every bar (HP,
+	// Prayer, Run, Spec) - they all read the exact same CompactOrbsConfig
+	// instance, so there's no per-bar config surface, just this one.
 	@ConfigSection(
-		name = "Bar",
-		description = "",
+		name = "Global Bar Layout",
+		description = "Controls every bar (HP, Prayer, Run, Spec) identically - one shared layout, not a per-bar setting.",
 		position = 2
 	)
 	String bar = "bar";
 
-	// Dev-only, temporary - exists purely so the width can be dialed in
-	// live in-game instead of guessed blind through code changes. Once a
-	// value is settled it gets hardcoded in HpVialOverlay and this item
-	// removed entirely, the same way ORB_LAYOUT/ENABLE_NO_CLICKTHROUGH
-	// already were - the stone cap's own fixed size means width isn't
-	// meant to be a real per-user setting.
-	@Range(min = 10, max = 40)
 	@ConfigItem(
-		keyName = ConfigKeys.BAR_WIDTH,
-		name = "Width (temp)",
-		description = "Dev-only - dial this in, then report the final value back to hardcode. Goes away once settled.",
+		keyName = ConfigKeys.BAR_ORIENTATION,
+		name = "Bar orientation",
+		description = "Which way the bar extends from its mount point (the Orb/Vial offsets below) - West is the default and matches vanilla's own native collar direction; East/North mirror it with a flipped/rotated collar; South is the original hand-built vertical layout.",
 		section = bar,
 		position = 0
 	)
-	default int barWidth()
+	default BarOrientation barOrientation()
 	{
-		return 20;
+		return BarOrientation.WEST;
 	}
 
 	@Range(min = 20, max = 400)
@@ -212,50 +231,66 @@ public interface CompactOrbsConfig extends Config
 		return 60;
 	}
 
-	// Dev-only, temporary - same reasoning as Width above.
-	@Range(min = -120, max = 40)
+	@Range(min = 10, max = 40)
 	@ConfigItem(
-		keyName = ConfigKeys.BAR_VERTICAL_OFFSET,
-		name = "Orb/Vial offset (temp)",
-		description = "Dev-only - nudges the bar down (+) away from the collar, or up (-) into more overlap with its tab. Goes away once settled.",
+		keyName = ConfigKeys.BAR_WIDTH,
+		name = "Width",
+		description = "How thick the bar is, across its short axis.",
 		section = bar,
 		position = 2
 	)
-	default int barVerticalOffset()
+	default int barWidth()
 	{
-		return 0;
+		return 20;
 	}
 
-	// Dev-only, temporary - same reasoning as Orb/Vial offset above.
-	@Range(min = -40, max = 40)
+	// Mounts the bar's anchor point this many pixels right (+) or left (-)
+	// of the orb icon's own center - the bar then extends outward from
+	// that point in whichever direction Bar orientation picks. Dynamically
+	// capped per-orientation to the bar's own length/width - see
+	// VialOverlay#clampOffset()'s javadoc.
+	@Range(min = -120, max = 120)
 	@ConfigItem(
 		keyName = ConfigKeys.BAR_HORIZONTAL_OFFSET,
-		name = "Orb/Bar horizontal offset (temp)",
-		description = "Dev-only - nudges the bar left (-) or right (+), independent of the collar, which stays centered on the icon regardless. Goes away once settled.",
+		name = "Orb/Vial horizontal offset",
+		description = "Mounts the bar this many pixels right (+) or left (-) of the orb icon's own center, before it extends outward in whichever direction Bar orientation picks.",
 		section = bar,
-		position = 4
+		position = 3
 	)
 	default int barHorizontalOffset()
 	{
 		return 0;
 	}
 
+	// Same reasoning as Orb/Vial horizontal offset above.
+	@Range(min = -120, max = 120)
+	@ConfigItem(
+		keyName = ConfigKeys.BAR_VERTICAL_OFFSET,
+		name = "Orb/Vial vertical offset",
+		description = "Mounts the bar this many pixels down (+) or up (-) of the orb icon's own center, before it extends outward in whichever direction Bar orientation picks.",
+		section = bar,
+		position = 4
+	)
+	default int barVerticalOffset()
+	{
+		return 0;
+	}
 
-	// Dev-only, temporary - same reasoning as Width above. The inner vial
-	// fill has no slider of its own - it always fills whatever's left
-	// inside the frame, so this one control governs both.
+	// The inner vial fill has no slider of its own - it always fills
+	// whatever's left inside the frame.
 	@Range(min = 1, max = 10)
 	@ConfigItem(
 		keyName = ConfigKeys.BAR_FRAME_WIDTH,
-		name = "Frame width (temp)",
-		description = "Dev-only - thickness of the stone frame ring. The vial fill always fills whatever's left inside it. Goes away once settled.",
+		name = "Frame thickness",
+		description = "Thickness of the stone frame ring. The vial fill always fills whatever's left inside it.",
 		section = bar,
-		position = 3
+		position = 5
 	)
 	default int barFrameWidth()
 	{
 		return 2;
 	}
+
 
 	@ConfigSection(
 		name = "Hotkey",

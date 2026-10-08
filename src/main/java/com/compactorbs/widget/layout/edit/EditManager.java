@@ -403,6 +403,12 @@ public class EditManager
 			: widgetManager.getMapParent().getId();
 	}
 
+	/** Dev-only - see ViciousBarsPlugin#applyOrbZoneWidth(), which needs a live handle to force this widget's size to track the widened zone (its own widthMode, copied from ORBS_UNIVERSE once at creation, never re-resolves against the live-synced parent on its own). */
+	public Widget getEditBackground()
+	{
+		return editBackground;
+	}
+
 	public void updateBackground()
 	{
 		final Widget parent = client.getWidget(getBackgroundParentId());

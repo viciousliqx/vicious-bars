@@ -642,29 +642,34 @@ public class CompactOrbsManager
 		return !isCompactLayout() && !isMinimapMinimized();
 	}
 
+	// Hardcoded - see CompactOrbsConfig's own comment on the four removed
+	// Layout Options items (Vertical offset/anchor, Compass fix, Disable
+	// orb reordering) for why. Left (not Right) and Top (not Bottom) match
+	// what was actually live and confirmed-stable; reordering was never
+	// disabled.
 	public boolean isAnchorLeft()
 	{
-		return config.horizontalAnchor().isLeft();
+		return true;
 	}
 
 	public boolean isAnchorRight()
 	{
-		return config.horizontalAnchor().isRight();
+		return false;
 	}
 
 	public boolean isAnchorTop()
 	{
-		return config.verticalAnchor().isTop();
+		return true;
 	}
 
 	public boolean isAnchorBottom()
 	{
-		return config.verticalAnchor().isBottom();
+		return false;
 	}
 
 	public boolean allowReordering()
 	{
-		return !config.disableReordering();
+		return true;
 	}
 
 	public boolean isMinimapHidden()
@@ -795,44 +800,14 @@ public class CompactOrbsManager
 			? getCurrentLayout().getBottomOffset() : 0;
 	}
 
+	// isAnchorBottom() is hardcoded false (see that method's own comment) -
+	// every caller of clampVerticalY() already gates its own call behind
+	// an isAnchorBottom() check of its own, so this was already permanently
+	// unreachable at the call sites; simplified to match rather than kept
+	// as dead code referencing the now-removed verticalYAdjustment() config.
 	public int clampVerticalY()
 	{
-		int y = 0;
-		int limit = 0;
-
-		if (isAnchorBottom() && !isEditingLayout)
-		{
-			y += config.verticalYAdjustment();
-
-			switch (getCurrentLayout())
-			{
-				case VERTICAL:
-					if (isCompassHidden() && (hideLogoutX || isClassicResizable()))
-					{
-						limit = 38 + slotManager.getHiddenSize();
-					}
-
-					if (y > limit)
-					{
-						y = limit;
-					}
-					break;
-
-				case HORIZONTAL:
-					if (hideLogoutX || isClassicResizable() || allowReordering() && hideWorldMap)
-					{
-						limit = 16;
-					}
-				case HORIZONTAL_WIDE:
-					if (y > getCurrentLayout().getBottomOffset() + limit)
-					{
-						y = getCurrentLayout().getBottomOffset() + limit;
-					}
-					break;
-			}
-		}
-
-		return y;
+		return 0;
 	}
 
 	public void hideAllOrbsByConfig()

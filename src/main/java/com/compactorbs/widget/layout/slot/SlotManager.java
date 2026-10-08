@@ -253,7 +253,7 @@ public class SlotManager
 
 	public int getHiddenSize()
 	{
-		if (config.leaveEmptySpace() || config.disableReordering() || manager.isEditingLayout)
+		if (!manager.allowReordering() || manager.isEditingLayout)
 		{
 			return 0;
 		}

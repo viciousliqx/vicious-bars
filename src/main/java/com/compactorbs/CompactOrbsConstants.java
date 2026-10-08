@@ -70,7 +70,6 @@ public class CompactOrbsConstants
 		public static final String HORIZONTAL_ANCHOR = "horizontalAnchor";
 		public static final String VERTICAL_Y_ADJUSTMENT = "verticalYAdjustment";
 		public static final String DISABLE_REORDERING = "disableReordering";
-		public static final String LEAVE_EMPTY_SPACE = "leaveEmptySpace";
 		public static final String ENABLE_NO_CLICKTHROUGH = "enableNoClickthrough";
 		public static final String HIDE_MINIMAP_WITH_SIDE_PANEL = "hideMinimapWithSidePanel";
 		public static final String HIDE_HP = "hideHp";
@@ -94,6 +93,10 @@ public class CompactOrbsConstants
 		public static final String BAR_WIDTH = "barWidth";
 		public static final String BAR_LENGTH = "barLength";
 
+		// Real, permanent setting - not dev-only. Vertical vs horizontal,
+		// and (for horizontal) which side of the icon the bar docks to.
+		public static final String BAR_ORIENTATION = "barOrientation";
+
 		// Also temporary, same reasoning as BAR_WIDTH - extra pixels added
 		// to the bar's top edge beyond where it's calculated to meet the
 		// collar's tab (positive = further down/away, negative = pulled up
@@ -110,6 +113,22 @@ public class CompactOrbsConstants
 		// stone frame ring. The inner vial fill isn't its own slider - it
 		// always fills whatever's left inside the frame.
 		public static final String BAR_FRAME_WIDTH = "barFrameWidth";
+
+		// Also temporary - one slider, widening getOrbsParent() AND
+		// getMapParent() together. F7's diagnostic dump confirmed these
+		// two are separate, nested widgets at the exact same native size
+		// (both plain absolute sizing - safe to edit), while the orb's own
+		// direct parent (ORBS_UNIVERSE) is a third, different widget sized
+		// some other way at render time (original width 0) - editing IT
+		// directly is what caused the screen-edge blowup and the
+		// hide/show-to-settle glitch, so it's left alone now. Lives in the
+		// Layout section now (not Bar) - it governs the drag zone, not any
+		// one bar's own look.
+		public static final String BAR_ZONE_WIDTH_OFFSET = "barZoneWidthOffset";
+
+		// Also temporary - vertical counterpart to BAR_ZONE_WIDTH_OFFSET,
+		// same two widgets, height instead of width.
+		public static final String BAR_ZONE_HEIGHT_OFFSET = "barZoneHeightOffset";
 
 		// Also temporary, same reasoning as BAR_WIDTH - the HP level number
 		// (repositioned below the icon, see HpVialOverlay) isn't perfectly
