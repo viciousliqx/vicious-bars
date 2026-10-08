@@ -27,10 +27,19 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.ItemContainer;
+import net.runelite.api.Prayer;
+import net.runelite.api.Skill;
 import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.gameval.ItemID;
+import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.gameval.VarPlayerID;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.events.ClientTick;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.GameTick;
+import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.ScriptPreFired;
@@ -129,8 +138,26 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	@Inject
 	private MouseManager mouseManager;
 
-	@Inject
-	private OrbZoneDebugOverlay orbZoneDebugOverlay;
+	// HP/Spec regen tracking - exact port of RuneLite's own RegenMeterPlugin
+	// (net.runelite.client.plugins.regenmeter), just re-anchored to our own
+	// bar/frame geometry instead of drawing a ring off the real orb's
+	// (drifted) widget bounds. See onGameTick() below.
+	private static final int SPEC_REGEN_TICKS = 50;
+	private static final int NORMAL_HP_REGEN_TICKS = 100;
+	private int ticksSinceHPRegen;
+	private int ticksSinceSpecRegen;
+	private boolean wearingLightbearer;
+
+	// Prayer regen tracking - not a RegenMeterPlugin port (it doesn't cover
+	// Prayer), derived from the OSRS wiki and cross-checked against
+	// Supalosa's "Prayer Regeneration Helper" plugin: a Prayer regeneration
+	// potion's effect restores 1 prayer point every 12 ticks, signalled by
+	// VarbitID.PRAYER_REGENERATION_POTION_TIMER (legacy name
+	// Varbits.BUFF_PRAYER_REGENERATION) going nonzero/zero. See
+	// onVarbitChanged() and onGameTick() below.
+	private static final int PRAYER_REGEN_TICKS = 12;
+	private int ticksSincePrayerRegen;
+	private boolean prayerRegenActive;
 
 	@Inject
 	private HpVialOverlay hpVialOverlay;
@@ -151,7 +178,6 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	protected void startUp() throws Exception
 	{
 		manager.migrateConfigs();
-		overlayManager.add(orbZoneDebugOverlay);
 		overlayManager.add(hpVialOverlay);
 		overlayManager.add(prayerVialOverlay);
 		overlayManager.add(runVialOverlay);
@@ -190,7 +216,6 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	@Override
 	protected void shutDown() throws Exception
 	{
-		overlayManager.remove(orbZoneDebugOverlay);
 		overlayManager.remove(hpVialOverlay);
 		hpVialOverlay.shutDown();
 		overlayManager.remove(prayerVialOverlay);
@@ -369,6 +394,13 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 			manager.isLoggingIn = true;
 			manager.wikiPluginBannerExists = false;
 			manager.clearCustomChildren();
+
+			// Same reset RegenMeterPlugin does on this transition - avoids
+			// carrying a stale tick count across a world hop/relog.
+			ticksSinceHPRegen = -2;
+			ticksSinceSpecRegen = 0;
+			ticksSincePrayerRegen = 0;
+			prayerRegenActive = false;
 		}
 		else if (manager.isLoggedIn() && manager.isLoggingIn)
 		{
@@ -480,6 +512,27 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged event)
 	{
+		if (event.getVarbitId() == VarbitID.PRAYER_RAPIDHEAL)
+		{
+			// Rapid Heal toggling changes the HP regen period (100 <-> 50
+			// ticks) - resync the counter right at the switch instead of
+			// letting it carry stale progress from the old period, exact
+			// same reset RegenMeterPlugin does on this varbit.
+			ticksSinceHPRegen = 0;
+		}
+
+		if (event.getVarbitId() == VarbitID.PRAYER_REGENERATION_POTION_TIMER)
+		{
+			// Resync to 0 on every nonzero report, not just the activating
+			// edge - keeps us locked to the server's real cadence instead
+			// of drifting if a tick gets missed client-side.
+			prayerRegenActive = event.getValue() > 0;
+			if (prayerRegenActive)
+			{
+				ticksSincePrayerRegen = 0;
+			}
+		}
+
 		switch (event.getVarbitId())
 		{
 			case Varbit.CUTSCENE_STATUS:
@@ -505,6 +558,79 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 					manager.updateMinimapToggleButton();
 				}
 				break;
+		}
+	}
+
+	@Subscribe
+	public void onItemContainerChanged(ItemContainerChanged event)
+	{
+		// Exact port of RegenMeterPlugin's own Lightbearer check - halves
+		// the spec regen period (50 -> 25 ticks) while worn.
+		if (event.getContainerId() != InventoryID.WORN)
+		{
+			return;
+		}
+
+		ItemContainer equipment = event.getItemContainer();
+		boolean wasWearingLightbearer = wearingLightbearer;
+		wearingLightbearer = equipment.contains(ItemID.LIGHTBEARER);
+
+		if (wearingLightbearer == wasWearingLightbearer)
+		{
+			return;
+		}
+
+		ticksSinceSpecRegen = Math.max(0, ticksSinceSpecRegen - 25);
+	}
+
+	@Subscribe
+	public void onGameTick(GameTick event)
+	{
+		int specRegenTicks = wearingLightbearer ? SPEC_REGEN_TICKS / 2 : SPEC_REGEN_TICKS;
+
+		if (client.getVarpValue(VarPlayerID.SA_ENERGY) == 1000)
+		{
+			ticksSinceSpecRegen = 0;
+		}
+		else
+		{
+			ticksSinceSpecRegen = (ticksSinceSpecRegen + 1) % specRegenTicks;
+		}
+
+		manager.specRegenPercentage = ticksSinceSpecRegen / (double) specRegenTicks;
+
+		int hpRegenTicks = client.isPrayerActive(Prayer.RAPID_HEAL) ? NORMAL_HP_REGEN_TICKS / 2 : NORMAL_HP_REGEN_TICKS;
+		ticksSinceHPRegen = (ticksSinceHPRegen + 1) % hpRegenTicks;
+
+		double hitpointsPercentage = ticksSinceHPRegen / (double) hpRegenTicks;
+
+		int boostedHp = client.getBoostedSkillLevel(Skill.HITPOINTS);
+		int realHp = client.getRealSkillLevel(Skill.HITPOINTS);
+
+		if (boostedHp == realHp)
+		{
+			hitpointsPercentage = 0;
+		}
+		else if (boostedHp > realHp)
+		{
+			// Overheal (above max, e.g. a few absorption-style effects) -
+			// counting back DOWN to max instead of up, so invert direction.
+			hitpointsPercentage = 1 - hitpointsPercentage;
+		}
+
+		manager.hpRegenPercentage = hitpointsPercentage;
+
+		int boostedPrayer = client.getBoostedSkillLevel(Skill.PRAYER);
+		int realPrayer = client.getRealSkillLevel(Skill.PRAYER);
+
+		if (!prayerRegenActive || boostedPrayer >= realPrayer)
+		{
+			manager.prayerRegenPercentage = 0;
+		}
+		else
+		{
+			ticksSincePrayerRegen = (ticksSincePrayerRegen + 1) % PRAYER_REGEN_TICKS;
+			manager.prayerRegenPercentage = ticksSincePrayerRegen / (double) PRAYER_REGEN_TICKS;
 		}
 	}
 
@@ -723,6 +849,16 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	// native sizes, not ones we're already mid-modifying.
 	private static final int ZONE_WIDGET_DUMP_KEY = KeyEvent.VK_F7;
 
+	// Also throwaway: F6 walks every widget root and logs every widget whose
+	// canvas bounds contain the CURRENT mouse position, regardless of
+	// click/hover routing - for the logout-X-on-top "dead zone" when it's
+	// dragged over the toolbar's blank slot: no click effect and no hover
+	// text there, meaning whatever's intercepting the input doesn't even
+	// have its own listener - so the game's own click/hover dispatch can't
+	// be used to find it. This finds it by raw bounds-containment instead,
+	// walking the tree ourselves rather than relying on that dispatch.
+	private static final int MOUSE_WIDGET_DUMP_KEY = KeyEvent.VK_F6;
+
 	@Override
 	public void keyPressed(KeyEvent e)
 	{
@@ -741,6 +877,12 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 		if (e.getKeyCode() == ZONE_WIDGET_DUMP_KEY)
 		{
 			clientThread.invokeLater(this::dumpZoneWidgets);
+			return;
+		}
+
+		if (e.getKeyCode() == MOUSE_WIDGET_DUMP_KEY)
+		{
+			clientThread.invokeLater(() -> dumpWidgetsAtMouse());
 			return;
 		}
 
@@ -894,6 +1036,66 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 			for (Widget child : children)
 			{
 				dumpWidgetSprites(child, depth + 1);
+			}
+		}
+	}
+
+	private void dumpWidgetsAtMouse()
+	{
+		net.runelite.api.Point mouse = client.getMouseCanvasPosition();
+		if (mouse == null)
+		{
+			log.info("[mouse dump] no mouse position");
+			return;
+		}
+
+		log.info("[mouse dump] mouse at ({},{})", mouse.getX(), mouse.getY());
+
+		Widget[] roots = client.getWidgetRoots();
+		if (roots == null)
+		{
+			log.info("[mouse dump] no widget roots");
+			return;
+		}
+
+		for (Widget root : roots)
+		{
+			dumpWidgetsAtMouse(root, mouse, 0);
+		}
+	}
+
+	private void dumpWidgetsAtMouse(Widget widget, net.runelite.api.Point mouse, int depth)
+	{
+		if (widget == null || depth > 20)
+		{
+			return;
+		}
+
+		if (!widget.isHidden())
+		{
+			net.runelite.api.Point canvas = widget.getCanvasLocation();
+			if (canvas != null
+				&& mouse.getX() >= canvas.getX() && mouse.getX() < canvas.getX() + widget.getWidth()
+				&& mouse.getY() >= canvas.getY() && mouse.getY() < canvas.getY() + widget.getHeight())
+			{
+				log.info("[mouse dump] {}id={} name={} actions={} noClickThrough={} hasListener={} pos=({},{}) size={}x{}",
+					"  ".repeat(depth), widget.getId(), widget.getName(),
+					java.util.Arrays.toString(widget.getActions()),
+					widget.getNoClickThrough(), widget.hasListener(),
+					canvas.getX(), canvas.getY(), widget.getWidth(), widget.getHeight());
+			}
+		}
+
+		for (Widget[] children : new Widget[][]{
+			widget.getChildren(), widget.getStaticChildren(), widget.getDynamicChildren(), widget.getNestedChildren()})
+		{
+			if (children == null)
+			{
+				continue;
+			}
+			for (Widget child : children)
+			{
+				dumpWidgetsAtMouse(child, mouse, depth + 1);
 			}
 		}
 	}

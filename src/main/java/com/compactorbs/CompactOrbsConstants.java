@@ -92,6 +92,15 @@ public class CompactOrbsConstants
 		// is meant to stay as a real, permanent user-facing setting.
 		public static final String BAR_WIDTH = "barWidth";
 		public static final String BAR_LENGTH = "barLength";
+		public static final String BAR_OPACITY = "barOpacity";
+		public static final String BAR_REGEN_OUTLINE_WIDTH = "barRegenOutlineWidth";
+
+		// Per-bar regen-highlight toggles (Hitpoints/Prayer/Special
+		// Attack/Run Energy config sections).
+		public static final String HP_SHOW_REGEN = "hpShowRegen";
+		public static final String PRAYER_SHOW_REGEN = "prayerShowRegen";
+		public static final String SPEC_SHOW_REGEN = "specShowRegen";
+		public static final String RUN_SHOW_REGEN = "runShowRegen";
 
 		// Real, permanent setting - not dev-only. Vertical vs horizontal,
 		// and (for horizontal) which side of the icon the bar docks to.

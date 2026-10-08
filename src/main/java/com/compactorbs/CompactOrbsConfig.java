@@ -118,7 +118,7 @@ public interface CompactOrbsConfig extends Config
 	String testing = "testing";
 
 	@ConfigSection(
-		name = "Layout Options",
+		name = "Zone Configuration",
 		description = "",
 		position = 1
 	)
@@ -194,13 +194,29 @@ public interface CompactOrbsConfig extends Config
 		return 0;
 	}
 
+	// "Top level" (Z-order) feature tried and rolled back - drawing our own
+	// copy of the logout X above the inventory panel while hiding the real
+	// one via opacity worked visually, but ONLY where nothing else real
+	// overlapped it. Dragged onto the toolbar's blank slot, clicks died
+	// entirely - confirmed via a widget-bounds dump (F6 in ViciousBarsPlugin)
+	// that SIDE_STATIC_LAYER (the whole tab-icon row's background, id
+	// 10747998) sits in front of the real X in the native click hit-test
+	// and has noClickThrough=true, swallowing the click before it ever
+	// reaches the (still fully listener-active) real X underneath. That
+	// flag isn't specific to the empty slot - it's load-bearing for the
+	// WHOLE tab row, so flipping it off to let our click through would also
+	// make every bit of blank space around every other tab icon click
+	// through to the 3D world. Not worth that global side effect for this
+	// one slot - rolled back rather than ship it. LogoutXOverlay.java
+	// deleted; ConfigKeys.LOGOUT_X_ON_TOP removed too.
+
 	// No longer dev-only/temp - confirmed working baseline (anchor-point
 	// mounting + four-direction orientation) as of live testing. This
 	// section is the single master layout control for every bar (HP,
 	// Prayer, Run, Spec) - they all read the exact same CompactOrbsConfig
 	// instance, so there's no per-bar config surface, just this one.
 	@ConfigSection(
-		name = "Global Bar Layout",
+		name = "Global Bar Config",
 		description = "Controls every bar (HP, Prayer, Run, Spec) identically - one shared layout, not a per-bar setting.",
 		position = 2
 	)
@@ -291,12 +307,113 @@ public interface CompactOrbsConfig extends Config
 		return 2;
 	}
 
+	@Range(min = 0, max = 100)
+	@ConfigItem(
+		keyName = ConfigKeys.BAR_OPACITY,
+		name = "Opacity",
+		description = "Overall opacity of the bar itself (frame + vial fill). The regen outline (below) always reads 30% more opaque than this.",
+		section = bar,
+		position = 6
+	)
+	default int barOpacity()
+	{
+		return 100;
+	}
+
+	@Range(min = 1, max = 10)
+	@ConfigItem(
+		keyName = ConfigKeys.BAR_REGEN_OUTLINE_WIDTH,
+		name = "Regen outline width",
+		description = "Thickness of the regen-progress outline traced along the inside of the vial cavity.",
+		section = bar,
+		position = 7
+	)
+	default int barRegenOutlineWidth()
+	{
+		return 1;
+	}
+
+	@ConfigSection(
+		name = "Hitpoints",
+		description = "",
+		position = 3
+	)
+	String hpSection = "hpSection";
+
+	@ConfigItem(
+		keyName = ConfigKeys.HP_SHOW_REGEN,
+		name = "Show regen",
+		description = "Highlight the frame ring, growing toward the next hitpoint regenerated - halves in period under Rapid Heal, off entirely at full hitpoints.",
+		section = hpSection,
+		position = 0
+	)
+	default boolean hpShowRegen()
+	{
+		return true;
+	}
+
+	@ConfigSection(
+		name = "Prayer",
+		description = "",
+		position = 4
+	)
+	String prayerSection = "prayerSection";
+
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_SHOW_REGEN,
+		name = "Show regen",
+		description = "Highlight the frame ring while a Prayer regeneration potion's effect is active, growing toward its next restored prayer point - prayer has no passive regen otherwise, so the ring stays off outside that potion's effect.",
+		section = prayerSection,
+		position = 0
+	)
+	default boolean prayerShowRegen()
+	{
+		return true;
+	}
+
+	@ConfigSection(
+		name = "Special Attack",
+		description = "",
+		position = 5
+	)
+	String specSection = "specSection";
+
+	@ConfigItem(
+		keyName = ConfigKeys.SPEC_SHOW_REGEN,
+		name = "Show regen",
+		description = "Highlight the frame ring, growing toward the next 10% of special attack energy restored - halves in period while wearing a Lightbearer, resets at full energy.",
+		section = specSection,
+		position = 0
+	)
+	default boolean specShowRegen()
+	{
+		return true;
+	}
+
+	@ConfigSection(
+		name = "Run Energy",
+		description = "",
+		position = 6
+	)
+	String runSection = "runSection";
+
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_SHOW_REGEN,
+		name = "Show regen",
+		description = "Highlight the frame ring with run energy's continuous per-tick regen - tracks smoothly rather than jumping, matching OSRS's 2025 run energy rework.",
+		section = runSection,
+		position = 0
+	)
+	default boolean runShowRegen()
+	{
+		return true;
+	}
 
 	@ConfigSection(
 		name = "Hotkey",
 		description = "",
 		closedByDefault = true,
-		position = 3
+		position = 7
 	)
 	String hotkey = "hotkey";
 
@@ -326,7 +443,7 @@ public interface CompactOrbsConfig extends Config
 	}
 
 	@ConfigSection(
-		name = "Orb Visibility",
+		name = "Orb Layout",
 		description = "",
 		closedByDefault = true,
 		position = 100

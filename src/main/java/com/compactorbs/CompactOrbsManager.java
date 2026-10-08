@@ -120,6 +120,15 @@ public class CompactOrbsManager
 	public boolean isLoggingIn;
 	public boolean isCutsceneActive;
 
+	// Written every game tick by ViciousBarsPlugin#onGameTick(), read by
+	// Hp/SpecVialOverlay to draw the frame-ring regen highlight - same
+	// plain-field-on-manager pattern as hideWorldMap/hideLogoutX above, not
+	// event-driven on this side since the overlay renders every frame
+	// regardless of tick cadence.
+	public double hpRegenPercentage;
+	public double prayerRegenPercentage;
+	public double specRegenPercentage;
+
 	public Widget compassFrame;
 	public Widget minimapButton;
 	private final Map<TargetWidget, Widget> noClickThroughChildren = new HashMap<>();

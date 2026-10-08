@@ -54,4 +54,21 @@ class RunVialOverlay extends VialOverlay
 	{
 		return FILL_COLOR;
 	}
+
+	@Override
+	protected Double regenPercentage()
+	{
+		// Run energy regen changed in OSRS's 2025 rework to a smooth
+		// per-tick fractional gain rather than discrete periodic jumps -
+		// no tick-tracking needed, just the sub-percent progress toward the
+		// next whole percentage point client.getEnergy() (0-10000) hasn't
+		// crossed yet.
+		return (client.getEnergy() % 100) / 100.0;
+	}
+
+	@Override
+	protected boolean regenEnabled()
+	{
+		return config.runShowRegen();
+	}
 }

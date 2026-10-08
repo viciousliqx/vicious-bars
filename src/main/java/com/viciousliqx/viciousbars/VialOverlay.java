@@ -4,9 +4,12 @@ import com.compactorbs.CompactOrbsConfig;
 import com.compactorbs.CompactOrbsManager;
 import com.compactorbs.widget.TargetWidget;
 import com.compactorbs.widget.WidgetManager;
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
@@ -284,6 +287,33 @@ abstract class VialOverlay extends Overlay
 	/** The vial's fill color - the one thing that visually distinguishes each bar. */
 	protected abstract Color fillColor();
 
+	/**
+	 * Progress (0.0-1.0) toward this bar's next restoration tick, or null if
+	 * this bar has nothing to show. Drawn as a growing outline traced along
+	 * the inside of the vial cavity, not a separate
+	 * orb ring or a frame-ring highlight (both tried, both dropped) - see
+	 * drawVialRegenOutline()/drawVialRegenOutlineHorizontal(). In practice
+	 * every bar currently returns a real 0.0-1.0 value rather than null
+	 * (Prayer included - see PrayerVialOverlay), but the null path stays
+	 * supported for any future bar that has nothing to report.
+	 */
+	protected Double regenPercentage()
+	{
+		return null;
+	}
+
+	/** Per-bar config toggle for the regen highlight - default off until a bar opts in. */
+	protected boolean regenEnabled()
+	{
+		return false;
+	}
+
+	/** Highlight color for the regen progress fill - defaults to a brighter version of the bar's own fill color. */
+	protected Color regenHighlightColor()
+	{
+		return fillColor().brighter();
+	}
+
 	@Override
 	public final Dimension render(Graphics2D graphics)
 	{
@@ -428,6 +458,7 @@ abstract class VialOverlay extends Overlay
 
 		drawFrame(graphics, width, height, frameWidth, innerWidth, innerHeight, innerArc);
 		drawVial(graphics, frameWidth, innerWidth, innerHeight, innerArc, current, max, true);
+		drawVialRegenOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, true);
 
 		drawRotatedSouthBacking(absoluteGraphics, icon, client.getWidget(orbContainer().getBackingId()), iconCenterX, iconCenterY);
 		absoluteGraphics.dispose();
@@ -486,6 +517,7 @@ abstract class VialOverlay extends Overlay
 
 		drawFrame(graphics, length, thickness, frameWidth, innerLength, innerThickness, innerArc);
 		drawVialHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, current, max, false);
+		drawVialRegenOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, false);
 
 		return new Dimension(length, thickness);
 	}
@@ -550,6 +582,7 @@ abstract class VialOverlay extends Overlay
 
 		drawFrame(graphics, length, thickness, frameWidth, innerLength, innerThickness, innerArc);
 		drawVialHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, current, max, true);
+		drawVialRegenOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, true);
 
 		if (drawingFlippedCollar)
 		{
@@ -620,6 +653,7 @@ abstract class VialOverlay extends Overlay
 
 		drawFrame(graphics, thickness, length, frameWidth, innerWidth, innerHeight, innerArc);
 		drawVial(graphics, frameWidth, innerWidth, innerHeight, innerArc, current, max, false);
+		drawVialRegenOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, false);
 
 		if (drawingRotatedCollar)
 		{
@@ -645,6 +679,18 @@ abstract class VialOverlay extends Overlay
 		return Math.max(-bound, Math.min(bound, offset));
 	}
 
+	/** Global Bar Config's opacity slider, as a 0.0-1.0 composite fraction. */
+	private float barOpacityFraction()
+	{
+		return config.barOpacity() / 100f;
+	}
+
+	/** The regen outline always reads 30 percentage points more opaque than the bar itself, capped at fully opaque. */
+	private float regenOpacityFraction()
+	{
+		return Math.min(100, config.barOpacity() + 30) / 100f;
+	}
+
 	/**
 	 * The frame ring between the bar's outer footprint and its inner vial.
 	 * The vintage flat/rounded frame is ALWAYS drawn first - its rounded
@@ -659,6 +705,9 @@ abstract class VialOverlay extends Overlay
 	 */
 	private void drawFrame(Graphics2D graphics, int width, int height, int frameWidth, int innerWidth, int innerHeight, int innerArc)
 	{
+		Graphics2D frameGraphics = (Graphics2D) graphics.create();
+		frameGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, barOpacityFraction()));
+
 		RoundRectangle2D.Float outerShape = new RoundRectangle2D.Float(0, 0, width, height, FRAME_ARC, FRAME_ARC);
 		RoundRectangle2D.Float innerShapeAtInset = new RoundRectangle2D.Float(
 			frameWidth, frameWidth, innerWidth, innerHeight, innerArc, innerArc);
@@ -666,14 +715,15 @@ abstract class VialOverlay extends Overlay
 		Area frameRing = new Area(outerShape);
 		frameRing.subtract(new Area(innerShapeAtInset));
 
-		graphics.setColor(FRAME_FILL_COLOR);
-		graphics.fill(frameRing);
+		frameGraphics.setColor(FRAME_FILL_COLOR);
+		frameGraphics.fill(frameRing);
 
-		graphics.setColor(FRAME_OUTLINE_COLOR);
-		graphics.draw(new RoundRectangle2D.Float(0, 0, width - 1, height - 1, FRAME_ARC, FRAME_ARC));
-		graphics.draw(new RoundRectangle2D.Float(frameWidth, frameWidth, innerWidth - 1, innerHeight - 1, innerArc, innerArc));
+		frameGraphics.setColor(FRAME_OUTLINE_COLOR);
+		frameGraphics.draw(new RoundRectangle2D.Float(0, 0, width - 1, height - 1, FRAME_ARC, FRAME_ARC));
+		frameGraphics.draw(new RoundRectangle2D.Float(frameWidth, frameWidth, innerWidth - 1, innerHeight - 1, innerArc, innerArc));
 
-		drawRealBorderFrame(graphics, width, height, frameWidth);
+		drawRealBorderFrame(frameGraphics, width, height, frameWidth);
+		frameGraphics.dispose();
 	}
 
 	/** Draws whichever border-kit pieces are loaded on top of the vintage frame already drawn - a no-op per piece still missing from the sprite cache. */
@@ -1412,6 +1462,7 @@ abstract class VialOverlay extends Overlay
 	private void drawVial(Graphics2D graphics, int frameWidth, int innerWidth, int innerHeight, int innerArc, int current, int max, boolean anchorBottom)
 	{
 		Graphics2D vialGraphics = (Graphics2D) graphics.create();
+		vialGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, barOpacityFraction()));
 		vialGraphics.translate(frameWidth, frameWidth);
 		vialGraphics.setClip(new RoundRectangle2D.Float(0, 0, innerWidth, innerHeight, innerArc, innerArc));
 
@@ -1428,6 +1479,70 @@ abstract class VialOverlay extends Overlay
 	}
 
 	/**
+	 * Regen-progress outline traced along the INSIDE of the vial cavity
+	 * (not the frame ring - that was tried and dropped, read as a
+	 * progression meter worse than this) - a thin stroke hugging the inner
+	 * rounded-rect's own boundary, revealed only up to the current
+	 * percentage, growing from the near-icon end first exactly like
+	 * drawVial()'s own anchorBottom rule, so it tracks the same direction
+	 * the vial itself fills. Reads 30 percentage points more opaque than
+	 * the bar itself (regenOpacityFraction()). No-op whenever this bar has
+	 * regen disabled or nothing to report (regenPercentage() == null).
+	 */
+	private void drawVialRegenOutline(Graphics2D graphics, int frameWidth, int innerWidth, int innerHeight, int innerArc, boolean anchorBottom)
+	{
+		if (!regenEnabled())
+		{
+			return;
+		}
+
+		Double percentage = regenPercentage();
+		if (percentage == null)
+		{
+			return;
+		}
+
+		int growthHeight = (int) Math.round(percentage * innerHeight);
+		int growthY = anchorBottom ? innerHeight - growthHeight : 0;
+
+		Graphics2D outlineGraphics = (Graphics2D) graphics.create();
+		outlineGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, regenOpacityFraction()));
+		outlineGraphics.translate(frameWidth, frameWidth);
+		outlineGraphics.clip(new Rectangle(0, growthY, innerWidth, growthHeight));
+		outlineGraphics.setColor(regenHighlightColor());
+		outlineGraphics.setStroke(new BasicStroke(Math.max(1, config.barRegenOutlineWidth())));
+		outlineGraphics.draw(new RoundRectangle2D.Float(0, 0, innerWidth - 1, innerHeight - 1, innerArc, innerArc));
+		outlineGraphics.dispose();
+	}
+
+	/** Horizontal counterpart to drawVialRegenOutline() - grows along X instead of Y, mirroring drawVialHorizontal()'s anchorRight rule. */
+	private void drawVialRegenOutlineHorizontal(Graphics2D graphics, int frameWidth, int innerLength, int innerThickness, int innerArc, boolean anchorRight)
+	{
+		if (!regenEnabled())
+		{
+			return;
+		}
+
+		Double percentage = regenPercentage();
+		if (percentage == null)
+		{
+			return;
+		}
+
+		int growthLength = (int) Math.round(percentage * innerLength);
+		int growthX = anchorRight ? innerLength - growthLength : 0;
+
+		Graphics2D outlineGraphics = (Graphics2D) graphics.create();
+		outlineGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, regenOpacityFraction()));
+		outlineGraphics.translate(frameWidth, frameWidth);
+		outlineGraphics.clip(new Rectangle(growthX, 0, growthLength, innerThickness));
+		outlineGraphics.setColor(regenHighlightColor());
+		outlineGraphics.setStroke(new BasicStroke(Math.max(1, config.barRegenOutlineWidth())));
+		outlineGraphics.draw(new RoundRectangle2D.Float(0, 0, innerLength - 1, innerThickness - 1, innerArc, innerArc));
+		outlineGraphics.dispose();
+	}
+
+	/**
 	 * Horizontal counterpart to drawVial() - fills along X instead of Y.
 	 * anchorRight controls which edge is the FIXED one (the end farthest
 	 * from the icon): true for EAST (far end is on the right), false for
@@ -1437,6 +1552,7 @@ abstract class VialOverlay extends Overlay
 	private void drawVialHorizontal(Graphics2D graphics, int frameWidth, int innerLength, int innerThickness, int innerArc, int current, int max, boolean anchorRight)
 	{
 		Graphics2D vialGraphics = (Graphics2D) graphics.create();
+		vialGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, barOpacityFraction()));
 		vialGraphics.translate(frameWidth, frameWidth);
 		vialGraphics.setClip(new RoundRectangle2D.Float(0, 0, innerLength, innerThickness, innerArc, innerArc));
 

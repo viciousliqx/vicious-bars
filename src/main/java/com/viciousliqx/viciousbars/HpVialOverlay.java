@@ -47,4 +47,16 @@ class HpVialOverlay extends VialOverlay
 	{
 		return FILL_COLOR;
 	}
+
+	@Override
+	protected Double regenPercentage()
+	{
+		return manager.hpRegenPercentage;
+	}
+
+	@Override
+	protected boolean regenEnabled()
+	{
+		return config.hpShowRegen();
+	}
 }

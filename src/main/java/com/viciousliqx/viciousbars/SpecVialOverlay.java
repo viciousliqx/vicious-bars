@@ -56,4 +56,16 @@ class SpecVialOverlay extends VialOverlay
 	{
 		return FILL_COLOR;
 	}
+
+	@Override
+	protected Double regenPercentage()
+	{
+		return manager.specRegenPercentage;
+	}
+
+	@Override
+	protected boolean regenEnabled()
+	{
+		return config.specShowRegen();
+	}
 }

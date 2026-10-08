@@ -53,4 +53,16 @@ class PrayerVialOverlay extends VialOverlay
 	{
 		return FILL_COLOR;
 	}
+
+	@Override
+	protected Double regenPercentage()
+	{
+		return manager.prayerRegenPercentage;
+	}
+
+	@Override
+	protected boolean regenEnabled()
+	{
+		return config.prayerShowRegen();
+	}
 }
