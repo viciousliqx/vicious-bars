@@ -93,6 +93,7 @@ public class CompactOrbsConstants
 		public static final String BAR_WIDTH = "barWidth";
 		public static final String BAR_LENGTH = "barLength";
 		public static final String BAR_OPACITY = "barOpacity";
+		public static final String BAR_FRAME_OPACITY = "barFrameOpacity";
 		public static final String BAR_REGEN_OUTLINE_WIDTH = "barRegenOutlineWidth";
 
 		// Per-bar regen-highlight toggles (Hitpoints/Prayer/Special
@@ -101,6 +102,32 @@ public class CompactOrbsConstants
 		public static final String PRAYER_SHOW_REGEN = "prayerShowRegen";
 		public static final String SPEC_SHOW_REGEN = "specShowRegen";
 		public static final String RUN_SHOW_REGEN = "runShowRegen";
+
+		// Per-bar state fill colors - restored from v1 (see git log before
+		// the full-reset "gut pass"), now driven by the same real
+		// varp/varbit signals v1 captured and confirmed in-game.
+		public static final String HP_NORMAL_COLOR = "hpNormalColor";
+		public static final String HP_POISONED_COLOR = "hpPoisonedColor";
+		public static final String HP_ENVENOMED_COLOR = "hpEnvenomedColor";
+		public static final String HP_DISEASED_COLOR = "hpDiseasedColor";
+		public static final String PRAYER_ACTIVE_COLOR = "prayerActiveColor";
+		public static final String PRAYER_INACTIVE_COLOR = "prayerInactiveColor";
+		public static final String SPEC_DEFAULT_COLOR = "specDefaultColor";
+		public static final String SPEC_ACTIVE_COLOR = "specActiveColor";
+		public static final String RUN_DEFAULT_COLOR = "runDefaultColor";
+		public static final String RUN_ACTIVE_COLOR = "runActiveColor";
+
+		// Per-bar regen-ring colors - independent of the fill color above
+		// (defaults match each bar's own default/normal fill, but either
+		// can be changed without affecting the other). HP is the exception:
+		// while poisoned/envenomed, HpVialOverlay hijacks this and draws the
+		// ring in whatever color the fill itself is using (Poisoned/
+		// Envenomed above) instead of hpRegenColor, so the countdown ring
+		// reads as part of the poison state rather than a separate choice.
+		public static final String HP_REGEN_COLOR = "hpRegenColor";
+		public static final String PRAYER_REGEN_COLOR = "prayerRegenColor";
+		public static final String SPEC_REGEN_COLOR = "specRegenColor";
+		public static final String RUN_REGEN_COLOR = "runRegenColor";
 
 		// Real, permanent setting - not dev-only. Vertical vs horizontal,
 		// and (for horizontal) which side of the icon the bar docks to.

@@ -27,6 +27,7 @@ package com.compactorbs;
 
 import static com.compactorbs.CompactOrbsConstants.ConfigGroup.GROUP_NAME;
 import com.compactorbs.CompactOrbsConstants.ConfigKeys;
+import java.awt.Color;
 import java.awt.event.KeyEvent;
 import lombok.Getter;
 import net.runelite.client.config.Config;
@@ -311,11 +312,24 @@ public interface CompactOrbsConfig extends Config
 	@ConfigItem(
 		keyName = ConfigKeys.BAR_OPACITY,
 		name = "Opacity",
-		description = "Overall opacity of the bar itself (frame + vial fill). The regen outline (below) always reads 30% more opaque than this.",
+		description = "Opacity of the vial fill. The regen outline (below) always reads 30% more opaque than this. Doesn't affect the frame - see Frame opacity.",
 		section = bar,
 		position = 6
 	)
 	default int barOpacity()
+	{
+		return 100;
+	}
+
+	@Range(min = 0, max = 100)
+	@ConfigItem(
+		keyName = ConfigKeys.BAR_FRAME_OPACITY,
+		name = "Frame opacity",
+		description = "Opacity of the stone frame ring, independent of the vial fill's own Opacity above.",
+		section = bar,
+		position = 7
+	)
+	default int barFrameOpacity()
 	{
 		return 100;
 	}
@@ -326,7 +340,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Regen outline width",
 		description = "Thickness of the regen-progress outline traced along the inside of the vial cavity.",
 		section = bar,
-		position = 7
+		position = 8
 	)
 	default int barRegenOutlineWidth()
 	{
@@ -352,6 +366,66 @@ public interface CompactOrbsConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = ConfigKeys.HP_NORMAL_COLOR,
+		name = "Normal color",
+		description = "Bar color while healthy.",
+		section = hpSection,
+		position = 1
+	)
+	default Color hpNormalColor()
+	{
+		return new Color(220, 40, 40);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.HP_POISONED_COLOR,
+		name = "Poisoned color",
+		description = "Bar color while poisoned.",
+		section = hpSection,
+		position = 2
+	)
+	default Color hpPoisonedColor()
+	{
+		return new Color(90, 170, 60);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.HP_ENVENOMED_COLOR,
+		name = "Envenomed color",
+		description = "Bar color while envenomed (lethal poison - won't naturally wear off).",
+		section = hpSection,
+		position = 3
+	)
+	default Color hpEnvenomedColor()
+	{
+		return new Color(60, 120, 40);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.HP_DISEASED_COLOR,
+		name = "Diseased color",
+		description = "Bar color while diseased.",
+		section = hpSection,
+		position = 4
+	)
+	default Color hpDiseasedColor()
+	{
+		return new Color(150, 110, 40);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.HP_REGEN_COLOR,
+		name = "Regen ring color",
+		description = "Regen outline color while Normal or Diseased. While Poisoned/Envenomed the ring switches to match that state's own bar color above instead, so it reads as part of the poison countdown.",
+		section = hpSection,
+		position = 5
+	)
+	default Color hpRegenColor()
+	{
+		return new Color(220, 40, 40);
+	}
+
 	@ConfigSection(
 		name = "Prayer",
 		description = "",
@@ -369,6 +443,42 @@ public interface CompactOrbsConfig extends Config
 	default boolean prayerShowRegen()
 	{
 		return true;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_ACTIVE_COLOR,
+		name = "Active color",
+		description = "Bar color while any prayer is active.",
+		section = prayerSection,
+		position = 1
+	)
+	default Color prayerActiveColor()
+	{
+		return new Color(60, 170, 220);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_INACTIVE_COLOR,
+		name = "Inactive color",
+		description = "Bar color while no prayer is active.",
+		section = prayerSection,
+		position = 2
+	)
+	default Color prayerInactiveColor()
+	{
+		return new Color(25, 35, 80);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_REGEN_COLOR,
+		name = "Regen ring color",
+		description = "Regen outline color while a Prayer regeneration potion's effect is active.",
+		section = prayerSection,
+		position = 3
+	)
+	default Color prayerRegenColor()
+	{
+		return new Color(60, 170, 220);
 	}
 
 	@ConfigSection(
@@ -390,6 +500,42 @@ public interface CompactOrbsConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = ConfigKeys.SPEC_DEFAULT_COLOR,
+		name = "Default color",
+		description = "Bar color while Special Attack isn't queued.",
+		section = specSection,
+		position = 1
+	)
+	default Color specDefaultColor()
+	{
+		return new Color(220, 40, 180);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.SPEC_ACTIVE_COLOR,
+		name = "Active color",
+		description = "Bar color while Special Attack is queued (armed for your next hit).",
+		section = specSection,
+		position = 2
+	)
+	default Color specActiveColor()
+	{
+		return new Color(255, 255, 255);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.SPEC_REGEN_COLOR,
+		name = "Regen ring color",
+		description = "Regen outline color, growing toward the next 10% of special attack energy restored.",
+		section = specSection,
+		position = 3
+	)
+	default Color specRegenColor()
+	{
+		return new Color(220, 40, 180);
+	}
+
 	@ConfigSection(
 		name = "Run Energy",
 		description = "",
@@ -407,6 +553,42 @@ public interface CompactOrbsConfig extends Config
 	default boolean runShowRegen()
 	{
 		return true;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_DEFAULT_COLOR,
+		name = "Default color",
+		description = "Bar color while Run is toggled off.",
+		section = runSection,
+		position = 1
+	)
+	default Color runDefaultColor()
+	{
+		return new Color(220, 160, 40);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_ACTIVE_COLOR,
+		name = "Active color",
+		description = "Bar color while Run is toggled on.",
+		section = runSection,
+		position = 2
+	)
+	default Color runActiveColor()
+	{
+		return new Color(212, 175, 55);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_REGEN_COLOR,
+		name = "Regen ring color",
+		description = "Regen outline color, tracking run energy's continuous per-tick regen.",
+		section = runSection,
+		position = 3
+	)
+	default Color runRegenColor()
+	{
+		return new Color(220, 160, 40);
 	}
 
 	@ConfigSection(

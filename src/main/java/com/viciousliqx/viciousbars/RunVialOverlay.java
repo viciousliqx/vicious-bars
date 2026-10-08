@@ -9,6 +9,7 @@ import java.awt.Color;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
+import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.client.game.SpriteManager;
 
 /**
@@ -23,8 +24,6 @@ import net.runelite.client.game.SpriteManager;
 @Singleton
 class RunVialOverlay extends VialOverlay
 {
-	private static final Color FILL_COLOR = new Color(220, 160, 40);
-
 	@Inject
 	private RunVialOverlay(Client client, CompactOrbsManager manager, CompactOrbsConfig config, WidgetManager widgetManager, SpriteManager spriteManager)
 	{
@@ -52,7 +51,12 @@ class RunVialOverlay extends VialOverlay
 	@Override
 	protected Color fillColor()
 	{
-		return FILL_COLOR;
+		return isActive() ? config.runActiveColor() : config.runDefaultColor();
+	}
+
+	private boolean isActive()
+	{
+		return client.getVarpValue(VarPlayerID.OPTION_RUN) != 0;
 	}
 
 	@Override
@@ -70,5 +74,11 @@ class RunVialOverlay extends VialOverlay
 	protected boolean regenEnabled()
 	{
 		return config.runShowRegen();
+	}
+
+	@Override
+	protected Color regenHighlightColor()
+	{
+		return config.runRegenColor();
 	}
 }

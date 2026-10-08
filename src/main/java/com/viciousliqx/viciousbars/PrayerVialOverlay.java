@@ -9,6 +9,7 @@ import java.awt.Color;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
+import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
 import net.runelite.client.game.SpriteManager;
 
@@ -17,13 +18,14 @@ import net.runelite.client.game.SpriteManager;
  * via F8's widget dump that Prayer's native geometry is pixel-identical to
  * HP's (same backing sprite 1071, icon/number at the same relative
  * positions), so none of VialOverlay's dialed-in constants needed
- * retuning - only the orb, skill, and fill color differ here.
+ * retuning - only the orb, skill, and fill color differ here. Active/
+ * inactive coloring restored from v1 (see git log before the full-reset
+ * "gut pass"), upgraded from v1's QUICKPRAYER_ACTIVE varbit (only reflected
+ * the Quick Prayers toggle) to checking every individual prayer.
  */
 @Singleton
 class PrayerVialOverlay extends VialOverlay
 {
-	private static final Color FILL_COLOR = new Color(60, 110, 220);
-
 	@Inject
 	private PrayerVialOverlay(Client client, CompactOrbsManager manager, CompactOrbsConfig config, WidgetManager widgetManager, SpriteManager spriteManager)
 	{
@@ -51,7 +53,19 @@ class PrayerVialOverlay extends VialOverlay
 	@Override
 	protected Color fillColor()
 	{
-		return FILL_COLOR;
+		return isActive() ? config.prayerActiveColor() : config.prayerInactiveColor();
+	}
+
+	private boolean isActive()
+	{
+		for (Prayer prayer : Prayer.values())
+		{
+			if (client.isPrayerActive(prayer))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -64,5 +78,11 @@ class PrayerVialOverlay extends VialOverlay
 	protected boolean regenEnabled()
 	{
 		return config.prayerShowRegen();
+	}
+
+	@Override
+	protected Color regenHighlightColor()
+	{
+		return config.prayerRegenColor();
 	}
 }

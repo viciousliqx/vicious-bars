@@ -679,10 +679,16 @@ abstract class VialOverlay extends Overlay
 		return Math.max(-bound, Math.min(bound, offset));
 	}
 
-	/** Global Bar Config's opacity slider, as a 0.0-1.0 composite fraction. */
+	/** Global Bar Config's opacity slider, as a 0.0-1.0 composite fraction. Vial fill only - see frameOpacityFraction() for the frame ring. */
 	private float barOpacityFraction()
 	{
 		return config.barOpacity() / 100f;
+	}
+
+	/** Global Bar Config's frame opacity slider, as a 0.0-1.0 composite fraction - independent of the vial fill's own barOpacityFraction(). */
+	private float frameOpacityFraction()
+	{
+		return config.barFrameOpacity() / 100f;
 	}
 
 	/** The regen outline always reads 30 percentage points more opaque than the bar itself, capped at fully opaque. */
@@ -706,7 +712,7 @@ abstract class VialOverlay extends Overlay
 	private void drawFrame(Graphics2D graphics, int width, int height, int frameWidth, int innerWidth, int innerHeight, int innerArc)
 	{
 		Graphics2D frameGraphics = (Graphics2D) graphics.create();
-		frameGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, barOpacityFraction()));
+		frameGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, frameOpacityFraction()));
 
 		RoundRectangle2D.Float outerShape = new RoundRectangle2D.Float(0, 0, width, height, FRAME_ARC, FRAME_ARC);
 		RoundRectangle2D.Float innerShapeAtInset = new RoundRectangle2D.Float(

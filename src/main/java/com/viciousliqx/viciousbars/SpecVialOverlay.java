@@ -25,8 +25,6 @@ import net.runelite.client.game.SpriteManager;
 @Singleton
 class SpecVialOverlay extends VialOverlay
 {
-	private static final Color FILL_COLOR = new Color(220, 40, 180);
-
 	@Inject
 	private SpecVialOverlay(Client client, CompactOrbsManager manager, CompactOrbsConfig config, WidgetManager widgetManager, SpriteManager spriteManager)
 	{
@@ -54,7 +52,12 @@ class SpecVialOverlay extends VialOverlay
 	@Override
 	protected Color fillColor()
 	{
-		return FILL_COLOR;
+		return isActive() ? config.specActiveColor() : config.specDefaultColor();
+	}
+
+	private boolean isActive()
+	{
+		return client.getVarpValue(VarPlayerID.SA_ATTACK) != 0;
 	}
 
 	@Override
@@ -67,5 +70,11 @@ class SpecVialOverlay extends VialOverlay
 	protected boolean regenEnabled()
 	{
 		return config.specShowRegen();
+	}
+
+	@Override
+	protected Color regenHighlightColor()
+	{
+		return config.specRegenColor();
 	}
 }

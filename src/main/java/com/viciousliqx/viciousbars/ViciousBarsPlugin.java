@@ -159,6 +159,25 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	private int ticksSincePrayerRegen;
 	private boolean prayerRegenActive;
 
+	// Poison/envenom damage-tick countdown - ported from RuneLite's own
+	// PoisonPlugin (net.runelite.client.plugins.poison), which resyncs a
+	// wall-clock timer to "now" on every VarPlayerID.POISON change (that
+	// varp decrements by 1 on each damage tick, so the event marks the
+	// exact moment one just landed) and waits 18.2 real seconds for the
+	// next. We track ticks instead, same as every other counter here, and
+	// use the wiki's 30-tick figure that 18.2s is rounded up from for
+	// display safety - onGameTick() below writes the inverted progress
+	// (1 - fraction) into manager.hpRegenPercentage while poisoned, so the
+	// ring starts full right after a hit and drains to empty right before
+	// the next one, the mirror image of normal regen's empty-to-full growth.
+	// Deliberately clamped rather than wrapped at POISON_TICK_TICKS (unlike
+	// HP/Spec's modulo counters above) - confirmed live that the real
+	// interval isn't a clean 30 ticks, so wrapping on our own count
+	// refilled the ring a tick or so before the real splat/VarbitChanged
+	// event; only that real event (onVarbitChanged below) should refill it.
+	private static final int POISON_TICK_TICKS = 30;
+	private int ticksSincePoisonTick;
+
 	@Inject
 	private HpVialOverlay hpVialOverlay;
 
@@ -401,6 +420,7 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 			ticksSinceSpecRegen = 0;
 			ticksSincePrayerRegen = 0;
 			prayerRegenActive = false;
+			ticksSincePoisonTick = 0;
 		}
 		else if (manager.isLoggedIn() && manager.isLoggingIn)
 		{
@@ -533,6 +553,15 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 			}
 		}
 
+		if (event.getVarpId() == VarPlayerID.POISON)
+		{
+			// Fires once per damage tick (the varp decrements by 1 each
+			// time) as well as on first getting poisoned/reapplied - either
+			// way, a fresh countdown just started, same resync-on-event
+			// approach as the Prayer regen potion timer above.
+			ticksSincePoisonTick = 0;
+		}
+
 		switch (event.getVarbitId())
 		{
 			case Varbit.CUTSCENE_STATUS:
@@ -619,6 +648,18 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 		}
 
 		manager.hpRegenPercentage = hitpointsPercentage;
+
+		if (client.getVarpValue(VarPlayerID.POISON) > 0)
+		{
+			// Clamp, don't wrap - the real interval isn't a clean 30 ticks
+			// (RuneLite's own PoisonPlugin waits 18.2 real seconds, ~30.33
+			// ticks, not 30 flat), so a modulo wrap here would refill the
+			// ring on our own guessed cadence a tick or so before the real
+			// splat/VarbitChanged event lands. Holding at empty instead
+			// means the ring only ever refills off the real event above.
+			ticksSincePoisonTick = Math.min(ticksSincePoisonTick + 1, POISON_TICK_TICKS);
+			manager.hpRegenPercentage = 1 - (ticksSincePoisonTick / (double) POISON_TICK_TICKS);
+		}
 
 		int boostedPrayer = client.getBoostedSkillLevel(Skill.PRAYER);
 		int realPrayer = client.getRealSkillLevel(Skill.PRAYER);
