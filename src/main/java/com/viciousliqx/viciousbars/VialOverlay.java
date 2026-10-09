@@ -114,12 +114,14 @@ abstract class VialOverlay extends Overlay
 
 	private static final int CONTENT_RIGHT_PADDING = 0;
 
-	// Small manual correction on top of the sprite-measured centering
-	// (rotatedBackingBodyRadius) - confirmed live as still "1-2px off"
-	// after that fix, nudging the collar (and, to stay consistent, the
-	// bar's top edge right below it) down by this much. Reused as-is for
-	// NORTH's own rotated collar - not independently verified there yet,
-	// a candidate to re-dial if NORTH's collar looks off by a pixel or two.
+	// No longer used by SOUTH (see its own barY/drawY comments) - this +1
+	// was eating into the real collar's own top border, confirmed via a
+	// zoomed screenshot pixel-matched against the raw source sprite. Kept
+	// only for NORTH, which applies it alongside NORTH_COLLAR_Y_NUDGE
+	// (+1) to net exactly zero - NORTH needing a same-size opposite
+	// correction to look right is what originally pointed at this
+	// constant being wrong for SOUTH too, rather than SOUTH-correct and
+	// NORTH needing the fix.
 	private static final int COLLAR_VERTICAL_NUDGE = 1;
 
 	// Small along-axis gap between the icon's own edge and the bar's near
@@ -231,6 +233,25 @@ abstract class VialOverlay extends Overlay
 	// one of the four real orientations, so the very first frame never
 	// looks like a "switch" and triggers a pointless restore-then-reapply.
 	private CompactOrbsConfig.BarOrientation lastOrientation;
+
+	// Collar-drawing used to happen inline, right inside render(), via a
+	// throwaway untranslated Graphics2D copy - confirmed live (screenshot)
+	// that this made each bar's Z-order relative to a DIFFERENT bar's
+	// collar depend on arbitrary overlay registration order rather than
+	// what's actually on screen (one bar's own frame/vial could cover
+	// another bar's collar). Since overlay priority applies to a whole
+	// Overlay instance and all four bars share this same class, the fix
+	// is a second, separately-prioritized overlay (OrbCollarOverlay) that
+	// draws every bar's collar in one later pass, guaranteed after every
+	// bar's own frame/vial regardless of which orb each belongs to. This
+	// just captures WHAT to draw during the normal render() pass; the
+	// actual drawing happens in drawCollar(), called by that overlay.
+	private enum CollarKind { NONE, SOUTH, EAST, NORTH }
+	private CollarKind pendingCollarKind = CollarKind.NONE;
+	private Widget pendingCollarIcon;
+	private Widget pendingCollarBacking;
+	private int pendingCollarIconCenterX;
+	private int pendingCollarIconCenterY;
 
 	// The icon isn't drawn alone - F8's dump showed several sibling
 	// graphics (indicator, the "empty"-fill wrapper, a hover-state
@@ -437,6 +458,15 @@ abstract class VialOverlay extends Overlay
 	@Override
 	public final Dimension render(Graphics2D graphics)
 	{
+		// Reset every frame, only set below if this frame actually has a
+		// collar to draw - otherwise a bar that stops rendering (main
+		// bars toggled off, orb not found, orientation switched to one
+		// with no collar) would leave the separate collar pass drawing a
+		// stale leftover from whenever it last ran. See the field comment
+		// on pendingCollarKind for why collar-drawing moved out of this
+		// method entirely.
+		pendingCollarKind = CollarKind.NONE;
+
 		if (!manager.isCompactLayout())
 		{
 			restoreBacking();
@@ -548,17 +578,15 @@ abstract class VialOverlay extends Overlay
 		// (iconCenterY + its radius), not where the collar's center is -
 		// the body sits entirely above the bar, while the tab (the
 		// "handle" hanging below the body) overlaps down into the bar's
-		// top. +COLLAR_VERTICAL_NUDGE to stay flush with the same nudge
-		// applied to the collar's own draw position.
-		int barY = iconCenterY + rotatedSouthBackingBodyRadius + COLLAR_VERTICAL_NUDGE + clampOffset(verticalOffset(), height);
-
-		// A separate, never-translated copy of the graphics context - the
-		// collar is drawn through it AFTER the frame/vial below (see the
-		// call near the end of this method), in absolute canvas space, so
-		// it paints over the bar rather than getting covered by it. Only
-		// the tab actually overlaps the bar at all (the body sits fully
-		// above barY), but the whole collar stays unobstructed either way.
-		Graphics2D absoluteGraphics = (Graphics2D) graphics.create();
+		// top. No COLLAR_VERTICAL_NUDGE here (unlike before) - confirmed
+		// live (zoomed screenshot, pixel-inspected against the raw source
+		// sprite) that the +1 it applied was eating into the collar's own
+		// top border, which the source art actually has - NORTH needed a
+		// separate nudge specifically to CANCEL this same constant back
+		// to net zero to look right, which is what finally pointed at it
+		// here too, rather than it being SOUTH-correct and NORTH being the
+		// one that needed correcting.
+		int barY = iconCenterY + rotatedSouthBackingBodyRadius + clampOffset(verticalOffset(), height);
 
 		// See old VitalBarOverlay's comment on this exact pair of calls
 		// (git history) - a non-movable DYNAMIC overlay still needs its
@@ -581,8 +609,11 @@ abstract class VialOverlay extends Overlay
 		drawVial(graphics, frameWidth, innerWidth, innerHeight, innerArc, current, max, true);
 		drawVialOutlines(graphics, frameWidth, innerWidth, innerHeight, innerArc, true);
 
-		drawRotatedSouthBacking(absoluteGraphics, icon, client.getWidget(orbContainer().getBackingId()), iconCenterX, iconCenterY);
-		absoluteGraphics.dispose();
+		pendingCollarKind = CollarKind.SOUTH;
+		pendingCollarIcon = icon;
+		pendingCollarBacking = client.getWidget(orbContainer().getBackingId());
+		pendingCollarIconCenterX = iconCenterX;
+		pendingCollarIconCenterY = iconCenterY;
 
 		return new Dimension(width, height);
 	}
@@ -692,8 +723,6 @@ abstract class VialOverlay extends Overlay
 		int barX = anchorX + gap;
 		int barY = anchorY - thickness / 2;
 
-		Graphics2D absoluteGraphics = (Graphics2D) graphics.create();
-
 		setPreferredLocation(null);
 		getBounds().setLocation(0, 0);
 		graphics.translate(barX, barY);
@@ -713,9 +742,12 @@ abstract class VialOverlay extends Overlay
 
 		if (drawingFlippedCollar)
 		{
-			drawFlippedEastBacking(absoluteGraphics, icon, backing, iconCenterX, iconCenterY);
+			pendingCollarKind = CollarKind.EAST;
+			pendingCollarIcon = icon;
+			pendingCollarBacking = backing;
+			pendingCollarIconCenterX = iconCenterX;
+			pendingCollarIconCenterY = iconCenterY;
 		}
-		absoluteGraphics.dispose();
 
 		return new Dimension(length, thickness);
 	}
@@ -764,8 +796,6 @@ abstract class VialOverlay extends Overlay
 		int barX = anchorX - thickness / 2;
 		int barY = anchorY - gap - length;
 
-		Graphics2D absoluteGraphics = (Graphics2D) graphics.create();
-
 		setPreferredLocation(null);
 		getBounds().setLocation(0, 0);
 		graphics.translate(barX, barY);
@@ -785,9 +815,12 @@ abstract class VialOverlay extends Overlay
 
 		if (drawingRotatedCollar)
 		{
-			drawRotatedNorthBacking(absoluteGraphics, icon, backing, iconCenterX, iconCenterY);
+			pendingCollarKind = CollarKind.NORTH;
+			pendingCollarIcon = icon;
+			pendingCollarBacking = backing;
+			pendingCollarIconCenterX = iconCenterX;
+			pendingCollarIconCenterY = iconCenterY;
 		}
-		absoluteGraphics.dispose();
 
 		return new Dimension(thickness, length);
 	}
@@ -956,14 +989,48 @@ abstract class VialOverlay extends Overlay
 	}
 
 	/**
+	 * Called by OrbCollarOverlay, a separate overlay given a higher
+	 * priority than this one specifically so every bar's collar draws
+	 * after every bar's own frame/vial, regardless of which of the four
+	 * this one is - see the field comment on pendingCollarKind. No-op if
+	 * this frame's render() didn't leave a collar pending (WEST never
+	 * does, and SOUTH/EAST/NORTH only do when a valid rotated sprite was
+	 * actually found).
+	 */
+	void drawCollar(Graphics2D graphics)
+	{
+		if (pendingCollarKind == CollarKind.NONE)
+		{
+			return;
+		}
+
+		Graphics2D collarGraphics = (Graphics2D) graphics.create();
+		switch (pendingCollarKind)
+		{
+			case SOUTH:
+				drawRotatedSouthBacking(collarGraphics, pendingCollarIcon, pendingCollarBacking, pendingCollarIconCenterX, pendingCollarIconCenterY);
+				break;
+			case EAST:
+				drawFlippedEastBacking(collarGraphics, pendingCollarIcon, pendingCollarBacking, pendingCollarIconCenterX, pendingCollarIconCenterY);
+				break;
+			case NORTH:
+				drawRotatedNorthBacking(collarGraphics, pendingCollarIcon, pendingCollarBacking, pendingCollarIconCenterX, pendingCollarIconCenterY);
+				break;
+			case NONE:
+				break;
+		}
+		collarGraphics.dispose();
+	}
+
+	/**
 	 * Hides the real backing (stone orb + tab) widget and draws a 90°
 	 * counter-clockwise-rotated copy of its own sprite in its place, so the
 	 * tab that normally protrudes left now points down - acting as a
 	 * "collar" sitting ABOVE the bar (see barY in renderSouth()), with only
-	 * its tab/handle actually overlapping the bar's top. Called through a
-	 * separate, never-translated copy of the graphics context AFTER the
-	 * frame/vial are drawn, so the whole collar - tab included - stays
-	 * fully visible, painted on top rather than under. Everything else on
+	 * its tab/handle actually overlapping the bar's top. Called via
+	 * drawCollar(), from OrbCollarOverlay's own later render pass, so the
+	 * whole collar - tab included - stays fully visible, painted on top of
+	 * every bar's frame/vial rather than getting covered by one. Everything else on
 	 * the real orb (icon, button hitbox, indicator) is left completely
 	 * alone - in particular the icon, which is a separate real widget, so
 	 * it stays upright with no counter-rotation needed, and stays
@@ -1009,7 +1076,7 @@ abstract class VialOverlay extends Overlay
 		// full 34) already accounts for this, where rotated.getHeight()/2
 		// (half of 57) doesn't.
 		int drawX = iconCenterX - rotated.getWidth() / 2;
-		int drawY = iconCenterY - rotatedSouthBackingBodyRadius + COLLAR_VERTICAL_NUDGE;
+		int drawY = iconCenterY - rotatedSouthBackingBodyRadius;
 		graphics.drawImage(rotated, drawX, drawY, null);
 	}
 

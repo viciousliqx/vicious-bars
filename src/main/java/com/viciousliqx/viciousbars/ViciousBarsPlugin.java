@@ -234,6 +234,9 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	private SpecVialOverlay specVialOverlay;
 
 	@Inject
+	private OrbCollarOverlay orbCollarOverlay;
+
+	@Inject
 	private net.runelite.client.game.SpriteManager spriteManager;
 
 	@Inject
@@ -262,6 +265,7 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 		overlayManager.add(prayerVialOverlay);
 		overlayManager.add(runVialOverlay);
 		overlayManager.add(specVialOverlay);
+		overlayManager.add(orbCollarOverlay);
 		overlayManager.add(hpAuxBarOverlay);
 		overlayManager.add(prayerAuxBarOverlay);
 		overlayManager.add(specAuxBarOverlay);
@@ -310,6 +314,7 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 		runVialOverlay.shutDown();
 		overlayManager.remove(specVialOverlay);
 		specVialOverlay.shutDown();
+		overlayManager.remove(orbCollarOverlay);
 		overlayManager.remove(hpAuxBarOverlay);
 		overlayManager.remove(prayerAuxBarOverlay);
 		overlayManager.remove(specAuxBarOverlay);
@@ -1308,6 +1313,17 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 		log.info("[orb dump] --- {} orb container (id={}, {}x{}) ---", label, container.getId(), container.getWidth(), container.getHeight());
 		dumpAllChildren(container, 0);
 		log.info("[orb dump] --- end {} ---", label);
+
+		// Temporary, alongside the above - saves the RAW backing sprite
+		// (pre-rotation/flip) so it can be inspected directly, to check
+		// whether the SOUTH/EAST 1-2px collar clip is baked into the
+		// source asset itself (e.g. asymmetric padding) versus only
+		// appearing in our own rotated/flipped copy or draw position.
+		Widget backing = client.getWidget(target.getBackingId());
+		if (backing != null && backing.getSpriteId() != -1)
+		{
+			saveSprite(backing.getSpriteId());
+		}
 	}
 
 	private void dumpZoneWidgets()
