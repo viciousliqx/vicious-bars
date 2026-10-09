@@ -428,6 +428,8 @@ public class CompactOrbsConstants
 		// same two widgets, height instead of width.
 		public static final String BAR_ZONE_HEIGHT_OFFSET = "barZoneHeightOffset";
 
+		public static final String SHOW_EDIT_GRID = "showEditGrid";
+
 		// Also temporary, same reasoning as BAR_WIDTH - the HP level number
 		// (repositioned below the icon, see HpVialOverlay) isn't perfectly
 		// centered under it natively; this nudges it left (-) or right (+)
@@ -436,11 +438,9 @@ public class CompactOrbsConstants
 		// temporarily for dialing in the HP number's position - settled at
 		// 4/4 and hardcoded directly in HpVialOverlay, config removed.
 
-		// Temporary again - NORTH's self-drawn number (see VialOverlay's
-		// drawNorthNumber()) needs re-dialing in now that it's drawn by us
-		// instead of repositioning the real widget.
-		public static final String NORTH_NUMBER_X_OFFSET = "northNumberXOffset";
-		public static final String NORTH_NUMBER_Y_OFFSET = "northNumberYOffset";
+		// NORTH's real number (-5/10) and content/collar group (+7) all
+		// settled and hardcoded directly in VialOverlay now, same
+		// workflow as EAST_NUMBER_X_OFFSET/Y_OFFSET's own history.
 
 		//edit-modes custom positioning
 		public static final String CUSTOM_LAYOUT_PREFIX = "custom_layout_";

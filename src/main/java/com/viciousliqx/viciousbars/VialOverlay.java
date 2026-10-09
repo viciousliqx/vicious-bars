@@ -276,6 +276,8 @@ abstract class VialOverlay extends Overlay
 	private Widget[] contentWidgets;
 	private int[] contentOriginalX;
 	private int[] contentOriginalY;
+	private int[] contentOriginalXMode;
+	private int[] contentOriginalYMode;
 	private Widget contentWidget;
 
 	protected VialOverlay(Client client, CompactOrbsManager manager, CompactOrbsConfig config, WidgetManager widgetManager, SpriteManager spriteManager)
@@ -1100,6 +1102,10 @@ abstract class VialOverlay extends Overlay
 	 * number is still the same real, fully functional widget, just
 	 * relocated, never hidden or given new behavior. SOUTH-only - see the
 	 * class javadoc for why the other three directions never call this.
+	 * <p>
+	 * The container gets a hard dimension swap (swapContainerToVertical())
+	 * instead of a computed minimal fit now - same reasoning as NORTH's own
+	 * swap, see that method's doc comment.
 	 */
 	private void repositionNumber(Widget container, Widget icon)
 	{
@@ -1118,7 +1124,13 @@ abstract class VialOverlay extends Overlay
 			numberWidget = number;
 		}
 
-		shiftContent(container, icon, CONTENT_LEFT_PADDING);
+		int iconNativeX = icon.getOriginalX();
+
+		swapContainerToVertical(container);
+		int verticalWidth = containerOriginalHeight;
+		int verticalHeight = containerOriginalWidth;
+
+		shiftContent(container, icon, (verticalWidth - icon.getWidth()) / 2);
 
 		if (number.getXPositionMode() != WidgetPositionMode.ABSOLUTE_LEFT)
 		{
@@ -1139,16 +1151,7 @@ abstract class VialOverlay extends Overlay
 			number.revalidate();
 		}
 
-		// Height: grown just enough that the repositioned number (now
-		// sitting past the container's native bottom edge) isn't clipped.
-		// Width: trimmed to just past whichever sits further right, the
-		// icon or the (number-offset-shiftable) number itself - now that
-		// shiftContentLeft() above has already pulled the icon (and its
-		// layered siblings) over near x=0, icon.getRelativeX() here already
-		// reflects the new, narrower position.
-		int iconRightEdge = icon.getRelativeX() + icon.getWidth();
-		int numberRightEdge = targetX + number.getWidth();
-		resizeContainer(container, Math.max(iconRightEdge, numberRightEdge) + CONTENT_RIGHT_PADDING, targetY + number.getHeight() + 2);
+		swapExtraWidgetToVertical(container, iconNativeX, verticalWidth, verticalHeight);
 	}
 
 	/**
@@ -1234,8 +1237,11 @@ abstract class VialOverlay extends Overlay
 	 * vanilla's native spot, but that offset is constant and never
 	 * differs between editing and non-editing, so there's nothing to
 	 * desync and nothing fighting the drag system, since the container's
-	 * Y is never written at all. Reuses resizeContainer() directly -
-	 * same shrink-width/grow-height-only method SOUTH already calls.
+	 * Y is never written at all. Uses swapContainerToVertical() - a hard
+	 * width↔height swap rather than a computed minimal fit - so NORTH and
+	 * SOUTH's containers are provably the same geometry as the real
+	 * horizontal native size, just rotated, with nothing to independently
+	 * drift out of sync between them.
 	 */
 	private void repositionNumberNorth(Widget container, Widget icon)
 	{
@@ -1265,7 +1271,11 @@ abstract class VialOverlay extends Overlay
 		// together), not whatever shiftContent() just moved it to.
 		int iconNativeX = icon.getOriginalX();
 
-		shiftContent(container, icon, CONTENT_LEFT_PADDING);
+		swapContainerToVertical(container);
+		int verticalWidth = containerOriginalHeight;
+		int verticalHeight = containerOriginalWidth;
+
+		shiftContent(container, icon, (verticalWidth - icon.getWidth()) / 2);
 
 		if (number.getXPositionMode() != WidgetPositionMode.ABSOLUTE_LEFT)
 		{
@@ -1278,15 +1288,26 @@ abstract class VialOverlay extends Overlay
 
 		int margin = number.getHeight() + 2;
 
+		// +7 dialed in live (temporary config slider, same workflow as
+		// EAST_NUMBER_X_OFFSET/Y_OFFSET's own history) against the hard-
+		// swapped container's actual rendered position - the computed
+		// margin alone left the icon group sitting too high, confirmed
+		// via a zoomed screenshot showing the collar sticking out past
+		// the purple drag-zone outline's top edge.
+		int contentYOffset = 7;
+
 		// Push the icon group down by margin - the inverse of the
 		// contentOriginalY shift this same mechanism used when the
 		// container itself moved; now the container's top stays put and
 		// the icon moves instead, opening clean non-negative space above
-		// it for the number.
+		// it for the number. The container's own height is now a fixed
+		// hard-swapped size (see swapContainerToVertical()) rather than
+		// computed to fit this exactly, so there's always comfortable
+		// headroom below the icon too.
 		for (int i = 0; i < contentWidgets.length; i++)
 		{
 			Widget content = contentWidgets[i];
-			int targetContentY = contentOriginalY[i] + margin;
+			int targetContentY = contentOriginalY[i] + margin + contentYOffset;
 			if (content.getOriginalY() != targetContentY)
 			{
 				content.setOriginalY(targetContentY);
@@ -1294,19 +1315,9 @@ abstract class VialOverlay extends Overlay
 			}
 		}
 
-		// icon.getOriginalY() here is the icon's ALREADY-SHIFTED Y (the
-		// loop above just wrote it, and icon is one of contentWidgets) -
-		// using it directly instead of re-deriving from margin alone is
-		// what was missing: the icon's own pre-shift baseline Y (4px
-		// natively, not 0) needs to be included too, or the container
-		// comes up short by exactly that much and clips the icon's
-		// bottom edge - confirmed live (screenshot).
-		int requiredWidth = CONTENT_LEFT_PADDING + icon.getOriginalWidth() + CONTENT_RIGHT_PADDING;
-		int requiredHeight = icon.getOriginalY() + icon.getOriginalHeight() + CONTENT_RIGHT_PADDING;
-		resizeContainer(container, requiredWidth, requiredHeight);
-
-		int targetX = icon.getRelativeX() + icon.getWidth() / 2 - number.getWidth() / 2 + config.northNumberXOffset();
-		int targetY = config.northNumberYOffset();
+		// X=-5, Y=10 both dialed in live the same way.
+		int targetX = icon.getRelativeX() + icon.getWidth() / 2 - number.getWidth() / 2 - 5;
+		int targetY = 10;
 
 		if (number.getOriginalX() != targetX || number.getOriginalY() != targetY)
 		{
@@ -1315,52 +1326,7 @@ abstract class VialOverlay extends Overlay
 			number.revalidate();
 		}
 
-		Widget extra = findExtraWidget(container, iconNativeX);
-		if (extra != null)
-		{
-			if (extraWidget != extra)
-			{
-				extraOriginalX = extra.getOriginalX();
-				extraOriginalY = extra.getOriginalY();
-				extraOriginalWidth = extra.getOriginalWidth();
-				extraOriginalHeight = extra.getOriginalHeight();
-				extraWidget = extra;
-			}
-
-			// Matches it to the icon's own (now vertically-shifted) bounds
-			// exactly, rather than a literal width/height swap - its
-			// native shape (~50 wide) doesn't actually fit inside how
-			// little NORTH's container grows, so clamping it to the
-			// icon's own footprint is what "inverted to fit, filling the
-			// container instead of breaking it" works out to - it can
-			// never fail to fit, since it's sized to what the icon
-			// itself already occupies.
-			boolean changed = false;
-			if (extra.getOriginalX() != icon.getRelativeX())
-			{
-				extra.setOriginalX(icon.getRelativeX());
-				changed = true;
-			}
-			if (extra.getOriginalY() != icon.getRelativeY())
-			{
-				extra.setOriginalY(icon.getRelativeY());
-				changed = true;
-			}
-			if (extra.getOriginalWidth() != icon.getWidth())
-			{
-				extra.setOriginalWidth(icon.getWidth());
-				changed = true;
-			}
-			if (extra.getOriginalHeight() != icon.getHeight())
-			{
-				extra.setOriginalHeight(icon.getHeight());
-				changed = true;
-			}
-			if (changed)
-			{
-				extra.revalidate();
-			}
-		}
+		swapExtraWidgetToVertical(container, iconNativeX, verticalWidth, verticalHeight);
 	}
 
 	/**
@@ -1395,14 +1361,13 @@ abstract class VialOverlay extends Overlay
 	 * showing right now still lines up with the others. Captured once per
 	 * container instance.
 	 * <p>
-	 * targetX varies by caller: SOUTH/EAST pass CONTENT_LEFT_PADDING, since
-	 * both of them also shrink/cap the container to hug the content
-	 * afterward, making a small fixed left padding read as "snug." NORTH
-	 * never touches the container's width at all - passing that same fixed
-	 * padding there left the icon justified hard against the left edge of
-	 * an otherwise full-width box instead of centered in it (confirmed
-	 * live, screenshot) - see repositionNumberNorth()'s own call site for
-	 * the centering math it passes instead.
+	 * targetX varies by caller: EAST passes CONTENT_LEFT_PADDING, since it
+	 * also shrinks/caps the container to hug the content afterward, making
+	 * a small fixed left padding read as "snug." SOUTH/NORTH both now hard
+	 * swap the container to a fixed, generously-sized width instead (see
+	 * swapContainerToVertical()), so they compute a true centered targetX
+	 * from that known width rather than using a fixed padding constant
+	 * that only made sense against a minimal-fit box.
 	 */
 	private void shiftContent(Widget container, Widget icon, int targetX)
 	{
@@ -1420,16 +1385,36 @@ abstract class VialOverlay extends Overlay
 			contentWidgets = matches.toArray(new Widget[0]);
 			contentOriginalX = new int[contentWidgets.length];
 			contentOriginalY = new int[contentWidgets.length];
+			contentOriginalXMode = new int[contentWidgets.length];
+			contentOriginalYMode = new int[contentWidgets.length];
 			for (int i = 0; i < contentWidgets.length; i++)
 			{
 				contentOriginalX[i] = contentWidgets[i].getOriginalX();
 				contentOriginalY[i] = contentWidgets[i].getOriginalY();
+				contentOriginalXMode[i] = contentWidgets[i].getXPositionMode();
+				contentOriginalYMode[i] = contentWidgets[i].getYPositionMode();
 			}
 			contentWidget = container;
 		}
 
+		// Forced explicitly (not just the number) - confirmed live
+		// (screenshot) that NORTH's hard-swapped, now-taller container
+		// pushed the icon group out past its OWN bottom edge instead of
+		// leaving the expected headroom below it, exactly matching what a
+		// non-ABSOLUTE_TOP/LEFT native anchor on these specific widgets
+		// would produce when the container's height changes out from
+		// under them. The number already got this same treatment; these
+		// never did.
 		for (Widget content : contentWidgets)
 		{
+			if (content.getXPositionMode() != WidgetPositionMode.ABSOLUTE_LEFT)
+			{
+				content.setXPositionMode(WidgetPositionMode.ABSOLUTE_LEFT);
+			}
+			if (content.getYPositionMode() != WidgetPositionMode.ABSOLUTE_TOP)
+			{
+				content.setYPositionMode(WidgetPositionMode.ABSOLUTE_TOP);
+			}
 			if (content.getOriginalX() != targetX)
 			{
 				content.setOriginalX(targetX);
@@ -1464,6 +1449,105 @@ abstract class VialOverlay extends Overlay
 		if (changed)
 		{
 			container.revalidate();
+		}
+	}
+
+	/**
+	 * Hard dimension swap for a vertical orientation (NORTH/SOUTH) - the
+	 * container ends up EXACTLY width↔height of its true native size, no
+	 * computed shrink/grow fit. Confirmed live that computing a
+	 * minimal-fit size independently per orientation was how a stale
+	 * manual pixel nudge went unnoticed for so long (see
+	 * COLLAR_VERTICAL_NUDGE's own history) - a hard swap means vertical
+	 * and horizontal orientations are PROVABLY the same geometry, just
+	 * rotated, with nothing to independently drift out of sync. Reuses
+	 * the same containerWidget/containerOriginalWidth/Height fields
+	 * resizeContainer() and growContainerWidth() already share, so
+	 * restoreNumber() needs no separate handling for this.
+	 */
+	private void swapContainerToVertical(Widget container)
+	{
+		if (containerWidget != container)
+		{
+			containerOriginalWidth = container.getOriginalWidth();
+			containerOriginalHeight = container.getOriginalHeight();
+			containerWidget = container;
+		}
+
+		boolean changed = false;
+		if (container.getOriginalWidth() != containerOriginalHeight)
+		{
+			container.setOriginalWidth(containerOriginalHeight);
+			changed = true;
+		}
+		if (container.getOriginalHeight() != containerOriginalWidth)
+		{
+			container.setOriginalHeight(containerOriginalWidth);
+			changed = true;
+		}
+		if (changed)
+		{
+			container.revalidate();
+		}
+	}
+
+	/**
+	 * Same hard-swap principle as swapContainerToVertical(), applied to
+	 * the orb's second real interactive widget (see the field comment on
+	 * extraWidget) - swapped to its own true native width↔height (not
+	 * clamped to the icon's footprint, an earlier compromise from when
+	 * the container was only grown to a tight computed fit and a literal
+	 * swap didn't have room to land) and centered in the now
+	 * hard-swapped, generously-sized container. iconNativeX is the
+	 * icon's PRE-shiftContent() original X - see repositionNumberNorth()
+	 * for why this has to be captured before shiftContent() runs.
+	 */
+	private void swapExtraWidgetToVertical(Widget container, int iconNativeX, int containerWidth, int containerHeight)
+	{
+		Widget extra = findExtraWidget(container, iconNativeX);
+		if (extra == null)
+		{
+			return;
+		}
+
+		if (extraWidget != extra)
+		{
+			extraOriginalX = extra.getOriginalX();
+			extraOriginalY = extra.getOriginalY();
+			extraOriginalWidth = extra.getOriginalWidth();
+			extraOriginalHeight = extra.getOriginalHeight();
+			extraWidget = extra;
+		}
+
+		int targetWidth = extraOriginalHeight;
+		int targetHeight = extraOriginalWidth;
+		int targetX = (containerWidth - targetWidth) / 2;
+		int targetY = (containerHeight - targetHeight) / 2;
+
+		boolean changed = false;
+		if (extra.getOriginalWidth() != targetWidth)
+		{
+			extra.setOriginalWidth(targetWidth);
+			changed = true;
+		}
+		if (extra.getOriginalHeight() != targetHeight)
+		{
+			extra.setOriginalHeight(targetHeight);
+			changed = true;
+		}
+		if (extra.getOriginalX() != targetX)
+		{
+			extra.setOriginalX(targetX);
+			changed = true;
+		}
+		if (extra.getOriginalY() != targetY)
+		{
+			extra.setOriginalY(targetY);
+			changed = true;
+		}
+		if (changed)
+		{
+			extra.revalidate();
 		}
 	}
 
@@ -1520,6 +1604,8 @@ abstract class VialOverlay extends Overlay
 		{
 			for (int i = 0; i < contentWidgets.length; i++)
 			{
+				contentWidgets[i].setXPositionMode(contentOriginalXMode[i]);
+				contentWidgets[i].setYPositionMode(contentOriginalYMode[i]);
 				contentWidgets[i].setOriginalX(contentOriginalX[i]);
 				contentWidgets[i].setOriginalY(contentOriginalY[i]);
 				contentWidgets[i].revalidate();
@@ -1527,6 +1613,8 @@ abstract class VialOverlay extends Overlay
 			contentWidgets = null;
 			contentOriginalX = null;
 			contentOriginalY = null;
+			contentOriginalXMode = null;
+			contentOriginalYMode = null;
 			contentWidget = null;
 		}
 

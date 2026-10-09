@@ -237,6 +237,9 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	private OrbCollarOverlay orbCollarOverlay;
 
 	@Inject
+	private EditGridOverlay editGridOverlay;
+
+	@Inject
 	private net.runelite.client.game.SpriteManager spriteManager;
 
 	@Inject
@@ -266,6 +269,7 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 		overlayManager.add(runVialOverlay);
 		overlayManager.add(specVialOverlay);
 		overlayManager.add(orbCollarOverlay);
+		overlayManager.add(editGridOverlay);
 		overlayManager.add(hpAuxBarOverlay);
 		overlayManager.add(prayerAuxBarOverlay);
 		overlayManager.add(specAuxBarOverlay);
@@ -315,6 +319,7 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 		overlayManager.remove(specVialOverlay);
 		specVialOverlay.shutDown();
 		overlayManager.remove(orbCollarOverlay);
+		overlayManager.remove(editGridOverlay);
 		overlayManager.remove(hpAuxBarOverlay);
 		overlayManager.remove(prayerAuxBarOverlay);
 		overlayManager.remove(specAuxBarOverlay);

@@ -225,6 +225,18 @@ public interface CompactOrbsConfig extends Config
 		return 0;
 	}
 
+	@ConfigItem(
+		keyName = ConfigKeys.SHOW_EDIT_GRID,
+		name = "Show edit grid",
+		description = "Draws reference grid lines over the red drag zone while editing - purely visual, doesn't affect dragging.",
+		section = layout,
+		position = 10
+	)
+	default boolean showEditGrid()
+	{
+		return true;
+	}
+
 	// "Top level" (Z-order) feature tried and rolled back - drawing our own
 	// copy of the logout X above the inventory panel while hiding the real
 	// one via opacity worked visually, but ONLY where nothing else real
@@ -432,6 +444,7 @@ public interface CompactOrbsConfig extends Config
 		return 20;
 	}
 
+	@Range(min = -500, max = 500)
 	@ConfigItem(
 		keyName = ConfigKeys.HP_HORIZONTAL_OFFSET,
 		name = "Orb/Vial horizontal offset",
@@ -444,6 +457,7 @@ public interface CompactOrbsConfig extends Config
 		return 0;
 	}
 
+	@Range(min = -500, max = 500)
 	@ConfigItem(
 		keyName = ConfigKeys.HP_VERTICAL_OFFSET,
 		name = "Orb/Vial vertical offset",
@@ -736,6 +750,7 @@ public interface CompactOrbsConfig extends Config
 		return 20;
 	}
 
+	@Range(min = -500, max = 500)
 	@ConfigItem(
 		keyName = ConfigKeys.PRAYER_HORIZONTAL_OFFSET,
 		name = "Orb/Vial horizontal offset",
@@ -748,6 +763,7 @@ public interface CompactOrbsConfig extends Config
 		return 0;
 	}
 
+	@Range(min = -500, max = 500)
 	@ConfigItem(
 		keyName = ConfigKeys.PRAYER_VERTICAL_OFFSET,
 		name = "Orb/Vial vertical offset",
@@ -1028,6 +1044,7 @@ public interface CompactOrbsConfig extends Config
 		return 20;
 	}
 
+	@Range(min = -500, max = 500)
 	@ConfigItem(
 		keyName = ConfigKeys.SPEC_HORIZONTAL_OFFSET,
 		name = "Orb/Vial horizontal offset",
@@ -1040,6 +1057,7 @@ public interface CompactOrbsConfig extends Config
 		return 0;
 	}
 
+	@Range(min = -500, max = 500)
 	@ConfigItem(
 		keyName = ConfigKeys.SPEC_VERTICAL_OFFSET,
 		name = "Orb/Vial vertical offset",
@@ -1320,6 +1338,7 @@ public interface CompactOrbsConfig extends Config
 		return 20;
 	}
 
+	@Range(min = -500, max = 500)
 	@ConfigItem(
 		keyName = ConfigKeys.RUN_HORIZONTAL_OFFSET,
 		name = "Orb/Vial horizontal offset",
@@ -1332,6 +1351,7 @@ public interface CompactOrbsConfig extends Config
 		return 0;
 	}
 
+	@Range(min = -500, max = 500)
 	@ConfigItem(
 		keyName = ConfigKeys.RUN_VERTICAL_OFFSET,
 		name = "Orb/Vial vertical offset",
@@ -3474,30 +3494,6 @@ public interface CompactOrbsConfig extends Config
 		position = 18
 	)
 	String testing = "testing";
-
-	@ConfigItem(
-		keyName = ConfigKeys.NORTH_NUMBER_X_OFFSET,
-		name = "North number X offset",
-		description = "Nudges our self-drawn North number left (-) or right (+) of its default centered position above the icon.",
-		section = testing,
-		position = 0
-	)
-	default int northNumberXOffset()
-	{
-		return 0;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.NORTH_NUMBER_Y_OFFSET,
-		name = "North number Y offset",
-		description = "Nudges our self-drawn North number up (-) or down (+) of its default position above the icon.",
-		section = testing,
-		position = 1
-	)
-	default int northNumberYOffset()
-	{
-		return 0;
-	}
 
 	//hidden from the config panel
 	@ConfigItem(
