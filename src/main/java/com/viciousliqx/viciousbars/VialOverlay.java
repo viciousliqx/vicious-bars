@@ -1,6 +1,7 @@
 package com.viciousliqx.viciousbars;
 
 import com.compactorbs.CompactOrbsConfig;
+import com.compactorbs.CompactOrbsConfig.ThresholdMode;
 import com.compactorbs.CompactOrbsManager;
 import com.compactorbs.widget.TargetWidget;
 import com.compactorbs.widget.WidgetManager;
@@ -342,6 +343,56 @@ abstract class VialOverlay extends Overlay
 		return fillColor().brighter();
 	}
 
+	/**
+	 * Threshold-glow mode - restored from v1 (see git log before the
+	 * full-reset "gut pass"), which only ever had this for Spec as a
+	 * "ready to use" alert (ACTIVE/COMBAT_ONLY, above-threshold - see
+	 * thresholdAbove()). Generalized here to all four bars; defaults off
+	 * until a bar opts in, same pattern as regenEnabled()/drainEnabled().
+	 */
+	protected ThresholdMode thresholdMode()
+	{
+		return ThresholdMode.DISABLED;
+	}
+
+	/** 0-100 percentage the threshold glow triggers at - see thresholdAbove() for which direction. */
+	protected int thresholdValue()
+	{
+		return 0;
+	}
+
+	/** Color the icon pulses in once the threshold condition is met. */
+	protected Color thresholdColor()
+	{
+		return Color.WHITE;
+	}
+
+	/** True if the glow fires at-or-ABOVE thresholdValue() (e.g. Spec's "charged enough" alert); false for at-or-BELOW (e.g. HP/Prayer/Run's "running low" warning). */
+	protected boolean thresholdAbove()
+	{
+		return false;
+	}
+
+	/** Whether the threshold condition is currently met, given thresholdMode()'s gating (disabled/always/combat-only) - drives the bar pulse in drawBarPulse(). */
+	private boolean isThresholdActive()
+	{
+		ThresholdMode mode = thresholdMode();
+		if (mode == ThresholdMode.DISABLED)
+		{
+			return false;
+		}
+		if (mode == ThresholdMode.COMBAT_ONLY && !manager.inCombat)
+		{
+			return false;
+		}
+
+		int max = Math.max(maxValue(), 1);
+		int current = Math.max(0, Math.min(currentValue(), max));
+		int percentage = (int) Math.round(100.0 * current / max);
+
+		return thresholdAbove() ? percentage >= thresholdValue() : percentage <= thresholdValue();
+	}
+
 	@Override
 	public final Dimension render(Graphics2D graphics)
 	{
@@ -485,6 +536,7 @@ abstract class VialOverlay extends Overlay
 		int innerArc = Math.round(innerWidth * INNER_ARC_FRACTION);
 
 		drawFrame(graphics, width, height, frameWidth, innerWidth, innerHeight, innerArc);
+		drawBarPulse(graphics, frameWidth, innerWidth, innerHeight, innerArc);
 		drawVial(graphics, frameWidth, innerWidth, innerHeight, innerArc, current, max, true);
 		drawVialOutlines(graphics, frameWidth, innerWidth, innerHeight, innerArc, true);
 
@@ -531,6 +583,8 @@ abstract class VialOverlay extends Overlay
 		int barX = anchorX - HORIZONTAL_GAP - length;
 		int barY = anchorY - thickness / 2;
 
+		Graphics2D absoluteGraphics = (Graphics2D) graphics.create();
+
 		setPreferredLocation(null);
 		getBounds().setLocation(0, 0);
 		graphics.translate(barX, barY);
@@ -544,8 +598,11 @@ abstract class VialOverlay extends Overlay
 		int innerArc = Math.round(innerThickness * INNER_ARC_FRACTION);
 
 		drawFrame(graphics, length, thickness, frameWidth, innerLength, innerThickness, innerArc);
+		drawBarPulse(graphics, frameWidth, innerLength, innerThickness, innerArc);
 		drawVialHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, current, max, false);
 		drawVialOutlinesHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, false);
+
+		absoluteGraphics.dispose();
 
 		return new Dimension(length, thickness);
 	}
@@ -609,6 +666,7 @@ abstract class VialOverlay extends Overlay
 		int innerArc = Math.round(innerThickness * INNER_ARC_FRACTION);
 
 		drawFrame(graphics, length, thickness, frameWidth, innerLength, innerThickness, innerArc);
+		drawBarPulse(graphics, frameWidth, innerLength, innerThickness, innerArc);
 		drawVialHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, current, max, true);
 		drawVialOutlinesHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, true);
 
@@ -680,6 +738,7 @@ abstract class VialOverlay extends Overlay
 		int innerArc = Math.round(innerWidth * INNER_ARC_FRACTION);
 
 		drawFrame(graphics, thickness, length, frameWidth, innerWidth, innerHeight, innerArc);
+		drawBarPulse(graphics, frameWidth, innerWidth, innerHeight, innerArc);
 		drawVial(graphics, frameWidth, innerWidth, innerHeight, innerArc, current, max, false);
 		drawVialOutlines(graphics, frameWidth, innerWidth, innerHeight, innerArc, false);
 
@@ -729,6 +788,46 @@ abstract class VialOverlay extends Overlay
 	private float drainOpacityFraction()
 	{
 		return Math.min(100, config.barOpacity() + 50) / 100f;
+	}
+
+	private static final int PULSE_PERIOD_MILLIS = 1200;
+	private static final float PULSE_MIN_FRACTION = 0.3f;
+
+	/**
+	 * Breathing pulse (not a hard blink) over thresholdColor()'s own alpha,
+	 * washed over just the inner vial cavity - NOT the frame (tried the
+	 * full outer footprint first, read as too much frame involvement) -
+	 * same inset/shape drawVial() itself fills. Drawn BEHIND the vial fill
+	 * (called right after drawFrame(), before drawVial() - see each
+	 * render*() call site) rather than on top, so it shines through the
+	 * fill's own translucent background/current-value color instead of
+	 * masking it. Tried highlighting the icon before that (v1's own
+	 * approach, since it drew its own icon bitmap and could tint it
+	 * directly), but this engine keeps the real native icon widget in
+	 * place instead of drawing one, and a halo on it read fine for v1's
+	 * hand-built icon but not here. graphics must already be
+	 * bar-relative/translated (same space drawFrame()/drawVial() use), not
+	 * absolute canvas coordinates. Wall-clock timed (not tick-based) so
+	 * the pulse stays smooth regardless of game tick rate.
+	 */
+	private void drawBarPulse(Graphics2D graphics, int frameWidth, int innerWidth, int innerHeight, int innerArc)
+	{
+		if (!isThresholdActive())
+		{
+			return;
+		}
+
+		double phase = (System.currentTimeMillis() % PULSE_PERIOD_MILLIS) / (double) PULSE_PERIOD_MILLIS;
+		float pulseFraction = PULSE_MIN_FRACTION + (1f - PULSE_MIN_FRACTION) * (float) (0.5 + 0.5 * Math.sin(phase * 2 * Math.PI));
+
+		Color base = thresholdColor();
+		int alpha = Math.round(base.getAlpha() * pulseFraction);
+
+		Graphics2D pulseGraphics = (Graphics2D) graphics.create();
+		pulseGraphics.translate(frameWidth, frameWidth);
+		pulseGraphics.setColor(new Color(base.getRed(), base.getGreen(), base.getBlue(), alpha));
+		pulseGraphics.fill(new RoundRectangle2D.Float(0, 0, innerWidth, innerHeight, innerArc, innerArc));
+		pulseGraphics.dispose();
 	}
 
 	/**
@@ -1512,7 +1611,7 @@ abstract class VialOverlay extends Overlay
 		double ratio = (double) current / max;
 		int fillHeight = (int) Math.round(ratio * innerHeight);
 		vialGraphics.setColor(fillColor());
-		int fillY = anchorBottom ? innerHeight - fillHeight : 0;
+		int fillY = (anchorBottom ^ config.reverseBarFill()) ? innerHeight - fillHeight : 0;
 		vialGraphics.fillRect(0, fillY, innerWidth, fillHeight);
 
 		vialGraphics.dispose();
@@ -1575,7 +1674,7 @@ abstract class VialOverlay extends Overlay
 			return;
 		}
 
-		drawOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, anchorBottom, percentage, regenHighlightColor(), regenOpacityFraction());
+		drawOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, anchorBottom ^ config.reverseRegenRing(), percentage, regenHighlightColor(), regenOpacityFraction());
 	}
 
 	/** Horizontal counterpart to drawVialRegenOutline() - grows along X instead of Y, mirroring drawVialHorizontal()'s anchorRight rule. */
@@ -1592,7 +1691,7 @@ abstract class VialOverlay extends Overlay
 			return;
 		}
 
-		drawOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, anchorRight, percentage, regenHighlightColor(), regenOpacityFraction());
+		drawOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, anchorRight ^ config.reverseRegenRing(), percentage, regenHighlightColor(), regenOpacityFraction());
 	}
 
 	/**
@@ -1617,7 +1716,7 @@ abstract class VialOverlay extends Overlay
 			return;
 		}
 
-		drawOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, anchorBottom, percentage, drainHighlightColor(), drainOpacityFraction());
+		drawOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, anchorBottom ^ config.reverseDrainRing(), percentage, drainHighlightColor(), drainOpacityFraction());
 	}
 
 	/** Horizontal counterpart to drawVialDrainOutline() - grows along X instead of Y, mirroring drawVialHorizontal()'s anchorRight rule. */
@@ -1634,7 +1733,7 @@ abstract class VialOverlay extends Overlay
 			return;
 		}
 
-		drawOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, anchorRight, percentage, drainHighlightColor(), drainOpacityFraction());
+		drawOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, anchorRight ^ config.reverseDrainRing(), percentage, drainHighlightColor(), drainOpacityFraction());
 	}
 
 	/** Shared clip-and-stroke primitive behind both drawVialRegenOutline() and drawVialDrainOutline() - only what's visually distinct (percentage, color, opacity) differs between the two. */
@@ -1689,7 +1788,7 @@ abstract class VialOverlay extends Overlay
 		double ratio = (double) current / max;
 		int fillLength = (int) Math.round(ratio * innerLength);
 		vialGraphics.setColor(fillColor());
-		int fillX = anchorRight ? innerLength - fillLength : 0;
+		int fillX = (anchorRight ^ config.reverseBarFill()) ? innerLength - fillLength : 0;
 		vialGraphics.fillRect(fillX, 0, fillLength, innerThickness);
 
 		vialGraphics.dispose();

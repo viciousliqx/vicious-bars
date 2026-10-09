@@ -77,6 +77,21 @@ public interface CompactOrbsConfig extends Config
 		EDIT_MODE
 	}
 
+	/** Per-bar threshold-glow mode - see the per-bar "Threshold mode" config items below. */
+	enum ThresholdMode
+	{
+		DISABLED,
+		ACTIVE,
+		COMBAT_ONLY
+	}
+
+	/** Per-bar threshold-glow direction - see the per-bar "Threshold direction" config items below. */
+	enum ThresholdDirection
+	{
+		AT_OR_ABOVE,
+		AT_OR_BELOW
+	}
+
 	// Each direction mounts the bar at a point offset from the orb icon's
 	// own center (the Orb/Vial horizontal + vertical offsets below - plain
 	// mountX/mountY added to iconCenterX/Y), then extends the bar outward
@@ -359,6 +374,42 @@ public interface CompactOrbsConfig extends Config
 		return 1;
 	}
 
+	@ConfigItem(
+		keyName = ConfigKeys.REVERSE_BAR_FILL,
+		name = "Reverse bar fill",
+		description = "Flips which end the vial fill empties from first - normally the near-icon end, with the remaining \"liquid\" receding toward the far end as the value drops.",
+		section = bar,
+		position = 10
+	)
+	default boolean reverseBarFill()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.REVERSE_REGEN_RING,
+		name = "Reverse regen ring",
+		description = "Flips which end the regen ring grows from, independently of the bar fill above.",
+		section = bar,
+		position = 11
+	)
+	default boolean reverseRegenRing()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.REVERSE_DRAIN_RING,
+		name = "Reverse drain ring",
+		description = "Flips which end the drain ring shrinks toward, independently of the bar fill and regen ring above.",
+		section = bar,
+		position = 12
+	)
+	default boolean reverseDrainRing()
+	{
+		return false;
+	}
+
 	@ConfigSection(
 		name = "Hitpoints",
 		description = "",
@@ -450,6 +501,55 @@ public interface CompactOrbsConfig extends Config
 		return new Color(220, 40, 40);
 	}
 
+	@ConfigItem(
+		keyName = ConfigKeys.HP_THRESHOLD_MODE,
+		name = "Threshold mode",
+		description = "Disabled: off. Active: the icon pulses once the threshold condition below is met. Combat only: same, but only while you're in combat.",
+		section = hpSection,
+		position = 7
+	)
+	default ThresholdMode hpThresholdMode()
+	{
+		return ThresholdMode.DISABLED;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.HP_THRESHOLD_DIRECTION,
+		name = "Threshold direction",
+		description = "At or below: warns when hitpoints drop too low (the usual case). At or above: warns when overhealed/too high instead (e.g. to avoid wasting an incoming heal).",
+		section = hpSection,
+		position = 8
+	)
+	default ThresholdDirection hpThresholdDirection()
+	{
+		return ThresholdDirection.AT_OR_BELOW;
+	}
+
+	@Range(min = 0, max = 100)
+	@ConfigItem(
+		keyName = ConfigKeys.HP_THRESHOLD,
+		name = "Threshold",
+		description = "Hitpoints percentage the icon pulses at, per Threshold direction above.",
+		section = hpSection,
+		position = 9
+	)
+	default int hpThreshold()
+	{
+		return 25;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.HP_THRESHOLD_COLOR,
+		name = "Threshold glow color",
+		description = "Color the icon pulses in once the threshold above is reached.",
+		section = hpSection,
+		position = 10
+	)
+	default Color hpThresholdColor()
+	{
+		return new Color(220, 30, 30, 160);
+	}
+
 	@ConfigSection(
 		name = "Prayer",
 		description = "",
@@ -517,6 +617,55 @@ public interface CompactOrbsConfig extends Config
 		return new Color(60, 170, 220);
 	}
 
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_THRESHOLD_MODE,
+		name = "Threshold mode",
+		description = "Disabled: off. Active: the icon pulses once the threshold condition below is met. Combat only: same, but only while you're in combat.",
+		section = prayerSection,
+		position = 5
+	)
+	default ThresholdMode prayerThresholdMode()
+	{
+		return ThresholdMode.DISABLED;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_THRESHOLD_DIRECTION,
+		name = "Threshold direction",
+		description = "At or below: warns when prayer points drop too low (the usual case). At or above: warns when too high instead.",
+		section = prayerSection,
+		position = 6
+	)
+	default ThresholdDirection prayerThresholdDirection()
+	{
+		return ThresholdDirection.AT_OR_BELOW;
+	}
+
+	@Range(min = 0, max = 100)
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_THRESHOLD,
+		name = "Threshold",
+		description = "Prayer points percentage the icon pulses at, per Threshold direction above.",
+		section = prayerSection,
+		position = 7
+	)
+	default int prayerThreshold()
+	{
+		return 25;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_THRESHOLD_COLOR,
+		name = "Threshold glow color",
+		description = "Color the icon pulses in once the threshold above is reached.",
+		section = prayerSection,
+		position = 8
+	)
+	default Color prayerThresholdColor()
+	{
+		return new Color(220, 30, 30, 160);
+	}
+
 	@ConfigSection(
 		name = "Special Attack",
 		description = "",
@@ -572,6 +721,55 @@ public interface CompactOrbsConfig extends Config
 		return new Color(220, 40, 180);
 	}
 
+	@ConfigItem(
+		keyName = ConfigKeys.SPEC_THRESHOLD_MODE,
+		name = "Threshold mode",
+		description = "Disabled: off. Active: the icon pulses once the threshold condition below is met. Combat only: same, but only while you're in combat.",
+		section = specSection,
+		position = 4
+	)
+	default ThresholdMode specThresholdMode()
+	{
+		return ThresholdMode.DISABLED;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.SPEC_THRESHOLD_DIRECTION,
+		name = "Threshold direction",
+		description = "At or above: \"ready to use\" alert once energy reaches the threshold (matches v1's original Spec threshold feature, and the usual case). At or below: warns when energy is too low instead.",
+		section = specSection,
+		position = 5
+	)
+	default ThresholdDirection specThresholdDirection()
+	{
+		return ThresholdDirection.AT_OR_ABOVE;
+	}
+
+	@Range(min = 0, max = 100)
+	@ConfigItem(
+		keyName = ConfigKeys.SPEC_THRESHOLD,
+		name = "Threshold",
+		description = "Special Attack energy percentage the icon pulses at, per Threshold direction above.",
+		section = specSection,
+		position = 6
+	)
+	default int specThreshold()
+	{
+		return 50;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.SPEC_THRESHOLD_COLOR,
+		name = "Threshold glow color",
+		description = "Color the icon pulses in once the threshold above is reached.",
+		section = specSection,
+		position = 7
+	)
+	default Color specThresholdColor()
+	{
+		return new Color(255, 215, 0, 160);
+	}
+
 	@ConfigSection(
 		name = "Run Energy",
 		description = "",
@@ -625,6 +823,55 @@ public interface CompactOrbsConfig extends Config
 	default Color runRegenColor()
 	{
 		return new Color(220, 160, 40);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_THRESHOLD_MODE,
+		name = "Threshold mode",
+		description = "Disabled: off. Active: the icon pulses once the threshold condition below is met. Combat only: same, but only while you're in combat.",
+		section = runSection,
+		position = 4
+	)
+	default ThresholdMode runThresholdMode()
+	{
+		return ThresholdMode.DISABLED;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_THRESHOLD_DIRECTION,
+		name = "Threshold direction",
+		description = "At or below: warns when run energy drops too low (the usual case). At or above: warns when too high instead.",
+		section = runSection,
+		position = 5
+	)
+	default ThresholdDirection runThresholdDirection()
+	{
+		return ThresholdDirection.AT_OR_BELOW;
+	}
+
+	@Range(min = 0, max = 100)
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_THRESHOLD,
+		name = "Threshold",
+		description = "Run energy percentage the icon pulses at, per Threshold direction above.",
+		section = runSection,
+		position = 6
+	)
+	default int runThreshold()
+	{
+		return 20;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_THRESHOLD_COLOR,
+		name = "Threshold glow color",
+		description = "Color the icon pulses in once the threshold above is reached.",
+		section = runSection,
+		position = 7
+	)
+	default Color runThresholdColor()
+	{
+		return new Color(220, 30, 30, 160);
 	}
 
 	@ConfigSection(

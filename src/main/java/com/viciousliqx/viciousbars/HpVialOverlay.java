@@ -1,6 +1,8 @@
 package com.viciousliqx.viciousbars;
 
 import com.compactorbs.CompactOrbsConfig;
+import com.compactorbs.CompactOrbsConfig.ThresholdDirection;
+import com.compactorbs.CompactOrbsConfig.ThresholdMode;
 import com.compactorbs.CompactOrbsManager;
 import com.compactorbs.widget.TargetWidget;
 import com.compactorbs.widget.WidgetManager;
@@ -110,5 +112,29 @@ class HpVialOverlay extends VialOverlay
 		// poison state, rather than its own independent slider - so the
 		// countdown reads as part of the poison state, not a separate choice.
 		return fillColor();
+	}
+
+	@Override
+	protected ThresholdMode thresholdMode()
+	{
+		return config.hpThresholdMode();
+	}
+
+	@Override
+	protected int thresholdValue()
+	{
+		return config.hpThreshold();
+	}
+
+	@Override
+	protected Color thresholdColor()
+	{
+		return config.hpThresholdColor();
+	}
+
+	@Override
+	protected boolean thresholdAbove()
+	{
+		return config.hpThresholdDirection() == ThresholdDirection.AT_OR_ABOVE;
 	}
 }

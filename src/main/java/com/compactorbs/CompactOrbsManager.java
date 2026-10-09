@@ -120,6 +120,12 @@ public class CompactOrbsManager
 	public boolean isLoggingIn;
 	public boolean isCutsceneActive;
 
+	// Written every game tick by ViciousBarsPlugin#onGameTick() off its own
+	// InteractingChanged tracking (with a lingering grace period after a
+	// fight ends, so this doesn't flicker off mid-fight) - read by every
+	// VialOverlay's threshold-glow check for ThresholdMode.COMBAT_ONLY.
+	public boolean inCombat;
+
 	// Written every game tick by ViciousBarsPlugin#onGameTick(), read by
 	// Hp/SpecVialOverlay to draw the frame-ring regen highlight - same
 	// plain-field-on-manager pattern as hideWorldMap/hideLogoutX above, not

@@ -97,6 +97,14 @@ public class CompactOrbsConstants
 		public static final String BAR_REGEN_OUTLINE_WIDTH = "barRegenOutlineWidth";
 		public static final String DRAIN_RING_DOMINANT = "drainRingDominant";
 
+		// Each of the three filling elements (main vial fill, regen ring,
+		// drain ring) normally empties/grows from the near-icon end first,
+		// per orientation (see drawVial()'s own javadoc) - these flip that
+		// per element, independently of each other and of orientation.
+		public static final String REVERSE_BAR_FILL = "reverseBarFill";
+		public static final String REVERSE_REGEN_RING = "reverseRegenRing";
+		public static final String REVERSE_DRAIN_RING = "reverseDrainRing";
+
 		// Per-bar regen-highlight toggles (Hitpoints/Prayer/Special
 		// Attack/Run Energy config sections).
 		public static final String HP_SHOW_REGEN = "hpShowRegen";
@@ -131,6 +139,28 @@ public class CompactOrbsConstants
 		public static final String PRAYER_REGEN_COLOR = "prayerRegenColor";
 		public static final String SPEC_REGEN_COLOR = "specRegenColor";
 		public static final String RUN_REGEN_COLOR = "runRegenColor";
+
+		// Per-bar threshold-glow settings, restored from v1 (see git log
+		// before the full-reset "gut pass") - v1 only ever had this for
+		// Spec, generalized to all four bars here. Direction is per-bar
+		// configurable (e.g. HP defaults to "running low" but can be
+		// flipped to warn when overhealed/too high instead).
+		public static final String HP_THRESHOLD_MODE = "hpThresholdMode";
+		public static final String HP_THRESHOLD_DIRECTION = "hpThresholdDirection";
+		public static final String HP_THRESHOLD = "hpThreshold";
+		public static final String HP_THRESHOLD_COLOR = "hpThresholdColor";
+		public static final String PRAYER_THRESHOLD_MODE = "prayerThresholdMode";
+		public static final String PRAYER_THRESHOLD_DIRECTION = "prayerThresholdDirection";
+		public static final String PRAYER_THRESHOLD = "prayerThreshold";
+		public static final String PRAYER_THRESHOLD_COLOR = "prayerThresholdColor";
+		public static final String SPEC_THRESHOLD_MODE = "specThresholdMode";
+		public static final String SPEC_THRESHOLD_DIRECTION = "specThresholdDirection";
+		public static final String SPEC_THRESHOLD = "specThreshold";
+		public static final String SPEC_THRESHOLD_COLOR = "specThresholdColor";
+		public static final String RUN_THRESHOLD_MODE = "runThresholdMode";
+		public static final String RUN_THRESHOLD_DIRECTION = "runThresholdDirection";
+		public static final String RUN_THRESHOLD = "runThreshold";
+		public static final String RUN_THRESHOLD_COLOR = "runThresholdColor";
 
 		// Real, permanent setting - not dev-only. Vertical vs horizontal,
 		// and (for horizontal) which side of the icon the bar docks to.

@@ -22,9 +22,12 @@ import com.compactorbs.widget.layout.edit.EditManager;
 import com.compactorbs.widget.layout.slot.SlotManager;
 import com.google.inject.Provides;
 import java.awt.event.KeyEvent;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Locale;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.ItemContainer;
@@ -39,6 +42,7 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.api.events.ClientTick;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.InteractingChanged;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.ScriptPostFired;
@@ -203,6 +207,18 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	// never falsely reads as a drain just because there's no prior value
 	// to compare against yet.
 	private int previousBoostedPrayer = -1;
+
+	// Combat tracking for the threshold-glow feature's COMBAT_ONLY mode -
+	// restored from v1's OpponentTracker (see git log before the
+	// full-reset "gut pass"), trimmed down to just the in-combat flag
+	// (v1 also tracked the opponent NPC specifically, for an Enemy
+	// Hitpoints bar this plugin doesn't have). Same lingering-after-combat
+	// pattern as RuneLite's own built-in OpponentInfo plugin: keep
+	// "in combat" true for a few seconds after interaction stops, so this
+	// doesn't flicker off mid-fight between hits.
+	private static final Duration COMBAT_LINGER = Duration.ofSeconds(5);
+	private Actor lastOpponentActor;
+	private Instant lastInteractionTime;
 
 	@Inject
 	private HpVialOverlay hpVialOverlay;
@@ -450,6 +466,8 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 			ticksSincePrayerDrainTick = 0;
 			measuredPrayerDrainTicksPerPoint = -1;
 			previousBoostedPrayer = -1;
+			lastOpponentActor = null;
+			lastInteractionTime = null;
 		}
 		else if (manager.isLoggedIn() && manager.isLoggingIn)
 		{
@@ -642,8 +660,28 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	}
 
 	@Subscribe
+	public void onInteractingChanged(InteractingChanged event)
+	{
+		if (event.getSource() != client.getLocalPlayer())
+		{
+			return;
+		}
+
+		lastOpponentActor = event.getTarget();
+		lastInteractionTime = Instant.now();
+	}
+
+	@Subscribe
 	public void onGameTick(GameTick event)
 	{
+		if (lastOpponentActor != null
+			&& client.getLocalPlayer().getInteracting() == null
+			&& Duration.between(lastInteractionTime, Instant.now()).compareTo(COMBAT_LINGER) > 0)
+		{
+			lastOpponentActor = null;
+		}
+		manager.inCombat = lastOpponentActor != null;
+
 		int specRegenTicks = wearingLightbearer ? SPEC_REGEN_TICKS / 2 : SPEC_REGEN_TICKS;
 
 		if (client.getVarpValue(VarPlayerID.SA_ENERGY) == 1000)

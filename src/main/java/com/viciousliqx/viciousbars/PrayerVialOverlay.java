@@ -1,6 +1,8 @@
 package com.viciousliqx.viciousbars;
 
 import com.compactorbs.CompactOrbsConfig;
+import com.compactorbs.CompactOrbsConfig.ThresholdDirection;
+import com.compactorbs.CompactOrbsConfig.ThresholdMode;
 import com.compactorbs.CompactOrbsManager;
 import com.compactorbs.widget.TargetWidget;
 import com.compactorbs.widget.WidgetManager;
@@ -106,5 +108,29 @@ class PrayerVialOverlay extends VialOverlay
 		// prayerActiveColor() in practice - using fillColor() directly
 		// keeps it automatically consistent rather than a redundant slider.
 		return fillColor();
+	}
+
+	@Override
+	protected ThresholdMode thresholdMode()
+	{
+		return config.prayerThresholdMode();
+	}
+
+	@Override
+	protected int thresholdValue()
+	{
+		return config.prayerThreshold();
+	}
+
+	@Override
+	protected Color thresholdColor()
+	{
+		return config.prayerThresholdColor();
+	}
+
+	@Override
+	protected boolean thresholdAbove()
+	{
+		return config.prayerThresholdDirection() == ThresholdDirection.AT_OR_ABOVE;
 	}
 }

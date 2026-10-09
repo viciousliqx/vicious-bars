@@ -1,6 +1,8 @@
 package com.viciousliqx.viciousbars;
 
 import com.compactorbs.CompactOrbsConfig;
+import com.compactorbs.CompactOrbsConfig.ThresholdDirection;
+import com.compactorbs.CompactOrbsConfig.ThresholdMode;
 import com.compactorbs.CompactOrbsManager;
 import com.compactorbs.widget.TargetWidget;
 import com.compactorbs.widget.WidgetManager;
@@ -80,5 +82,29 @@ class RunVialOverlay extends VialOverlay
 	protected Color regenHighlightColor()
 	{
 		return config.runRegenColor();
+	}
+
+	@Override
+	protected ThresholdMode thresholdMode()
+	{
+		return config.runThresholdMode();
+	}
+
+	@Override
+	protected int thresholdValue()
+	{
+		return config.runThreshold();
+	}
+
+	@Override
+	protected Color thresholdColor()
+	{
+		return config.runThresholdColor();
+	}
+
+	@Override
+	protected boolean thresholdAbove()
+	{
+		return config.runThresholdDirection() == ThresholdDirection.AT_OR_ABOVE;
 	}
 }
