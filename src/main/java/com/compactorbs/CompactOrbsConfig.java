@@ -334,13 +334,25 @@ public interface CompactOrbsConfig extends Config
 		return 100;
 	}
 
+	@ConfigItem(
+		keyName = ConfigKeys.DRAIN_RING_DOMINANT,
+		name = "Drain ring takes precedence",
+		description = "When a bar has both a regen ring and a drain ring showing at once, the drain ring is drawn on top (and reads more opaque) by default. Turn off to have the regen ring take precedence instead.",
+		section = bar,
+		position = 8
+	)
+	default boolean drainRingDominant()
+	{
+		return true;
+	}
+
 	@Range(min = 1, max = 10)
 	@ConfigItem(
 		keyName = ConfigKeys.BAR_REGEN_OUTLINE_WIDTH,
 		name = "Regen outline width",
 		description = "Thickness of the regen-progress outline traced along the inside of the vial cavity.",
 		section = bar,
-		position = 8
+		position = 9
 	)
 	default int barRegenOutlineWidth()
 	{
@@ -367,11 +379,23 @@ public interface CompactOrbsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = ConfigKeys.HP_SHOW_DRAIN,
+		name = "Show drain",
+		description = "Highlight the frame ring while poisoned or envenomed, counting down to the next damage tick - starts full right after a hit and drains to empty right before the next one, the inverse of the regen ring above.",
+		section = hpSection,
+		position = 1
+	)
+	default boolean hpShowDrain()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = ConfigKeys.HP_NORMAL_COLOR,
 		name = "Normal color",
 		description = "Bar color while healthy.",
 		section = hpSection,
-		position = 1
+		position = 2
 	)
 	default Color hpNormalColor()
 	{
@@ -383,7 +407,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Poisoned color",
 		description = "Bar color while poisoned.",
 		section = hpSection,
-		position = 2
+		position = 3
 	)
 	default Color hpPoisonedColor()
 	{
@@ -395,7 +419,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Envenomed color",
 		description = "Bar color while envenomed (lethal poison - won't naturally wear off).",
 		section = hpSection,
-		position = 3
+		position = 4
 	)
 	default Color hpEnvenomedColor()
 	{
@@ -407,7 +431,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Diseased color",
 		description = "Bar color while diseased.",
 		section = hpSection,
-		position = 4
+		position = 5
 	)
 	default Color hpDiseasedColor()
 	{
@@ -417,9 +441,9 @@ public interface CompactOrbsConfig extends Config
 	@ConfigItem(
 		keyName = ConfigKeys.HP_REGEN_COLOR,
 		name = "Regen ring color",
-		description = "Regen outline color while Normal or Diseased. While Poisoned/Envenomed the ring switches to match that state's own bar color above instead, so it reads as part of the poison countdown.",
+		description = "Regen outline color, growing toward the next hitpoint regenerated. Independent of the drain ring below, which has its own color (locked to the Poisoned/Envenomed color above) and its own toggle.",
 		section = hpSection,
-		position = 5
+		position = 6
 	)
 	default Color hpRegenColor()
 	{
@@ -446,11 +470,23 @@ public interface CompactOrbsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_SHOW_DRAIN,
+		name = "Show drain",
+		description = "Highlight the frame ring while any prayer is active, counting down to the next prayer point drained - starts full right after a point drains and empties right before the next one, the inverse of the regen ring above. Paces itself off the real gap between your last two point losses rather than a formula, so it takes one point loss after activating a prayer (or changing gear) to start showing.",
+		section = prayerSection,
+		position = 1
+	)
+	default boolean prayerShowDrain()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = ConfigKeys.PRAYER_ACTIVE_COLOR,
 		name = "Active color",
 		description = "Bar color while any prayer is active.",
 		section = prayerSection,
-		position = 1
+		position = 2
 	)
 	default Color prayerActiveColor()
 	{
@@ -462,7 +498,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Inactive color",
 		description = "Bar color while no prayer is active.",
 		section = prayerSection,
-		position = 2
+		position = 3
 	)
 	default Color prayerInactiveColor()
 	{
@@ -474,7 +510,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Regen ring color",
 		description = "Regen outline color while a Prayer regeneration potion's effect is active.",
 		section = prayerSection,
-		position = 3
+		position = 4
 	)
 	default Color prayerRegenColor()
 	{

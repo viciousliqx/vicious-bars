@@ -167,9 +167,11 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	// next. We track ticks instead, same as every other counter here, and
 	// use the wiki's 30-tick figure that 18.2s is rounded up from for
 	// display safety - onGameTick() below writes the inverted progress
-	// (1 - fraction) into manager.hpRegenPercentage while poisoned, so the
-	// ring starts full right after a hit and drains to empty right before
-	// the next one, the mirror image of normal regen's empty-to-full growth.
+	// (1 - fraction) into manager.hpDrainPercentage while poisoned (null
+	// otherwise), a separate field from hpRegenPercentage since the two
+	// ring off completely independent schedules - see HpVialOverlay's
+	// drain trio and VialOverlay's drawVialOutlines() for how the two
+	// rings combine on screen.
 	// Deliberately clamped rather than wrapped at POISON_TICK_TICKS (unlike
 	// HP/Spec's modulo counters above) - confirmed live that the real
 	// interval isn't a clean 30 ticks, so wrapping on our own count
@@ -177,6 +179,30 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	// event; only that real event (onVarbitChanged below) should refill it.
 	private static final int POISON_TICK_TICKS = 30;
 	private int ticksSincePoisonTick;
+
+	// Prayer point drain countdown. Originally tried porting the real OSRS
+	// drain-rate formula (https://oldschool.runescape.wiki/w/Prayer#Prayer_drain_mechanics,
+	// cross-checked against RuneLite's own core Prayer plugin's
+	// getEstimatedTimeRemaining()) to predict ticks-per-point, but
+	// confirmed live that formula runs noticeably faster than the real
+	// drain (~1.5x on Piety) - not just an off-by-one like poison, a real
+	// pacing error somewhere between the wiki's numbers and the live
+	// client, not worth chasing blind. So instead of trusting any formula,
+	// this measures the real tick gap between the player's last two actual
+	// point losses (previousBoostedPrayer dropping) and paces the ring off
+	// THAT - self-calibrating to whatever the real current rate is (gear,
+	// active prayers, whatever) rather than predicting it. No ring shows
+	// until a second real point loss gives an actual interval to calibrate
+	// to; clamped rather than wrapped once paced (same reasoning as poison
+	// - only a real loss should refill it). PrayerVialOverlay inverts this
+	// the same way HpVialOverlay does for poison: full right after a point
+	// drains, empty right before the next one.
+	private int ticksSincePrayerDrainTick;
+	private double measuredPrayerDrainTicksPerPoint = -1;
+	// -1 sentinel so the very first tick (including right after a relog)
+	// never falsely reads as a drain just because there's no prior value
+	// to compare against yet.
+	private int previousBoostedPrayer = -1;
 
 	@Inject
 	private HpVialOverlay hpVialOverlay;
@@ -421,6 +447,9 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 			ticksSincePrayerRegen = 0;
 			prayerRegenActive = false;
 			ticksSincePoisonTick = 0;
+			ticksSincePrayerDrainTick = 0;
+			measuredPrayerDrainTicksPerPoint = -1;
+			previousBoostedPrayer = -1;
 		}
 		else if (manager.isLoggedIn() && manager.isLoggingIn)
 		{
@@ -658,11 +687,56 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 			// splat/VarbitChanged event lands. Holding at empty instead
 			// means the ring only ever refills off the real event above.
 			ticksSincePoisonTick = Math.min(ticksSincePoisonTick + 1, POISON_TICK_TICKS);
-			manager.hpRegenPercentage = 1 - (ticksSincePoisonTick / (double) POISON_TICK_TICKS);
+			manager.hpDrainPercentage = 1 - (ticksSincePoisonTick / (double) POISON_TICK_TICKS);
+		}
+		else
+		{
+			manager.hpDrainPercentage = null;
+		}
+
+		boolean anyPrayerActive = false;
+		for (Prayer prayer : Prayer.values())
+		{
+			if (client.isPrayerActive(prayer))
+			{
+				anyPrayerActive = true;
+				break;
+			}
 		}
 
 		int boostedPrayer = client.getBoostedSkillLevel(Skill.PRAYER);
 		int realPrayer = client.getRealSkillLevel(Skill.PRAYER);
+
+		boolean justLostPrayerPoint = previousBoostedPrayer >= 0 && boostedPrayer < previousBoostedPrayer;
+		if (justLostPrayerPoint)
+		{
+			if (ticksSincePrayerDrainTick > 0)
+			{
+				measuredPrayerDrainTicksPerPoint = ticksSincePrayerDrainTick;
+			}
+			ticksSincePrayerDrainTick = 0;
+		}
+		previousBoostedPrayer = boostedPrayer;
+
+		if (anyPrayerActive)
+		{
+			if (!justLostPrayerPoint)
+			{
+				// Don't also advance on the same tick as a reset - keeps
+				// the reset tick reading as a clean, literal full ring
+				// rather than one tick's worth into the next cycle already.
+				ticksSincePrayerDrainTick++;
+			}
+
+			manager.prayerDrainPercentage = measuredPrayerDrainTicksPerPoint > 0
+				? 1 - Math.min(1.0, ticksSincePrayerDrainTick / measuredPrayerDrainTicksPerPoint)
+				: null;
+		}
+		else
+		{
+			ticksSincePrayerDrainTick = 0;
+			manager.prayerDrainPercentage = null;
+		}
 
 		if (!prayerRegenActive || boostedPrayer >= realPrayer)
 		{

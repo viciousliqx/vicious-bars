@@ -129,6 +129,20 @@ public class CompactOrbsManager
 	public double prayerRegenPercentage;
 	public double specRegenPercentage;
 
+	// Separate from hpRegenPercentage above - HP can be gaining and losing
+	// value on completely independent schedules (its own hitpoint regen
+	// tick vs a poison/envenom damage tick), so this needs its own field
+	// rather than overloading the regen one. Null (not just 0) while
+	// nothing's currently draining, since HpVialOverlay's drain ring should
+	// be fully absent then, not just invisible at 0% progress.
+	public Double hpDrainPercentage;
+
+	// Same reasoning as hpDrainPercentage above - Prayer's own passive
+	// drain-while-active mechanic runs on a completely different cadence
+	// than prayerRegenPercentage's potion-driven restore, so it needs its
+	// own field too. Null while no prayer is active (nothing draining).
+	public Double prayerDrainPercentage;
+
 	public Widget compassFrame;
 	public Widget minimapButton;
 	private final Map<TargetWidget, Widget> noClickThroughChildren = new HashMap<>();

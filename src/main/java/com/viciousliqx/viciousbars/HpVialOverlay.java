@@ -85,16 +85,30 @@ class HpVialOverlay extends VialOverlay
 	@Override
 	protected Color regenHighlightColor()
 	{
-		// Poisoned/envenomed hijack the ring to match whatever color the
-		// fill itself is using for that state, instead of the independent
-		// regen-ring color - so the countdown reads as part of the poison
-		// state rather than a separate choice. Diseased is left alone
-		// (regenPercentage() doesn't special-case it either) until its own
-		// mechanics are confirmed in-game.
-		if (client.getVarpValue(VarPlayerID.POISON) > 0)
-		{
-			return fillColor();
-		}
 		return config.hpRegenColor();
+	}
+
+	@Override
+	protected Double drainPercentage()
+	{
+		// Only poisoned/envenomed have a drain to show - diseased is left
+		// on regenPercentage()/regenHighlightColor() (unmodified HP regen)
+		// until disease's own mechanics are confirmed in-game.
+		return manager.hpDrainPercentage;
+	}
+
+	@Override
+	protected boolean drainEnabled()
+	{
+		return config.hpShowDrain();
+	}
+
+	@Override
+	protected Color drainHighlightColor()
+	{
+		// Locked to whatever color the fill itself is using for the current
+		// poison state, rather than its own independent slider - so the
+		// countdown reads as part of the poison state, not a separate choice.
+		return fillColor();
 	}
 }

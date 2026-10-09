@@ -95,11 +95,14 @@ public class CompactOrbsConstants
 		public static final String BAR_OPACITY = "barOpacity";
 		public static final String BAR_FRAME_OPACITY = "barFrameOpacity";
 		public static final String BAR_REGEN_OUTLINE_WIDTH = "barRegenOutlineWidth";
+		public static final String DRAIN_RING_DOMINANT = "drainRingDominant";
 
 		// Per-bar regen-highlight toggles (Hitpoints/Prayer/Special
 		// Attack/Run Energy config sections).
 		public static final String HP_SHOW_REGEN = "hpShowRegen";
+		public static final String HP_SHOW_DRAIN = "hpShowDrain";
 		public static final String PRAYER_SHOW_REGEN = "prayerShowRegen";
+		public static final String PRAYER_SHOW_DRAIN = "prayerShowDrain";
 		public static final String SPEC_SHOW_REGEN = "specShowRegen";
 		public static final String RUN_SHOW_REGEN = "runShowRegen";
 

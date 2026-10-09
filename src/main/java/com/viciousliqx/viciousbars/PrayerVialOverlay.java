@@ -85,4 +85,26 @@ class PrayerVialOverlay extends VialOverlay
 	{
 		return config.prayerRegenColor();
 	}
+
+	@Override
+	protected Double drainPercentage()
+	{
+		return manager.prayerDrainPercentage;
+	}
+
+	@Override
+	protected boolean drainEnabled()
+	{
+		return config.prayerShowDrain();
+	}
+
+	@Override
+	protected Color drainHighlightColor()
+	{
+		// Drain only ever runs while active (isActive() must be true for
+		// drainPercentage() to be non-null), so this is always
+		// prayerActiveColor() in practice - using fillColor() directly
+		// keeps it automatically consistent rather than a redundant slider.
+		return fillColor();
+	}
 }

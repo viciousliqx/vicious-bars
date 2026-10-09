@@ -314,6 +314,34 @@ abstract class VialOverlay extends Overlay
 		return fillColor().brighter();
 	}
 
+	/**
+	 * Progress (1.0-0.0) until this bar's next expected drain tick, or null
+	 * if nothing's currently draining - the mirror image of
+	 * regenPercentage(): starts full right after a drain and counts DOWN to
+	 * empty right before the next one, instead of growing up from empty.
+	 * Genuinely separate from regen rather than a shared field, since a bar
+	 * can gain and lose value on completely independent schedules (HP's
+	 * poison/envenom tick vs its own hitpoint regen tick) - drawn as its own
+	 * outline (drawVialDrainOutline()/drawVialDrainOutlineHorizontal()),
+	 * overlaid on the regen ring per drainTakesPrecedence().
+	 */
+	protected Double drainPercentage()
+	{
+		return null;
+	}
+
+	/** Per-bar config toggle for the drain highlight - default off until a bar opts in. */
+	protected boolean drainEnabled()
+	{
+		return false;
+	}
+
+	/** Highlight color for the drain progress fill - defaults to a brighter version of the bar's own fill color, same fallback as regenHighlightColor(). */
+	protected Color drainHighlightColor()
+	{
+		return fillColor().brighter();
+	}
+
 	@Override
 	public final Dimension render(Graphics2D graphics)
 	{
@@ -458,7 +486,7 @@ abstract class VialOverlay extends Overlay
 
 		drawFrame(graphics, width, height, frameWidth, innerWidth, innerHeight, innerArc);
 		drawVial(graphics, frameWidth, innerWidth, innerHeight, innerArc, current, max, true);
-		drawVialRegenOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, true);
+		drawVialOutlines(graphics, frameWidth, innerWidth, innerHeight, innerArc, true);
 
 		drawRotatedSouthBacking(absoluteGraphics, icon, client.getWidget(orbContainer().getBackingId()), iconCenterX, iconCenterY);
 		absoluteGraphics.dispose();
@@ -517,7 +545,7 @@ abstract class VialOverlay extends Overlay
 
 		drawFrame(graphics, length, thickness, frameWidth, innerLength, innerThickness, innerArc);
 		drawVialHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, current, max, false);
-		drawVialRegenOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, false);
+		drawVialOutlinesHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, false);
 
 		return new Dimension(length, thickness);
 	}
@@ -582,7 +610,7 @@ abstract class VialOverlay extends Overlay
 
 		drawFrame(graphics, length, thickness, frameWidth, innerLength, innerThickness, innerArc);
 		drawVialHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, current, max, true);
-		drawVialRegenOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, true);
+		drawVialOutlinesHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, true);
 
 		if (drawingFlippedCollar)
 		{
@@ -653,7 +681,7 @@ abstract class VialOverlay extends Overlay
 
 		drawFrame(graphics, thickness, length, frameWidth, innerWidth, innerHeight, innerArc);
 		drawVial(graphics, frameWidth, innerWidth, innerHeight, innerArc, current, max, false);
-		drawVialRegenOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, false);
+		drawVialOutlines(graphics, frameWidth, innerWidth, innerHeight, innerArc, false);
 
 		if (drawingRotatedCollar)
 		{
@@ -695,6 +723,12 @@ abstract class VialOverlay extends Overlay
 	private float regenOpacityFraction()
 	{
 		return Math.min(100, config.barOpacity() + 30) / 100f;
+	}
+
+	/** The drain outline reads even more opaque than regen's own boost - it's meant to read as the dominant ring whenever both are visible together. */
+	private float drainOpacityFraction()
+	{
+		return Math.min(100, config.barOpacity() + 50) / 100f;
 	}
 
 	/**
@@ -1485,15 +1519,48 @@ abstract class VialOverlay extends Overlay
 	}
 
 	/**
+	 * Draws both the regen and drain outlines in whichever order makes the
+	 * dominant one land on top - called from all four orientations instead
+	 * of each one invoking the two outlines separately.
+	 */
+	private void drawVialOutlines(Graphics2D graphics, int frameWidth, int innerWidth, int innerHeight, int innerArc, boolean anchorBottom)
+	{
+		if (config.drainRingDominant())
+		{
+			drawVialRegenOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, anchorBottom);
+			drawVialDrainOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, anchorBottom);
+		}
+		else
+		{
+			drawVialDrainOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, anchorBottom);
+			drawVialRegenOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, anchorBottom);
+		}
+	}
+
+	/** Horizontal counterpart to drawVialOutlines(). */
+	private void drawVialOutlinesHorizontal(Graphics2D graphics, int frameWidth, int innerLength, int innerThickness, int innerArc, boolean anchorRight)
+	{
+		if (config.drainRingDominant())
+		{
+			drawVialRegenOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, anchorRight);
+			drawVialDrainOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, anchorRight);
+		}
+		else
+		{
+			drawVialDrainOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, anchorRight);
+			drawVialRegenOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, anchorRight);
+		}
+	}
+
+	/**
 	 * Regen-progress outline traced along the INSIDE of the vial cavity
 	 * (not the frame ring - that was tried and dropped, read as a
 	 * progression meter worse than this) - a thin stroke hugging the inner
 	 * rounded-rect's own boundary, revealed only up to the current
 	 * percentage, growing from the near-icon end first exactly like
 	 * drawVial()'s own anchorBottom rule, so it tracks the same direction
-	 * the vial itself fills. Reads 30 percentage points more opaque than
-	 * the bar itself (regenOpacityFraction()). No-op whenever this bar has
-	 * regen disabled or nothing to report (regenPercentage() == null).
+	 * the vial itself fills. No-op whenever this bar has regen disabled or
+	 * nothing to report (regenPercentage() == null).
 	 */
 	private void drawVialRegenOutline(Graphics2D graphics, int frameWidth, int innerWidth, int innerHeight, int innerArc, boolean anchorBottom)
 	{
@@ -1508,17 +1575,7 @@ abstract class VialOverlay extends Overlay
 			return;
 		}
 
-		int growthHeight = (int) Math.round(percentage * innerHeight);
-		int growthY = anchorBottom ? innerHeight - growthHeight : 0;
-
-		Graphics2D outlineGraphics = (Graphics2D) graphics.create();
-		outlineGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, regenOpacityFraction()));
-		outlineGraphics.translate(frameWidth, frameWidth);
-		outlineGraphics.clip(new Rectangle(0, growthY, innerWidth, growthHeight));
-		outlineGraphics.setColor(regenHighlightColor());
-		outlineGraphics.setStroke(new BasicStroke(Math.max(1, config.barRegenOutlineWidth())));
-		outlineGraphics.draw(new RoundRectangle2D.Float(0, 0, innerWidth - 1, innerHeight - 1, innerArc, innerArc));
-		outlineGraphics.dispose();
+		drawOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, anchorBottom, percentage, regenHighlightColor(), regenOpacityFraction());
 	}
 
 	/** Horizontal counterpart to drawVialRegenOutline() - grows along X instead of Y, mirroring drawVialHorizontal()'s anchorRight rule. */
@@ -1535,14 +1592,78 @@ abstract class VialOverlay extends Overlay
 			return;
 		}
 
+		drawOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, anchorRight, percentage, regenHighlightColor(), regenOpacityFraction());
+	}
+
+	/**
+	 * Drain-progress outline - the mirror image of the regen outline: starts
+	 * at full coverage and shrinks back toward the near-icon end as
+	 * drainPercentage() counts down, instead of growing from it. Drawn
+	 * identically to the regen outline otherwise (see drawOutline()); which
+	 * one lands on top when both are visible is decided by
+	 * drawVialOutlines(), not here. No-op whenever this bar has drain
+	 * disabled or nothing to report (drainPercentage() == null).
+	 */
+	private void drawVialDrainOutline(Graphics2D graphics, int frameWidth, int innerWidth, int innerHeight, int innerArc, boolean anchorBottom)
+	{
+		if (!drainEnabled())
+		{
+			return;
+		}
+
+		Double percentage = drainPercentage();
+		if (percentage == null)
+		{
+			return;
+		}
+
+		drawOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, anchorBottom, percentage, drainHighlightColor(), drainOpacityFraction());
+	}
+
+	/** Horizontal counterpart to drawVialDrainOutline() - grows along X instead of Y, mirroring drawVialHorizontal()'s anchorRight rule. */
+	private void drawVialDrainOutlineHorizontal(Graphics2D graphics, int frameWidth, int innerLength, int innerThickness, int innerArc, boolean anchorRight)
+	{
+		if (!drainEnabled())
+		{
+			return;
+		}
+
+		Double percentage = drainPercentage();
+		if (percentage == null)
+		{
+			return;
+		}
+
+		drawOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, anchorRight, percentage, drainHighlightColor(), drainOpacityFraction());
+	}
+
+	/** Shared clip-and-stroke primitive behind both drawVialRegenOutline() and drawVialDrainOutline() - only what's visually distinct (percentage, color, opacity) differs between the two. */
+	private void drawOutline(Graphics2D graphics, int frameWidth, int innerWidth, int innerHeight, int innerArc, boolean anchorBottom, double percentage, Color color, float opacityFraction)
+	{
+		int growthHeight = (int) Math.round(percentage * innerHeight);
+		int growthY = anchorBottom ? innerHeight - growthHeight : 0;
+
+		Graphics2D outlineGraphics = (Graphics2D) graphics.create();
+		outlineGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, opacityFraction));
+		outlineGraphics.translate(frameWidth, frameWidth);
+		outlineGraphics.clip(new Rectangle(0, growthY, innerWidth, growthHeight));
+		outlineGraphics.setColor(color);
+		outlineGraphics.setStroke(new BasicStroke(Math.max(1, config.barRegenOutlineWidth())));
+		outlineGraphics.draw(new RoundRectangle2D.Float(0, 0, innerWidth - 1, innerHeight - 1, innerArc, innerArc));
+		outlineGraphics.dispose();
+	}
+
+	/** Horizontal counterpart to drawOutline() - grows along X instead of Y. */
+	private void drawOutlineHorizontal(Graphics2D graphics, int frameWidth, int innerLength, int innerThickness, int innerArc, boolean anchorRight, double percentage, Color color, float opacityFraction)
+	{
 		int growthLength = (int) Math.round(percentage * innerLength);
 		int growthX = anchorRight ? innerLength - growthLength : 0;
 
 		Graphics2D outlineGraphics = (Graphics2D) graphics.create();
-		outlineGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, regenOpacityFraction()));
+		outlineGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, opacityFraction));
 		outlineGraphics.translate(frameWidth, frameWidth);
 		outlineGraphics.clip(new Rectangle(growthX, 0, growthLength, innerThickness));
-		outlineGraphics.setColor(regenHighlightColor());
+		outlineGraphics.setColor(color);
 		outlineGraphics.setStroke(new BasicStroke(Math.max(1, config.barRegenOutlineWidth())));
 		outlineGraphics.draw(new RoundRectangle2D.Float(0, 0, innerLength - 1, innerThickness - 1, innerArc, innerArc));
 		outlineGraphics.dispose();
