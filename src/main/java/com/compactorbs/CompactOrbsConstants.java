@@ -85,25 +85,69 @@ public class CompactOrbsConstants
 		public static final String HIDE_GRID = "hideGrid";
 
 		// Vicious Bars' own, new to this plugin (not inherited from Compact
-		// Orbs). BAR_WIDTH is temporary - it's here purely so the width can
-		// be dialed in live in-game instead of guessed blind through code
-		// changes; once settled it gets hardcoded and this key removed, the
-		// same way ORB_LAYOUT/ENABLE_NO_CLICKTHROUGH already were. BAR_LENGTH
-		// is meant to stay as a real, permanent user-facing setting.
-		public static final String BAR_WIDTH = "barWidth";
-		public static final String BAR_LENGTH = "barLength";
-		public static final String BAR_OPACITY = "barOpacity";
-		public static final String BAR_FRAME_OPACITY = "barFrameOpacity";
-		public static final String BAR_REGEN_OUTLINE_WIDTH = "barRegenOutlineWidth";
-		public static final String DRAIN_RING_DOMINANT = "drainRingDominant";
+		// Orbs). Every one of these was originally a single Global Bar
+		// Config setting shared across all four main bars (same era as
+		// orientation() - see git log) - promoted to fully independent
+		// per-bar settings, one key per bar, each bar's own default
+		// matching what the old shared setting used to default to.
+		public static final String HP_LENGTH = "hpLength";
+		public static final String PRAYER_LENGTH = "prayerLength";
+		public static final String SPEC_LENGTH = "specLength";
+		public static final String RUN_LENGTH = "runLength";
+		public static final String HP_WIDTH = "hpWidth";
+		public static final String PRAYER_WIDTH = "prayerWidth";
+		public static final String SPEC_WIDTH = "specWidth";
+		public static final String RUN_WIDTH = "runWidth";
+		public static final String HP_HORIZONTAL_OFFSET = "hpHorizontalOffset";
+		public static final String PRAYER_HORIZONTAL_OFFSET = "prayerHorizontalOffset";
+		public static final String SPEC_HORIZONTAL_OFFSET = "specHorizontalOffset";
+		public static final String RUN_HORIZONTAL_OFFSET = "runHorizontalOffset";
+		public static final String HP_VERTICAL_OFFSET = "hpVerticalOffset";
+		public static final String PRAYER_VERTICAL_OFFSET = "prayerVerticalOffset";
+		public static final String SPEC_VERTICAL_OFFSET = "specVerticalOffset";
+		public static final String RUN_VERTICAL_OFFSET = "runVerticalOffset";
+		public static final String HP_FRAME_THICKNESS = "hpFrameThickness";
+		public static final String PRAYER_FRAME_THICKNESS = "prayerFrameThickness";
+		public static final String SPEC_FRAME_THICKNESS = "specFrameThickness";
+		public static final String RUN_FRAME_THICKNESS = "runFrameThickness";
+		public static final String HP_FRAME_SHADOW_WIDTH = "hpFrameShadowWidth";
+		public static final String PRAYER_FRAME_SHADOW_WIDTH = "prayerFrameShadowWidth";
+		public static final String SPEC_FRAME_SHADOW_WIDTH = "specFrameShadowWidth";
+		public static final String RUN_FRAME_SHADOW_WIDTH = "runFrameShadowWidth";
+		public static final String HP_BAR_OPACITY = "hpBarOpacity";
+		public static final String PRAYER_BAR_OPACITY = "prayerBarOpacity";
+		public static final String SPEC_BAR_OPACITY = "specBarOpacity";
+		public static final String RUN_BAR_OPACITY = "runBarOpacity";
+		public static final String HP_FRAME_OPACITY = "hpFrameOpacity";
+		public static final String PRAYER_FRAME_OPACITY = "prayerFrameOpacity";
+		public static final String SPEC_FRAME_OPACITY = "specFrameOpacity";
+		public static final String RUN_FRAME_OPACITY = "runFrameOpacity";
+		public static final String HP_REGEN_DRAIN_PRIORITY = "hpRegenDrainPriority";
+		public static final String PRAYER_REGEN_DRAIN_PRIORITY = "prayerRegenDrainPriority";
+		public static final String SPEC_REGEN_DRAIN_PRIORITY = "specRegenDrainPriority";
+		public static final String RUN_REGEN_DRAIN_PRIORITY = "runRegenDrainPriority";
+		public static final String HP_REGEN_DRAIN_RING_SIZE = "hpRegenDrainRingSize";
+		public static final String PRAYER_REGEN_DRAIN_RING_SIZE = "prayerRegenDrainRingSize";
+		public static final String SPEC_REGEN_DRAIN_RING_SIZE = "specRegenDrainRingSize";
+		public static final String RUN_REGEN_DRAIN_RING_SIZE = "runRegenDrainRingSize";
 
 		// Each of the three filling elements (main vial fill, regen ring,
 		// drain ring) normally empties/grows from the near-icon end first,
 		// per orientation (see drawVial()'s own javadoc) - these flip that
-		// per element, independently of each other and of orientation.
-		public static final String REVERSE_BAR_FILL = "reverseBarFill";
-		public static final String REVERSE_REGEN_RING = "reverseRegenRing";
-		public static final String REVERSE_DRAIN_RING = "reverseDrainRing";
+		// per element, independently of each other, of orientation, and
+		// (now) of the other main bars.
+		public static final String HP_REVERSE_BAR_FILL = "hpReverseBarFill";
+		public static final String PRAYER_REVERSE_BAR_FILL = "prayerReverseBarFill";
+		public static final String SPEC_REVERSE_BAR_FILL = "specReverseBarFill";
+		public static final String RUN_REVERSE_BAR_FILL = "runReverseBarFill";
+		public static final String HP_REVERSE_REGEN_RING = "hpReverseRegenRing";
+		public static final String PRAYER_REVERSE_REGEN_RING = "prayerReverseRegenRing";
+		public static final String SPEC_REVERSE_REGEN_RING = "specReverseRegenRing";
+		public static final String RUN_REVERSE_REGEN_RING = "runReverseRegenRing";
+		public static final String HP_REVERSE_DRAIN_RING = "hpReverseDrainRing";
+		public static final String PRAYER_REVERSE_DRAIN_RING = "prayerReverseDrainRing";
+		public static final String SPEC_REVERSE_DRAIN_RING = "specReverseDrainRing";
+		public static final String RUN_REVERSE_DRAIN_RING = "runReverseDrainRing";
 
 		// Per-bar regen-highlight toggles (Hitpoints/Prayer/Special
 		// Attack/Run Energy config sections).
@@ -162,26 +206,211 @@ public class CompactOrbsConstants
 		public static final String RUN_THRESHOLD = "runThreshold";
 		public static final String RUN_THRESHOLD_COLOR = "runThresholdColor";
 
+		// Per-main-bar coupling with that bar's own aux counterpart - see
+		// the Aux Bars keys below. Default on: when main-bars mode is
+		// active, the matching aux bar auto-hides; turn off to run both at
+		// once for that particular bar.
+		public static final String HP_HIDE_AUX_WHEN_MAIN_SHOWN = "hpHideAuxWhenMainShown";
+		public static final String PRAYER_HIDE_AUX_WHEN_MAIN_SHOWN = "prayerHideAuxWhenMainShown";
+		public static final String SPEC_HIDE_AUX_WHEN_MAIN_SHOWN = "specHideAuxWhenMainShown";
+		public static final String RUN_HIDE_AUX_WHEN_MAIN_SHOWN = "runHideAuxWhenMainShown";
+
+		// ------------------------------------------------------------------
+		// Auxiliary bars - restored from v1 (see git log before the
+		// full-reset "gut pass"): free-floating/Docked overlays with no real
+		// widget involvement at all (no repositioning, no interactivity -
+		// that's the main bars' job above), shown by default whenever the
+		// main bars are hidden (stock Compact Orbs behavior - vanilla
+		// minimap until the user enables Compact mode). HP/Prayer/Spec/Run
+        // aux bars read the same CompactOrbsManager regen/drain fields their
+		// main-bar counterparts do; Warmth/Enemy HP have no main-bar
+		// counterpart and never existed as anything but an aux bar, even in
+		// v1.
+		// ------------------------------------------------------------------
+
+		// Shared across every aux bar - same three v1 kept shared
+		// (borderWidth/dockPadding/dockOffset) plus the newer v2-parity
+		// shared settings (frame opacity split, regen outline width,
+		// regen/drain priority, reverse-direction toggles).
+		public static final String AUX_FRAME_WIDTH = "auxFrameWidth";
+		public static final String AUX_FRAME_SHADOW_WIDTH = "auxFrameShadowWidth";
+
+		// Was a straight read of the main bars' own (now-removed, promoted
+		// to per-bar) drainRingDominant() boolean - aux bars need their own
+		// copy of this concept now, upgraded to match the main bars' newer
+		// enum-based naming (Regen/drain priority) rather than reintroducing
+		// the old boolean.
+		public static final String AUX_REGEN_DRAIN_PRIORITY = "auxRegenDrainPriority";
+		public static final String AUX_DOCK_PADDING = "auxDockPadding";
+		public static final String AUX_DOCK_OFFSET = "auxDockOffset";
+		public static final String AUX_REGEN_OUTLINE_WIDTH = "auxRegenOutlineWidth";
+		public static final String AUX_REVERSE_BAR_FILL = "auxReverseBarFill";
+		public static final String AUX_REVERSE_REGEN_RING = "auxReverseRegenRing";
+		public static final String AUX_REVERSE_DRAIN_RING = "auxReverseDrainRing";
+
+		// Hitpoints (aux)
+		public static final String AUX_HP_ENABLED = "auxHpEnabled";
+		public static final String AUX_HP_PLACEMENT_MODE = "auxHpPlacementMode";
+		public static final String AUX_HP_DOCK_SIDE = "auxHpDockSide";
+		public static final String AUX_HP_DOCK_SLOT = "auxHpDockSlot";
+		public static final String AUX_HP_DOCK_JUSTIFICATION = "auxHpDockJustification";
+		public static final String AUX_HP_CLAMP_TO_PANEL = "auxHpClampToPanel";
+		public static final String AUX_HP_FLOATING_ORIENTATION = "auxHpFloatingOrientation";
+		public static final String AUX_HP_THICKNESS = "auxHpThickness";
+		public static final String AUX_HP_LENGTH = "auxHpLength";
+		public static final String AUX_HP_SHOW_ICON = "auxHpShowIcon";
+		public static final String AUX_HP_ICON_SIZE = "auxHpIconSize";
+		public static final String AUX_HP_SHOW_COUNTER = "auxHpShowCounter";
+		public static final String AUX_HP_CONTENT_JUSTIFICATION = "auxHpContentJustification";
+		public static final String AUX_HP_CONTENT_OFFSET = "auxHpContentOffset";
+		public static final String AUX_HP_REVERSE_CONTENT = "auxHpReverseContent";
+		public static final String AUX_HP_OPACITY = "auxHpOpacity";
+		public static final String AUX_HP_NORMAL_COLOR = "auxHpNormalColor";
+		public static final String AUX_HP_POISONED_COLOR = "auxHpPoisonedColor";
+		public static final String AUX_HP_ENVENOMED_COLOR = "auxHpEnvenomedColor";
+		public static final String AUX_HP_DISEASED_COLOR = "auxHpDiseasedColor";
+		public static final String AUX_HP_SHOW_REGEN = "auxHpShowRegen";
+		public static final String AUX_HP_REGEN_COLOR = "auxHpRegenColor";
+		public static final String AUX_HP_SHOW_DRAIN = "auxHpShowDrain";
+		public static final String AUX_HP_THRESHOLD_MODE = "auxHpThresholdMode";
+		public static final String AUX_HP_THRESHOLD_DIRECTION = "auxHpThresholdDirection";
+		public static final String AUX_HP_THRESHOLD = "auxHpThreshold";
+		public static final String AUX_HP_THRESHOLD_COLOR = "auxHpThresholdColor";
+
+		// Prayer (aux)
+		public static final String AUX_PRAYER_ENABLED = "auxPrayerEnabled";
+		public static final String AUX_PRAYER_PLACEMENT_MODE = "auxPrayerPlacementMode";
+		public static final String AUX_PRAYER_DOCK_SIDE = "auxPrayerDockSide";
+		public static final String AUX_PRAYER_DOCK_SLOT = "auxPrayerDockSlot";
+		public static final String AUX_PRAYER_DOCK_JUSTIFICATION = "auxPrayerDockJustification";
+		public static final String AUX_PRAYER_CLAMP_TO_PANEL = "auxPrayerClampToPanel";
+		public static final String AUX_PRAYER_FLOATING_ORIENTATION = "auxPrayerFloatingOrientation";
+		public static final String AUX_PRAYER_THICKNESS = "auxPrayerThickness";
+		public static final String AUX_PRAYER_LENGTH = "auxPrayerLength";
+		public static final String AUX_PRAYER_SHOW_ICON = "auxPrayerShowIcon";
+		public static final String AUX_PRAYER_ICON_SIZE = "auxPrayerIconSize";
+		public static final String AUX_PRAYER_SHOW_COUNTER = "auxPrayerShowCounter";
+		public static final String AUX_PRAYER_CONTENT_JUSTIFICATION = "auxPrayerContentJustification";
+		public static final String AUX_PRAYER_CONTENT_OFFSET = "auxPrayerContentOffset";
+		public static final String AUX_PRAYER_REVERSE_CONTENT = "auxPrayerReverseContent";
+		public static final String AUX_PRAYER_OPACITY = "auxPrayerOpacity";
+		public static final String AUX_PRAYER_ACTIVE_COLOR = "auxPrayerActiveColor";
+		public static final String AUX_PRAYER_INACTIVE_COLOR = "auxPrayerInactiveColor";
+		public static final String AUX_PRAYER_SHOW_REGEN = "auxPrayerShowRegen";
+		public static final String AUX_PRAYER_REGEN_COLOR = "auxPrayerRegenColor";
+		public static final String AUX_PRAYER_SHOW_DRAIN = "auxPrayerShowDrain";
+		public static final String AUX_PRAYER_THRESHOLD_MODE = "auxPrayerThresholdMode";
+		public static final String AUX_PRAYER_THRESHOLD_DIRECTION = "auxPrayerThresholdDirection";
+		public static final String AUX_PRAYER_THRESHOLD = "auxPrayerThreshold";
+		public static final String AUX_PRAYER_THRESHOLD_COLOR = "auxPrayerThresholdColor";
+
+		// Special Attack (aux)
+		public static final String AUX_SPEC_ENABLED = "auxSpecEnabled";
+		public static final String AUX_SPEC_PLACEMENT_MODE = "auxSpecPlacementMode";
+		public static final String AUX_SPEC_DOCK_SIDE = "auxSpecDockSide";
+		public static final String AUX_SPEC_DOCK_SLOT = "auxSpecDockSlot";
+		public static final String AUX_SPEC_DOCK_JUSTIFICATION = "auxSpecDockJustification";
+		public static final String AUX_SPEC_CLAMP_TO_PANEL = "auxSpecClampToPanel";
+		public static final String AUX_SPEC_FLOATING_ORIENTATION = "auxSpecFloatingOrientation";
+		public static final String AUX_SPEC_THICKNESS = "auxSpecThickness";
+		public static final String AUX_SPEC_LENGTH = "auxSpecLength";
+		public static final String AUX_SPEC_SHOW_ICON = "auxSpecShowIcon";
+		public static final String AUX_SPEC_ICON_SIZE = "auxSpecIconSize";
+		public static final String AUX_SPEC_SHOW_COUNTER = "auxSpecShowCounter";
+		public static final String AUX_SPEC_CONTENT_JUSTIFICATION = "auxSpecContentJustification";
+		public static final String AUX_SPEC_CONTENT_OFFSET = "auxSpecContentOffset";
+		public static final String AUX_SPEC_REVERSE_CONTENT = "auxSpecReverseContent";
+		public static final String AUX_SPEC_OPACITY = "auxSpecOpacity";
+		public static final String AUX_SPEC_DEFAULT_COLOR = "auxSpecDefaultColor";
+		public static final String AUX_SPEC_ACTIVE_COLOR = "auxSpecActiveColor";
+		public static final String AUX_SPEC_SHOW_REGEN = "auxSpecShowRegen";
+		public static final String AUX_SPEC_REGEN_COLOR = "auxSpecRegenColor";
+		public static final String AUX_SPEC_THRESHOLD_MODE = "auxSpecThresholdMode";
+		public static final String AUX_SPEC_THRESHOLD_DIRECTION = "auxSpecThresholdDirection";
+		public static final String AUX_SPEC_THRESHOLD = "auxSpecThreshold";
+		public static final String AUX_SPEC_THRESHOLD_COLOR = "auxSpecThresholdColor";
+
+		// Run Energy (aux)
+		public static final String AUX_RUN_ENABLED = "auxRunEnabled";
+		public static final String AUX_RUN_PLACEMENT_MODE = "auxRunPlacementMode";
+		public static final String AUX_RUN_DOCK_SIDE = "auxRunDockSide";
+		public static final String AUX_RUN_DOCK_SLOT = "auxRunDockSlot";
+		public static final String AUX_RUN_DOCK_JUSTIFICATION = "auxRunDockJustification";
+		public static final String AUX_RUN_CLAMP_TO_PANEL = "auxRunClampToPanel";
+		public static final String AUX_RUN_FLOATING_ORIENTATION = "auxRunFloatingOrientation";
+		public static final String AUX_RUN_THICKNESS = "auxRunThickness";
+		public static final String AUX_RUN_LENGTH = "auxRunLength";
+		public static final String AUX_RUN_SHOW_ICON = "auxRunShowIcon";
+		public static final String AUX_RUN_ICON_SIZE = "auxRunIconSize";
+		public static final String AUX_RUN_SHOW_COUNTER = "auxRunShowCounter";
+		public static final String AUX_RUN_CONTENT_JUSTIFICATION = "auxRunContentJustification";
+		public static final String AUX_RUN_CONTENT_OFFSET = "auxRunContentOffset";
+		public static final String AUX_RUN_REVERSE_CONTENT = "auxRunReverseContent";
+		public static final String AUX_RUN_OPACITY = "auxRunOpacity";
+		public static final String AUX_RUN_DEFAULT_COLOR = "auxRunDefaultColor";
+		public static final String AUX_RUN_ACTIVE_COLOR = "auxRunActiveColor";
+		public static final String AUX_RUN_SHOW_REGEN = "auxRunShowRegen";
+		public static final String AUX_RUN_REGEN_COLOR = "auxRunRegenColor";
+		public static final String AUX_RUN_THRESHOLD_MODE = "auxRunThresholdMode";
+		public static final String AUX_RUN_THRESHOLD_DIRECTION = "auxRunThresholdDirection";
+		public static final String AUX_RUN_THRESHOLD = "auxRunThreshold";
+		public static final String AUX_RUN_THRESHOLD_COLOR = "auxRunThresholdColor";
+
+		// Warmth (aux) - no main-bar counterpart
+		public static final String AUX_WARMTH_ENABLED = "auxWarmthEnabled";
+		public static final String AUX_WARMTH_VISIBILITY = "auxWarmthVisibility";
+		public static final String AUX_WARMTH_PLACEMENT_MODE = "auxWarmthPlacementMode";
+		public static final String AUX_WARMTH_DOCK_SIDE = "auxWarmthDockSide";
+		public static final String AUX_WARMTH_DOCK_SLOT = "auxWarmthDockSlot";
+		public static final String AUX_WARMTH_DOCK_JUSTIFICATION = "auxWarmthDockJustification";
+		public static final String AUX_WARMTH_CLAMP_TO_PANEL = "auxWarmthClampToPanel";
+		public static final String AUX_WARMTH_FLOATING_ORIENTATION = "auxWarmthFloatingOrientation";
+		public static final String AUX_WARMTH_THICKNESS = "auxWarmthThickness";
+		public static final String AUX_WARMTH_LENGTH = "auxWarmthLength";
+		public static final String AUX_WARMTH_SHOW_ICON = "auxWarmthShowIcon";
+		public static final String AUX_WARMTH_ICON_SIZE = "auxWarmthIconSize";
+		public static final String AUX_WARMTH_SHOW_COUNTER = "auxWarmthShowCounter";
+		public static final String AUX_WARMTH_CONTENT_JUSTIFICATION = "auxWarmthContentJustification";
+		public static final String AUX_WARMTH_CONTENT_OFFSET = "auxWarmthContentOffset";
+		public static final String AUX_WARMTH_REVERSE_CONTENT = "auxWarmthReverseContent";
+		public static final String AUX_WARMTH_OPACITY = "auxWarmthOpacity";
+		public static final String AUX_WARMTH_COLOR = "auxWarmthColor";
+		public static final String AUX_WARMTH_THRESHOLD_MODE = "auxWarmthThresholdMode";
+		public static final String AUX_WARMTH_THRESHOLD_DIRECTION = "auxWarmthThresholdDirection";
+		public static final String AUX_WARMTH_THRESHOLD = "auxWarmthThreshold";
+		public static final String AUX_WARMTH_THRESHOLD_COLOR = "auxWarmthThresholdColor";
+
+		// Enemy Hitpoints (aux) - no main-bar counterpart
+		public static final String AUX_ENEMY_HP_ENABLED = "auxEnemyHpEnabled";
+		public static final String AUX_ENEMY_HP_PLACEMENT_MODE = "auxEnemyHpPlacementMode";
+		public static final String AUX_ENEMY_HP_DOCK_SIDE = "auxEnemyHpDockSide";
+		public static final String AUX_ENEMY_HP_DOCK_SLOT = "auxEnemyHpDockSlot";
+		public static final String AUX_ENEMY_HP_DOCK_JUSTIFICATION = "auxEnemyHpDockJustification";
+		public static final String AUX_ENEMY_HP_CLAMP_TO_PANEL = "auxEnemyHpClampToPanel";
+		public static final String AUX_ENEMY_HP_FLOATING_ORIENTATION = "auxEnemyHpFloatingOrientation";
+		public static final String AUX_ENEMY_HP_THICKNESS = "auxEnemyHpThickness";
+		public static final String AUX_ENEMY_HP_LENGTH = "auxEnemyHpLength";
+		public static final String AUX_ENEMY_HP_SHOW_ICON = "auxEnemyHpShowIcon";
+		public static final String AUX_ENEMY_HP_ICON_SIZE = "auxEnemyHpIconSize";
+		public static final String AUX_ENEMY_HP_SHOW_COUNTER = "auxEnemyHpShowCounter";
+		public static final String AUX_ENEMY_HP_COUNTER_FORMAT = "auxEnemyHpCounterFormat";
+		public static final String AUX_ENEMY_HP_CONTENT_JUSTIFICATION = "auxEnemyHpContentJustification";
+		public static final String AUX_ENEMY_HP_CONTENT_OFFSET = "auxEnemyHpContentOffset";
+		public static final String AUX_ENEMY_HP_REVERSE_CONTENT = "auxEnemyHpReverseContent";
+		public static final String AUX_ENEMY_HP_OPACITY = "auxEnemyHpOpacity";
+		public static final String AUX_ENEMY_HP_COLOR = "auxEnemyHpColor";
+		public static final String AUX_ENEMY_HP_THRESHOLD_MODE = "auxEnemyHpThresholdMode";
+		public static final String AUX_ENEMY_HP_THRESHOLD_DIRECTION = "auxEnemyHpThresholdDirection";
+		public static final String AUX_ENEMY_HP_THRESHOLD = "auxEnemyHpThreshold";
+		public static final String AUX_ENEMY_HP_THRESHOLD_COLOR = "auxEnemyHpThresholdColor";
+
 		// Real, permanent setting - not dev-only. Vertical vs horizontal,
-		// and (for horizontal) which side of the icon the bar docks to.
-		public static final String BAR_ORIENTATION = "barOrientation";
-
-		// Also temporary, same reasoning as BAR_WIDTH - extra pixels added
-		// to the bar's top edge beyond where it's calculated to meet the
-		// collar's tab (positive = further down/away, negative = pulled up
-		// into more overlap).
-		public static final String BAR_VERTICAL_OFFSET = "barVerticalOffset";
-
-		// Also temporary, same reasoning as BAR_VERTICAL_OFFSET - extra
-		// pixels added to the bar's X position (positive = right, negative
-		// = left), independent of the collar, which stays centered on the
-		// icon regardless.
-		public static final String BAR_HORIZONTAL_OFFSET = "barHorizontalOffset";
-
-		// Also temporary, same reasoning as BAR_WIDTH - thickness of the
-		// stone frame ring. The inner vial fill isn't its own slider - it
-		// always fills whatever's left inside the frame.
-		public static final String BAR_FRAME_WIDTH = "barFrameWidth";
+		// and (for horizontal) which side of the icon the bar docks to - now
+		// per-bar instead of shared, one key per main bar.
+		public static final String HP_ORIENTATION = "hpOrientation";
+		public static final String PRAYER_ORIENTATION = "prayerOrientation";
+		public static final String SPEC_ORIENTATION = "specOrientation";
+		public static final String RUN_ORIENTATION = "runOrientation";
 
 		// Also temporary - one slider, widening getOrbsParent() AND
 		// getMapParent() together. F7's diagnostic dump confirmed these
@@ -206,6 +435,12 @@ public class CompactOrbsConstants
 		// BAR_NUMBER_HORIZONTAL_OFFSET/BAR_NUMBER_VERTICAL_OFFSET were here
 		// temporarily for dialing in the HP number's position - settled at
 		// 4/4 and hardcoded directly in HpVialOverlay, config removed.
+
+		// Temporary again - NORTH's self-drawn number (see VialOverlay's
+		// drawNorthNumber()) needs re-dialing in now that it's drawn by us
+		// instead of repositioning the real widget.
+		public static final String NORTH_NUMBER_X_OFFSET = "northNumberXOffset";
+		public static final String NORTH_NUMBER_Y_OFFSET = "northNumberYOffset";
 
 		//edit-modes custom positioning
 		public static final String CUSTOM_LAYOUT_PREFIX = "custom_layout_";

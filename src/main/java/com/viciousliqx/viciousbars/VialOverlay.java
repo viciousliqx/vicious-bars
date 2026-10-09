@@ -84,12 +84,6 @@ abstract class VialOverlay extends Overlay
 	private static final int EAST_NUMBER_X_OFFSET = -2;
 	private static final int EAST_NUMBER_Y_OFFSET = 4;
 
-	// NORTH's own number placement - dialed in live via temporary config
-	// sliders (northNumberXOffset/northNumberYOffset), settled at -5/3,
-	// then hardcoded and the config removed, same workflow as EAST's pair.
-	private static final int NORTH_NUMBER_X_OFFSET = -5;
-	private static final int NORTH_NUMBER_Y_OFFSET = 3;
-
 	// Confirmed live via F8 + targeted testing: a -2,-2 nudge on the icon
 	// group DID reach the widgets correctly (verified in the dump), but
 	// made no visible difference, because drawRotatedNorthBacking() below
@@ -118,10 +112,6 @@ abstract class VialOverlay extends Overlay
 	// (now content-hugging) container instead of leaving it left-heavy.
 	private static final int CONTENT_LEFT_PADDING = 4;
 
-	// NORTH's own left padding - confirmed live that left-aligned (not
-	// centered) is correct, just with less gap than SOUTH/EAST's value.
-	// A guess pending live dial-in, not yet confirmed.
-	private static final int NORTH_CONTENT_LEFT_PADDING = 1;
 	private static final int CONTENT_RIGHT_PADDING = 0;
 
 	// Small manual correction on top of the sprite-measured centering
@@ -216,24 +206,26 @@ abstract class VialOverlay extends Overlay
 	private int containerOriginalHeight;
 	private int containerOriginalWidth;
 
-	// NORTH-only - separate from the pair above since NORTH touches the
-	// container's Y (never touched by SOUTH/EAST). Kept as its own
-	// widget-instance-keyed pair rather than folded into containerWidget's,
-	// to avoid tangling SOUTH/EAST's width/height semantics with NORTH's
-	// width/Y-shift ones on the same shared fields. The icon (and its
-	// layered siblings)'s own Y-shift reuses contentWidgets/contentOriginalY
-	// instead - see repositionNumberNorth()'s own comment on that loop.
-	// Width joined this pair too - confirmed live the container stayed at
-	// its full native ~57px (roughly double a 26px icon) regardless of
-	// where the icon sat inside it, since nothing had ever shrunk it for
-	// NORTH the way resizeContainer() does for SOUTH. Deliberately its own
-	// field rather than reusing containerWidget/containerOriginalWidth
-	// (growContainerWidth()'s pair, EAST-only) - both would otherwise fight
-	// over the same widget's height via two different "native" snapshots.
-	private Widget northContainerWidget;
-	private int northContainerOriginalY;
-	private int northContainerOriginalWidth;
-	private int northContainerOriginalHeight;
+	// Every orb container carries a SECOND real interactive widget besides
+	// the icon/number - confirmed via F8's dump on all four orbs (HP,
+	// Prayer, Spec, Run), always type=0 with no sprite/text of its own, at
+	// a native X (~3) distinct from the icon's own native X (~27) - so
+	// shiftContent()'s own icon-sibling-group matching correctly leaves it
+	// alone. On Prayer this happens to be the real "Quick-prayers" toggle
+	// (confirmed via its native "Activate"/"Setup" actions), but it's NOT
+	// Prayer-specific - HP/Spec/Run all have the identical structural
+	// widget, just without a Quick-prayers-style action attached. First
+	// found and fixed for Prayer alone (searching by its "Activate"
+	// action) - confirmed live that Spec Attack still had the exact same
+	// click misalignment NORTH's own resize didn't touch, since nothing
+	// ever adjusted this second widget for orbs that don't have that
+	// action. Found structurally instead now (by native X, not by
+	// action text) so the same fix applies to all four uniformly.
+	private Widget extraWidget;
+	private int extraOriginalX;
+	private int extraOriginalY;
+	private int extraOriginalWidth;
+	private int extraOriginalHeight;
 
 	// Null until the first render() call - deliberately NOT defaulted to
 	// one of the four real orientations, so the very first frame never
@@ -278,6 +270,55 @@ abstract class VialOverlay extends Overlay
 
 	/** The real orb this bar docks to. */
 	protected abstract TargetWidget orbContainer();
+
+	/** Which way this bar extends from its mount point - per-bar, not shared, so each of HP/Prayer/Spec/Run can pick its own. */
+	protected abstract CompactOrbsConfig.BarOrientation orientation();
+
+	// Every setting below was promoted from a single Global Bar Config
+	// shared across all four bars to a fully independent per-bar one
+	// (same shape as orientation() above) - each bar's own default value
+	// matches what the old shared setting used to default to, so a fresh
+	// install still looks uniform out of the box, but each bar is now
+	// freely customizable on its own from there.
+
+	/** How long the bar is, end to end. */
+	protected abstract int length();
+
+	/** How thick the bar is, across its short axis. */
+	protected abstract int width();
+
+	/** Mounts the bar this many pixels right (+) or left (-) of the orb icon's own center, before it extends outward per orientation(). */
+	protected abstract int horizontalOffset();
+
+	/** Mounts the bar this many pixels down (+) or up (-) of the orb icon's own center, before it extends outward per orientation(). */
+	protected abstract int verticalOffset();
+
+	/** Thickness of the stone frame ring - the vial fill always fills whatever's left inside it. */
+	protected abstract int frameThickness();
+
+	/** Stroke width of the dark outline traced around the whole bar's outer edge, independent of frameThickness(). */
+	protected abstract int frameShadowWidth();
+
+	/** 0-100. Opacity of the vial fill - the regen/drain rings read more opaque than this (see regenOpacityFraction()/drainOpacityFraction()). Doesn't affect the frame - see frameOpacity(). */
+	protected abstract int barOpacity();
+
+	/** 0-100. Opacity of the stone frame ring, independent of barOpacity(). */
+	protected abstract int frameOpacity();
+
+	/** Which ring (regen or drain) draws on top, and reads more opaque, whenever both are visible at once on this bar. */
+	protected abstract CompactOrbsConfig.RegenDrainPriority regenDrainPriority();
+
+	/** Thickness of the regen/drain outline traced along the inside of the vial cavity. */
+	protected abstract int regenDrainRingSize();
+
+	/** Flips which end the vial fill empties from first - normally the near-icon end. */
+	protected abstract boolean reverseBarFill();
+
+	/** Flips which end the regen ring grows from, independently of reverseBarFill(). */
+	protected abstract boolean reverseRegenRing();
+
+	/** Flips which end the drain ring shrinks toward, independently of reverseBarFill() and reverseRegenRing(). */
+	protected abstract boolean reverseDrainRing();
 
 	/** 0-max current value (HP, prayer points, etc.) for the vial fill. */
 	protected abstract int currentValue();
@@ -429,7 +470,7 @@ abstract class VialOverlay extends Overlay
 			return null;
 		}
 
-		CompactOrbsConfig.BarOrientation orientation = config.barOrientation();
+		CompactOrbsConfig.BarOrientation orientation = orientation();
 
 		// Switching orientation mid-session otherwise leaks whatever the
 		// PREVIOUS orientation touched into the new one - confirmed live
@@ -468,8 +509,8 @@ abstract class VialOverlay extends Overlay
 	/** The original, hand-built layout - bar hangs below the icon, which (unlike the other three) vanilla never laid out for us, hence the number/content repositioning below. */
 	private Dimension renderSouth(Graphics2D graphics, Widget orb)
 	{
-		int width = config.barWidth();
-		int height = config.barLength();
+		int width = width();
+		int height = length();
 
 		Point orbCanvas = orb.getCanvasLocation();
 		int orbCenterX = orbCanvas.getX() + orb.getWidth() / 2;
@@ -502,14 +543,14 @@ abstract class VialOverlay extends Overlay
 		// vertical extension) capped to the bar's own width/thickness;
 		// along-axis offset (vertical, the direction the bar extends in)
 		// capped to its length - see clampOffset()'s own javadoc.
-		int barX = iconCenterX - width / 2 + clampOffset(config.barHorizontalOffset(), width);
+		int barX = iconCenterX - width / 2 + clampOffset(horizontalOffset(), width);
 		// The bar's top starts exactly where the collar's round BODY ends
 		// (iconCenterY + its radius), not where the collar's center is -
 		// the body sits entirely above the bar, while the tab (the
 		// "handle" hanging below the body) overlaps down into the bar's
 		// top. +COLLAR_VERTICAL_NUDGE to stay flush with the same nudge
 		// applied to the collar's own draw position.
-		int barY = iconCenterY + rotatedSouthBackingBodyRadius + COLLAR_VERTICAL_NUDGE + clampOffset(config.barVerticalOffset(), height);
+		int barY = iconCenterY + rotatedSouthBackingBodyRadius + COLLAR_VERTICAL_NUDGE + clampOffset(verticalOffset(), height);
 
 		// A separate, never-translated copy of the graphics context - the
 		// collar is drawn through it AFTER the frame/vial below (see the
@@ -530,7 +571,7 @@ abstract class VialOverlay extends Overlay
 		int max = Math.max(maxValue(), 1);
 		int current = Math.max(0, Math.min(currentValue(), max));
 
-		int frameWidth = config.barFrameWidth();
+		int frameWidth = frameThickness();
 		int innerWidth = width - 2 * frameWidth;
 		int innerHeight = height - 2 * frameWidth;
 		int innerArc = Math.round(innerWidth * INNER_ARC_FRACTION);
@@ -565,8 +606,8 @@ abstract class VialOverlay extends Overlay
 		int iconCenterX = iconCanvas != null ? iconCanvas.getX() + icon.getWidth() / 2 : orbCenterX;
 		int iconCenterY = iconCanvas != null ? iconCanvas.getY() + icon.getHeight() / 2 : orbCenterY;
 
-		int length = config.barLength();
-		int thickness = config.barWidth();
+		int length = length();
+		int thickness = width();
 
 		// The mount point - plain offset from the icon's own center,
 		// capped dynamically to the bar's own footprint (see
@@ -577,8 +618,8 @@ abstract class VialOverlay extends Overlay
 		// stays tied to iconCenterX/Y instead, never to this point, since
 		// it's a fixed-size connector that can't stretch to meet a
 		// freely-repositioned bar.
-		int anchorX = iconCenterX + clampOffset(config.barHorizontalOffset(), length);
-		int anchorY = iconCenterY + clampOffset(config.barVerticalOffset(), thickness);
+		int anchorX = iconCenterX + clampOffset(horizontalOffset(), length);
+		int anchorY = iconCenterY + clampOffset(verticalOffset(), thickness);
 
 		int barX = anchorX - HORIZONTAL_GAP - length;
 		int barY = anchorY - thickness / 2;
@@ -592,7 +633,7 @@ abstract class VialOverlay extends Overlay
 		int max = Math.max(maxValue(), 1);
 		int current = Math.max(0, Math.min(currentValue(), max));
 
-		int frameWidth = config.barFrameWidth();
+		int frameWidth = frameThickness();
 		int innerLength = length - 2 * frameWidth;
 		int innerThickness = thickness - 2 * frameWidth;
 		int innerArc = Math.round(innerThickness * INNER_ARC_FRACTION);
@@ -627,14 +668,14 @@ abstract class VialOverlay extends Overlay
 		int iconCenterX = iconCanvas != null ? iconCanvas.getX() + icon.getWidth() / 2 : orbCenterX;
 		int iconCenterY = iconCanvas != null ? iconCanvas.getY() + icon.getHeight() / 2 : orbCenterY;
 
-		int length = config.barLength();
-		int thickness = config.barWidth();
+		int length = length();
+		int thickness = width();
 
 		// Along-axis (horizontal, the direction EAST extends in) capped to
 		// length, cross-axis (vertical) capped to thickness - see
 		// clampOffset()'s javadoc.
-		int anchorX = iconCenterX + clampOffset(config.barHorizontalOffset(), length);
-		int anchorY = iconCenterY + clampOffset(config.barVerticalOffset(), thickness);
+		int anchorX = iconCenterX + clampOffset(horizontalOffset(), length);
+		int anchorY = iconCenterY + clampOffset(verticalOffset(), thickness);
 
 		Widget backing = client.getWidget(orbContainer().getBackingId());
 		boolean drawingFlippedCollar = backing != null && getFlippedEastBacking(backing.getSpriteId()) != null;
@@ -660,7 +701,7 @@ abstract class VialOverlay extends Overlay
 		int max = Math.max(maxValue(), 1);
 		int current = Math.max(0, Math.min(currentValue(), max));
 
-		int frameWidth = config.barFrameWidth();
+		int frameWidth = frameThickness();
 		int innerLength = length - 2 * frameWidth;
 		int innerThickness = thickness - 2 * frameWidth;
 		int innerArc = Math.round(innerThickness * INNER_ARC_FRACTION);
@@ -699,14 +740,14 @@ abstract class VialOverlay extends Overlay
 		int iconCenterX = iconCanvas != null ? iconCanvas.getX() + icon.getWidth() / 2 : orbCenterX;
 		int iconCenterY = iconCanvas != null ? iconCanvas.getY() + icon.getHeight() / 2 : orbCenterY;
 
-		int length = config.barLength();
-		int thickness = config.barWidth();
+		int length = length();
+		int thickness = width();
 
 		// Along-axis (vertical, the direction NORTH extends in) capped to
 		// length, cross-axis (horizontal) capped to thickness - mirrors
 		// SOUTH's own clamp, see clampOffset()'s javadoc.
-		int anchorX = iconCenterX + clampOffset(config.barHorizontalOffset(), thickness);
-		int anchorY = iconCenterY + clampOffset(config.barVerticalOffset(), length);
+		int anchorX = iconCenterX + clampOffset(horizontalOffset(), thickness);
+		int anchorY = iconCenterY + clampOffset(verticalOffset(), length);
 
 		Widget backing = client.getWidget(orbContainer().getBackingId());
 		boolean drawingRotatedCollar = backing != null && getRotatedNorthBacking(backing.getSpriteId()) != null;
@@ -732,7 +773,7 @@ abstract class VialOverlay extends Overlay
 		int max = Math.max(maxValue(), 1);
 		int current = Math.max(0, Math.min(currentValue(), max));
 
-		int frameWidth = config.barFrameWidth();
+		int frameWidth = frameThickness();
 		int innerWidth = thickness - 2 * frameWidth;
 		int innerHeight = length - 2 * frameWidth;
 		int innerArc = Math.round(innerWidth * INNER_ARC_FRACTION);
@@ -769,25 +810,25 @@ abstract class VialOverlay extends Overlay
 	/** Global Bar Config's opacity slider, as a 0.0-1.0 composite fraction. Vial fill only - see frameOpacityFraction() for the frame ring. */
 	private float barOpacityFraction()
 	{
-		return config.barOpacity() / 100f;
+		return barOpacity() / 100f;
 	}
 
 	/** Global Bar Config's frame opacity slider, as a 0.0-1.0 composite fraction - independent of the vial fill's own barOpacityFraction(). */
 	private float frameOpacityFraction()
 	{
-		return config.barFrameOpacity() / 100f;
+		return frameOpacity() / 100f;
 	}
 
 	/** The regen outline always reads 30 percentage points more opaque than the bar itself, capped at fully opaque. */
 	private float regenOpacityFraction()
 	{
-		return Math.min(100, config.barOpacity() + 30) / 100f;
+		return Math.min(100, barOpacity() + 30) / 100f;
 	}
 
 	/** The drain outline reads even more opaque than regen's own boost - it's meant to read as the dominant ring whenever both are visible together. */
 	private float drainOpacityFraction()
 	{
-		return Math.min(100, config.barOpacity() + 50) / 100f;
+		return Math.min(100, barOpacity() + 50) / 100f;
 	}
 
 	private static final int PULSE_PERIOD_MILLIS = 1200;
@@ -858,7 +899,9 @@ abstract class VialOverlay extends Overlay
 		frameGraphics.fill(frameRing);
 
 		frameGraphics.setColor(FRAME_OUTLINE_COLOR);
+		frameGraphics.setStroke(new BasicStroke(Math.max(1, frameShadowWidth())));
 		frameGraphics.draw(new RoundRectangle2D.Float(0, 0, width - 1, height - 1, FRAME_ARC, FRAME_ARC));
+		frameGraphics.setStroke(new BasicStroke(1));
 		frameGraphics.draw(new RoundRectangle2D.Float(frameWidth, frameWidth, innerWidth - 1, innerHeight - 1, innerArc, innerArc));
 
 		drawRealBorderFrame(frameGraphics, width, height, frameWidth);
@@ -1101,38 +1144,31 @@ abstract class VialOverlay extends Overlay
 	}
 
 	/**
-	 * NORTH counterpart to repositionNumber() - moves the real level
-	 * number to sit above the icon instead of vanilla's native left,
-	 * horizontally centered.
+	 * NORTH counterpart to repositionNumber() - the real level number
+	 * needs to sit above the icon, but the container clips children to
+	 * [0, height) so a negative-Y real number simply vanishes rather than
+	 * merely overlapping. Earlier versions solved that by moving the real
+	 * CONTAINER's own Y to carve out room above - confirmed live,
+	 * repeatedly, that doing so was the root of every North-specific
+	 * problem: it fought the drag system during editing (orb stuck),
+	 * produced a visible jump reconciling the editing/non-editing states
+	 * on exit, and left the real click hitbox drifting from the visuals
+	 * (the native hitbox follows the container's own bounds).
 	 * <p>
-	 * Confirmed live: a first pass that just set the number's Y negative
-	 * made it vanish entirely rather than merely overlap - the container
-	 * clips children to [0, height), and unlike EAST's clipping risk
-	 * (fixable by simply growing width, since EAST's content never needs
-	 * to move below y=0), nothing about negative Y is inside that box no
-	 * matter how tall the container gets.
-	 * <p>
-	 * The actual fix: shift the CONTAINER's own Y up by the number's
-	 * height + a gap (carving out empty room above where the icon used to
-	 * sit), grow its height by the same amount so its bottom edge doesn't
-	 * move, then shift the WHOLE icon sibling group's Y down by that same
-	 * amount so their SCREEN position stays exactly where vanilla put it -
-	 * net zero movement, but now there's real, unclipped space above for
-	 * the number to live in, at local y=0.
-	 * <p>
-	 * That Y-shift was originally applied to `icon` alone, not its layered
-	 * siblings (the indicator/empty-fill/hover graphics that compose the
-	 * SAME visual orb together with it - see the field comment on
-	 * contentWidgets). Confirmed live via F8's widget dump + targeted
-	 * logging: `icon` itself genuinely did shift to the right Y, but its
-	 * siblings stayed at their native one, splitting one coherent-looking
-	 * graphic into misaligned pieces - not an icon-vs-collar problem like
-	 * it first looked. Shifting the whole contentWidgets group (below)
-	 * instead of just icon fixes it.
-	 * <p>
-	 * Also calls shiftContent() to CENTER that same group horizontally
-	 * (not CONTENT_LEFT_PADDING like SOUTH/EAST use) - see that call's own
-	 * comment for why NORTH needs a different target X.
+	 * The actual fix doesn't need to give up the real number at all -
+	 * SOUTH/EAST never touch the container's Y because they only ever
+	 * grow it DOWNWARD (new content fits below the icon, extending the
+	 * bottom edge, which never requires moving the top). NORTH can use
+	 * that exact same safe operation, just inverted: grow the container
+	 * downward same as SOUTH/EAST do, but put the NUMBER at the newly
+	 * available top (relative Y=0, never negative, never clipped) and
+	 * push the ICON (and its layered siblings) down into the space below
+	 * it instead - the icon ends up a small, fixed distance lower than
+	 * vanilla's native spot, but that offset is constant and never
+	 * differs between editing and non-editing, so there's nothing to
+	 * desync and nothing fighting the drag system, since the container's
+	 * Y is never written at all. Reuses resizeContainer() directly -
+	 * same shrink-width/grow-height-only method SOUTH already calls.
 	 */
 	private void repositionNumberNorth(Widget container, Widget icon)
 	{
@@ -1151,13 +1187,18 @@ abstract class VialOverlay extends Overlay
 			numberWidget = number;
 		}
 
-		// Left-aligned, same idea as SOUTH/EAST - centering was tried first
-		// and confirmed live to be the wrong call (left-aligned already
-		// looked right, just with too much gap at CONTENT_LEFT_PADDING's
-		// value) - NORTH_CONTENT_LEFT_PADDING is its own, smaller constant
-		// rather than reusing CONTENT_LEFT_PADDING directly, since there's
-		// no guarantee the right gap is the same for both.
-		shiftContent(container, icon, NORTH_CONTENT_LEFT_PADDING);
+		if (number.isHidden())
+		{
+			number.setHidden(false);
+		}
+
+		// Captured before shiftContent() below moves it - findExtraWidget()
+		// needs the icon's TRUE native X to tell it apart from the icon's
+		// own layered siblings (which share its native X and get shifted
+		// together), not whatever shiftContent() just moved it to.
+		int iconNativeX = icon.getOriginalX();
+
+		shiftContent(container, icon, CONTENT_LEFT_PADDING);
 
 		if (number.getXPositionMode() != WidgetPositionMode.ABSOLUTE_LEFT)
 		{
@@ -1168,54 +1209,13 @@ abstract class VialOverlay extends Overlay
 			number.setYPositionMode(WidgetPositionMode.ABSOLUTE_TOP);
 		}
 
-		if (northContainerWidget != container)
-		{
-			northContainerOriginalY = container.getOriginalY();
-			northContainerOriginalWidth = container.getOriginalWidth();
-			northContainerOriginalHeight = container.getOriginalHeight();
-			northContainerWidget = container;
-		}
-
 		int margin = number.getHeight() + 2;
 
-		int targetContainerY = northContainerOriginalY - margin;
-		int targetContainerHeight = northContainerOriginalHeight + margin;
-		// Shrinks to fit the icon group's true footprint (left padding +
-		// icon's own width + a small right pad), same shrink-to-content
-		// idea as resizeContainer() uses for SOUTH - mirrored here instead
-		// of reused, see the field comment on northContainerOriginalWidth.
-		int requiredWidth = NORTH_CONTENT_LEFT_PADDING + icon.getOriginalWidth() + CONTENT_RIGHT_PADDING;
-		int targetContainerWidth = Math.min(northContainerOriginalWidth, Math.max(1, requiredWidth));
-		boolean containerChanged = false;
-		if (container.getOriginalY() != targetContainerY)
-		{
-			container.setOriginalY(targetContainerY);
-			containerChanged = true;
-		}
-		if (container.getOriginalWidth() != targetContainerWidth)
-		{
-			container.setOriginalWidth(targetContainerWidth);
-			containerChanged = true;
-		}
-		if (container.getOriginalHeight() != targetContainerHeight)
-		{
-			container.setOriginalHeight(targetContainerHeight);
-			containerChanged = true;
-		}
-		if (containerChanged)
-		{
-			container.revalidate();
-		}
-
-		// Shifts the WHOLE sibling group shiftContent() just moved
-		// horizontally (icon plus every layered indicator/empty-fill/hover
-		// graphic sharing its original x - see that field's comment) down
-		// by the same margin, not just the icon alone. Confirmed live via
-		// F8's widget dump + targeted logging: the first version of this
-		// only moved `icon` itself, leaving its layered siblings (which
-		// compose the SAME visual orb together with it) stuck at their
-		// native Y - splitting one coherent-looking graphic into
-		// misaligned pieces, not an icon-vs-collar problem at all.
+		// Push the icon group down by margin - the inverse of the
+		// contentOriginalY shift this same mechanism used when the
+		// container itself moved; now the container's top stays put and
+		// the icon moves instead, opening clean non-negative space above
+		// it for the number.
 		for (int i = 0; i < contentWidgets.length; i++)
 		{
 			Widget content = contentWidgets[i];
@@ -1227,8 +1227,19 @@ abstract class VialOverlay extends Overlay
 			}
 		}
 
-		int targetX = icon.getRelativeX() + icon.getWidth() / 2 - number.getWidth() / 2 + NORTH_NUMBER_X_OFFSET;
-		int targetY = NORTH_NUMBER_Y_OFFSET;
+		// icon.getOriginalY() here is the icon's ALREADY-SHIFTED Y (the
+		// loop above just wrote it, and icon is one of contentWidgets) -
+		// using it directly instead of re-deriving from margin alone is
+		// what was missing: the icon's own pre-shift baseline Y (4px
+		// natively, not 0) needs to be included too, or the container
+		// comes up short by exactly that much and clips the icon's
+		// bottom edge - confirmed live (screenshot).
+		int requiredWidth = CONTENT_LEFT_PADDING + icon.getOriginalWidth() + CONTENT_RIGHT_PADDING;
+		int requiredHeight = icon.getOriginalY() + icon.getOriginalHeight() + CONTENT_RIGHT_PADDING;
+		resizeContainer(container, requiredWidth, requiredHeight);
+
+		int targetX = icon.getRelativeX() + icon.getWidth() / 2 - number.getWidth() / 2 + config.northNumberXOffset();
+		int targetY = config.northNumberYOffset();
 
 		if (number.getOriginalX() != targetX || number.getOriginalY() != targetY)
 		{
@@ -1236,6 +1247,78 @@ abstract class VialOverlay extends Overlay
 			number.setOriginalY(targetY);
 			number.revalidate();
 		}
+
+		Widget extra = findExtraWidget(container, iconNativeX);
+		if (extra != null)
+		{
+			if (extraWidget != extra)
+			{
+				extraOriginalX = extra.getOriginalX();
+				extraOriginalY = extra.getOriginalY();
+				extraOriginalWidth = extra.getOriginalWidth();
+				extraOriginalHeight = extra.getOriginalHeight();
+				extraWidget = extra;
+			}
+
+			// Matches it to the icon's own (now vertically-shifted) bounds
+			// exactly, rather than a literal width/height swap - its
+			// native shape (~50 wide) doesn't actually fit inside how
+			// little NORTH's container grows, so clamping it to the
+			// icon's own footprint is what "inverted to fit, filling the
+			// container instead of breaking it" works out to - it can
+			// never fail to fit, since it's sized to what the icon
+			// itself already occupies.
+			boolean changed = false;
+			if (extra.getOriginalX() != icon.getRelativeX())
+			{
+				extra.setOriginalX(icon.getRelativeX());
+				changed = true;
+			}
+			if (extra.getOriginalY() != icon.getRelativeY())
+			{
+				extra.setOriginalY(icon.getRelativeY());
+				changed = true;
+			}
+			if (extra.getOriginalWidth() != icon.getWidth())
+			{
+				extra.setOriginalWidth(icon.getWidth());
+				changed = true;
+			}
+			if (extra.getOriginalHeight() != icon.getHeight())
+			{
+				extra.setOriginalHeight(icon.getHeight());
+				changed = true;
+			}
+			if (changed)
+			{
+				extra.revalidate();
+			}
+		}
+	}
+
+	/**
+	 * Finds the orb's second real interactive widget (see the field
+	 * comment on extraWidget) by its native X, distinct from the icon's -
+	 * more robust than matching on action text (Prayer's "Activate" only
+	 * exists for Prayer; this has to work for HP/Spec/Run too, which carry
+	 * the identical structural widget without that action).
+	 */
+	private static Widget findExtraWidget(Widget container, int iconNativeX)
+	{
+		Widget[] children = container.getStaticChildren();
+		if (children == null)
+		{
+			return null;
+		}
+		for (Widget child : children)
+		{
+			if (child != null && child.getType() == WidgetType.LAYER
+				&& child.getOriginalX() != iconNativeX)
+			{
+				return child;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -1348,6 +1431,16 @@ abstract class VialOverlay extends Overlay
 	/** Safe to call unconditionally any time we're not actively repositioning the number - a no-op once nothing's saved. */
 	private void restoreNumber()
 	{
+		if (extraWidget != null)
+		{
+			extraWidget.setOriginalX(extraOriginalX);
+			extraWidget.setOriginalY(extraOriginalY);
+			extraWidget.setOriginalWidth(extraOriginalWidth);
+			extraWidget.setOriginalHeight(extraOriginalHeight);
+			extraWidget.revalidate();
+			extraWidget = null;
+		}
+
 		if (containerWidget != null)
 		{
 			containerWidget.setOriginalWidth(containerOriginalWidth);
@@ -1370,20 +1463,16 @@ abstract class VialOverlay extends Overlay
 			contentWidget = null;
 		}
 
-		if (northContainerWidget != null)
-		{
-			northContainerWidget.setOriginalY(northContainerOriginalY);
-			northContainerWidget.setOriginalWidth(northContainerOriginalWidth);
-			northContainerWidget.setOriginalHeight(northContainerOriginalHeight);
-			northContainerWidget.revalidate();
-			northContainerWidget = null;
-		}
-
 		if (numberWidget == null)
 		{
 			return;
 		}
 
+		// NORTH never moves the number's position at all (it's hidden
+		// instead - see repositionNumberNorth()), but it does hide it, so
+		// unhiding it unconditionally here is required for NORTH and a
+		// harmless no-op for every other orientation, which never hide it.
+		numberWidget.setHidden(false);
 		numberWidget.setXPositionMode(numberOriginalXMode);
 		numberWidget.setYPositionMode(numberOriginalYMode);
 		numberWidget.setOriginalX(numberOriginalX);
@@ -1611,7 +1700,7 @@ abstract class VialOverlay extends Overlay
 		double ratio = (double) current / max;
 		int fillHeight = (int) Math.round(ratio * innerHeight);
 		vialGraphics.setColor(fillColor());
-		int fillY = (anchorBottom ^ config.reverseBarFill()) ? innerHeight - fillHeight : 0;
+		int fillY = (anchorBottom ^ reverseBarFill()) ? innerHeight - fillHeight : 0;
 		vialGraphics.fillRect(0, fillY, innerWidth, fillHeight);
 
 		vialGraphics.dispose();
@@ -1624,7 +1713,7 @@ abstract class VialOverlay extends Overlay
 	 */
 	private void drawVialOutlines(Graphics2D graphics, int frameWidth, int innerWidth, int innerHeight, int innerArc, boolean anchorBottom)
 	{
-		if (config.drainRingDominant())
+		if (regenDrainPriority() == CompactOrbsConfig.RegenDrainPriority.DRAIN)
 		{
 			drawVialRegenOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, anchorBottom);
 			drawVialDrainOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, anchorBottom);
@@ -1639,7 +1728,7 @@ abstract class VialOverlay extends Overlay
 	/** Horizontal counterpart to drawVialOutlines(). */
 	private void drawVialOutlinesHorizontal(Graphics2D graphics, int frameWidth, int innerLength, int innerThickness, int innerArc, boolean anchorRight)
 	{
-		if (config.drainRingDominant())
+		if (regenDrainPriority() == CompactOrbsConfig.RegenDrainPriority.DRAIN)
 		{
 			drawVialRegenOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, anchorRight);
 			drawVialDrainOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, anchorRight);
@@ -1674,7 +1763,7 @@ abstract class VialOverlay extends Overlay
 			return;
 		}
 
-		drawOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, anchorBottom ^ config.reverseRegenRing(), percentage, regenHighlightColor(), regenOpacityFraction());
+		drawOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, anchorBottom ^ reverseRegenRing(), percentage, regenHighlightColor(), regenOpacityFraction());
 	}
 
 	/** Horizontal counterpart to drawVialRegenOutline() - grows along X instead of Y, mirroring drawVialHorizontal()'s anchorRight rule. */
@@ -1691,7 +1780,7 @@ abstract class VialOverlay extends Overlay
 			return;
 		}
 
-		drawOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, anchorRight ^ config.reverseRegenRing(), percentage, regenHighlightColor(), regenOpacityFraction());
+		drawOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, anchorRight ^ reverseRegenRing(), percentage, regenHighlightColor(), regenOpacityFraction());
 	}
 
 	/**
@@ -1716,7 +1805,7 @@ abstract class VialOverlay extends Overlay
 			return;
 		}
 
-		drawOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, anchorBottom ^ config.reverseDrainRing(), percentage, drainHighlightColor(), drainOpacityFraction());
+		drawOutline(graphics, frameWidth, innerWidth, innerHeight, innerArc, anchorBottom ^ reverseDrainRing(), percentage, drainHighlightColor(), drainOpacityFraction());
 	}
 
 	/** Horizontal counterpart to drawVialDrainOutline() - grows along X instead of Y, mirroring drawVialHorizontal()'s anchorRight rule. */
@@ -1733,7 +1822,7 @@ abstract class VialOverlay extends Overlay
 			return;
 		}
 
-		drawOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, anchorRight ^ config.reverseDrainRing(), percentage, drainHighlightColor(), drainOpacityFraction());
+		drawOutlineHorizontal(graphics, frameWidth, innerLength, innerThickness, innerArc, anchorRight ^ reverseDrainRing(), percentage, drainHighlightColor(), drainOpacityFraction());
 	}
 
 	/** Shared clip-and-stroke primitive behind both drawVialRegenOutline() and drawVialDrainOutline() - only what's visually distinct (percentage, color, opacity) differs between the two. */
@@ -1747,7 +1836,7 @@ abstract class VialOverlay extends Overlay
 		outlineGraphics.translate(frameWidth, frameWidth);
 		outlineGraphics.clip(new Rectangle(0, growthY, innerWidth, growthHeight));
 		outlineGraphics.setColor(color);
-		outlineGraphics.setStroke(new BasicStroke(Math.max(1, config.barRegenOutlineWidth())));
+		outlineGraphics.setStroke(new BasicStroke(Math.max(1, regenDrainRingSize())));
 		outlineGraphics.draw(new RoundRectangle2D.Float(0, 0, innerWidth - 1, innerHeight - 1, innerArc, innerArc));
 		outlineGraphics.dispose();
 	}
@@ -1763,7 +1852,7 @@ abstract class VialOverlay extends Overlay
 		outlineGraphics.translate(frameWidth, frameWidth);
 		outlineGraphics.clip(new Rectangle(growthX, 0, growthLength, innerThickness));
 		outlineGraphics.setColor(color);
-		outlineGraphics.setStroke(new BasicStroke(Math.max(1, config.barRegenOutlineWidth())));
+		outlineGraphics.setStroke(new BasicStroke(Math.max(1, regenDrainRingSize())));
 		outlineGraphics.draw(new RoundRectangle2D.Float(0, 0, innerLength - 1, innerThickness - 1, innerArc, innerArc));
 		outlineGraphics.dispose();
 	}
@@ -1788,7 +1877,7 @@ abstract class VialOverlay extends Overlay
 		double ratio = (double) current / max;
 		int fillLength = (int) Math.round(ratio * innerLength);
 		vialGraphics.setColor(fillColor());
-		int fillX = (anchorRight ^ config.reverseBarFill()) ? innerLength - fillLength : 0;
+		int fillX = (anchorRight ^ reverseBarFill()) ? innerLength - fillLength : 0;
 		vialGraphics.fillRect(fillX, 0, fillLength, innerThickness);
 
 		vialGraphics.dispose();

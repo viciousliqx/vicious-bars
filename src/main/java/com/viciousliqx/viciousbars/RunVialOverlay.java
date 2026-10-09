@@ -39,6 +39,12 @@ class RunVialOverlay extends VialOverlay
 	}
 
 	@Override
+	protected CompactOrbsConfig.BarOrientation orientation()
+	{
+		return config.runOrientation();
+	}
+
+	@Override
 	protected int currentValue()
 	{
 		return client.getEnergy() / 100;
@@ -106,5 +112,83 @@ class RunVialOverlay extends VialOverlay
 	protected boolean thresholdAbove()
 	{
 		return config.runThresholdDirection() == ThresholdDirection.AT_OR_ABOVE;
+	}
+
+	@Override
+	protected int length()
+	{
+		return config.runLength();
+	}
+
+	@Override
+	protected int width()
+	{
+		return config.runWidth();
+	}
+
+	@Override
+	protected int horizontalOffset()
+	{
+		return config.runHorizontalOffset();
+	}
+
+	@Override
+	protected int verticalOffset()
+	{
+		return config.runVerticalOffset();
+	}
+
+	@Override
+	protected int frameThickness()
+	{
+		return config.runFrameThickness();
+	}
+
+	@Override
+	protected int frameShadowWidth()
+	{
+		return config.runFrameShadowWidth();
+	}
+
+	@Override
+	protected int barOpacity()
+	{
+		return config.runBarOpacity();
+	}
+
+	@Override
+	protected int frameOpacity()
+	{
+		return config.runFrameOpacity();
+	}
+
+	@Override
+	protected CompactOrbsConfig.RegenDrainPriority regenDrainPriority()
+	{
+		return config.runRegenDrainPriority();
+	}
+
+	@Override
+	protected int regenDrainRingSize()
+	{
+		return config.runRegenDrainRingSize();
+	}
+
+	@Override
+	protected boolean reverseBarFill()
+	{
+		return config.runReverseBarFill();
+	}
+
+	@Override
+	protected boolean reverseRegenRing()
+	{
+		return config.runReverseRegenRing();
+	}
+
+	@Override
+	protected boolean reverseDrainRing()
+	{
+		return config.runReverseDrainRing();
 	}
 }

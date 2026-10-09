@@ -42,6 +42,12 @@ class HpVialOverlay extends VialOverlay
 	}
 
 	@Override
+	protected CompactOrbsConfig.BarOrientation orientation()
+	{
+		return config.hpOrientation();
+	}
+
+	@Override
 	protected int currentValue()
 	{
 		return client.getBoostedSkillLevel(Skill.HITPOINTS);
@@ -136,5 +142,83 @@ class HpVialOverlay extends VialOverlay
 	protected boolean thresholdAbove()
 	{
 		return config.hpThresholdDirection() == ThresholdDirection.AT_OR_ABOVE;
+	}
+
+	@Override
+	protected int length()
+	{
+		return config.hpLength();
+	}
+
+	@Override
+	protected int width()
+	{
+		return config.hpWidth();
+	}
+
+	@Override
+	protected int horizontalOffset()
+	{
+		return config.hpHorizontalOffset();
+	}
+
+	@Override
+	protected int verticalOffset()
+	{
+		return config.hpVerticalOffset();
+	}
+
+	@Override
+	protected int frameThickness()
+	{
+		return config.hpFrameThickness();
+	}
+
+	@Override
+	protected int frameShadowWidth()
+	{
+		return config.hpFrameShadowWidth();
+	}
+
+	@Override
+	protected int barOpacity()
+	{
+		return config.hpBarOpacity();
+	}
+
+	@Override
+	protected int frameOpacity()
+	{
+		return config.hpFrameOpacity();
+	}
+
+	@Override
+	protected CompactOrbsConfig.RegenDrainPriority regenDrainPriority()
+	{
+		return config.hpRegenDrainPriority();
+	}
+
+	@Override
+	protected int regenDrainRingSize()
+	{
+		return config.hpRegenDrainRingSize();
+	}
+
+	@Override
+	protected boolean reverseBarFill()
+	{
+		return config.hpReverseBarFill();
+	}
+
+	@Override
+	protected boolean reverseRegenRing()
+	{
+		return config.hpReverseRegenRing();
+	}
+
+	@Override
+	protected boolean reverseDrainRing()
+	{
+		return config.hpReverseDrainRing();
 	}
 }

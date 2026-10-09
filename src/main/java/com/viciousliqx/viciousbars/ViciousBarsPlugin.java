@@ -31,6 +31,7 @@ import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.ItemContainer;
+import net.runelite.api.NPC;
 import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
 import net.runelite.api.gameval.InterfaceID;
@@ -235,6 +236,24 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 	@Inject
 	private net.runelite.client.game.SpriteManager spriteManager;
 
+	@Inject
+	private HpAuxBarOverlay hpAuxBarOverlay;
+
+	@Inject
+	private PrayerAuxBarOverlay prayerAuxBarOverlay;
+
+	@Inject
+	private SpecAuxBarOverlay specAuxBarOverlay;
+
+	@Inject
+	private RunAuxBarOverlay runAuxBarOverlay;
+
+	@Inject
+	private WarmthAuxBarOverlay warmthAuxBarOverlay;
+
+	@Inject
+	private EnemyHpAuxBarOverlay enemyHpAuxBarOverlay;
+
 	@Override
 	protected void startUp() throws Exception
 	{
@@ -243,6 +262,12 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 		overlayManager.add(prayerVialOverlay);
 		overlayManager.add(runVialOverlay);
 		overlayManager.add(specVialOverlay);
+		overlayManager.add(hpAuxBarOverlay);
+		overlayManager.add(prayerAuxBarOverlay);
+		overlayManager.add(specAuxBarOverlay);
+		overlayManager.add(runAuxBarOverlay);
+		overlayManager.add(warmthAuxBarOverlay);
+		overlayManager.add(enemyHpAuxBarOverlay);
 		keyManager.registerKeyListener(this);
 		mouseManager.registerMouseListener(dragListener);
 		orbRegistry.registerAll();
@@ -285,6 +310,12 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 		runVialOverlay.shutDown();
 		overlayManager.remove(specVialOverlay);
 		specVialOverlay.shutDown();
+		overlayManager.remove(hpAuxBarOverlay);
+		overlayManager.remove(prayerAuxBarOverlay);
+		overlayManager.remove(specAuxBarOverlay);
+		overlayManager.remove(runAuxBarOverlay);
+		overlayManager.remove(warmthAuxBarOverlay);
+		overlayManager.remove(enemyHpAuxBarOverlay);
 		restoreBarZoneSize();
 		keyManager.unregisterKeyListener(this);
 		mouseManager.unregisterMouseListener(dragListener);
@@ -681,6 +712,10 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 			lastOpponentActor = null;
 		}
 		manager.inCombat = lastOpponentActor != null;
+		// Restored for the Enemy HP aux bar - v1's OpponentTracker#getOpponent()
+		// (see git log before the full-reset "gut pass"), null unless the
+		// current (or recently-lingering) target is specifically an NPC.
+		manager.combatTargetNpc = lastOpponentActor instanceof NPC ? (NPC) lastOpponentActor : null;
 
 		int specRegenTicks = wearingLightbearer ? SPEC_REGEN_TICKS / 2 : SPEC_REGEN_TICKS;
 

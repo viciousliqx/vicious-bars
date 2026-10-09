@@ -64,6 +64,7 @@ import net.runelite.api.GameState;
 import net.runelite.api.Menu;
 import net.runelite.api.MenuAction;
 import net.runelite.api.MenuEntry;
+import net.runelite.api.NPC;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.JavaScriptCallback;
 import net.runelite.api.widgets.Widget;
@@ -125,6 +126,13 @@ public class CompactOrbsManager
 	// fight ends, so this doesn't flicker off mid-fight) - read by every
 	// VialOverlay's threshold-glow check for ThresholdMode.COMBAT_ONLY.
 	public boolean inCombat;
+
+	// Same tracking as inCombat above, narrowed to the NPC case only (null
+	// if the current/lingering target is a player, or there's no target at
+	// all) - read by EnemyHpAuxBarOverlay. Restored from v1's
+	// OpponentTracker#getOpponent() (see git log before the full-reset
+	// "gut pass").
+	public NPC combatTargetNpc;
 
 	// Written every game tick by ViciousBarsPlugin#onGameTick(), read by
 	// Hp/SpecVialOverlay to draw the frame-ring regen highlight - same

@@ -41,6 +41,12 @@ class PrayerVialOverlay extends VialOverlay
 	}
 
 	@Override
+	protected CompactOrbsConfig.BarOrientation orientation()
+	{
+		return config.prayerOrientation();
+	}
+
+	@Override
 	protected int currentValue()
 	{
 		return client.getBoostedSkillLevel(Skill.PRAYER);
@@ -132,5 +138,83 @@ class PrayerVialOverlay extends VialOverlay
 	protected boolean thresholdAbove()
 	{
 		return config.prayerThresholdDirection() == ThresholdDirection.AT_OR_ABOVE;
+	}
+
+	@Override
+	protected int length()
+	{
+		return config.prayerLength();
+	}
+
+	@Override
+	protected int width()
+	{
+		return config.prayerWidth();
+	}
+
+	@Override
+	protected int horizontalOffset()
+	{
+		return config.prayerHorizontalOffset();
+	}
+
+	@Override
+	protected int verticalOffset()
+	{
+		return config.prayerVerticalOffset();
+	}
+
+	@Override
+	protected int frameThickness()
+	{
+		return config.prayerFrameThickness();
+	}
+
+	@Override
+	protected int frameShadowWidth()
+	{
+		return config.prayerFrameShadowWidth();
+	}
+
+	@Override
+	protected int barOpacity()
+	{
+		return config.prayerBarOpacity();
+	}
+
+	@Override
+	protected int frameOpacity()
+	{
+		return config.prayerFrameOpacity();
+	}
+
+	@Override
+	protected CompactOrbsConfig.RegenDrainPriority regenDrainPriority()
+	{
+		return config.prayerRegenDrainPriority();
+	}
+
+	@Override
+	protected int regenDrainRingSize()
+	{
+		return config.prayerRegenDrainRingSize();
+	}
+
+	@Override
+	protected boolean reverseBarFill()
+	{
+		return config.prayerReverseBarFill();
+	}
+
+	@Override
+	protected boolean reverseRegenRing()
+	{
+		return config.prayerReverseRegenRing();
+	}
+
+	@Override
+	protected boolean reverseDrainRing()
+	{
+		return config.prayerReverseDrainRing();
 	}
 }
