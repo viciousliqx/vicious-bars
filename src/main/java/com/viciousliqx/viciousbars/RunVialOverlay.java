@@ -191,4 +191,10 @@ class RunVialOverlay extends VialOverlay
 	{
 		return config.runReverseDrainRing();
 	}
+
+	@Override
+	protected boolean hideDepletionEffect()
+	{
+		return config.runHideDepletionEffect();
+	}
 }

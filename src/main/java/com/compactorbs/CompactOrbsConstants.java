@@ -58,8 +58,9 @@ public class CompactOrbsConstants
 		public static final String CONFIG_VERSION = "configVersion";
 		public static final String MINIMAP = "hideMinimap";
 		public static final String COMPASS = "hideCompass";
-		public static final String HOTKEY_KEYBIND = "hotkeyKeybind";
-		public static final String HOTKEY_TOGGLE_OPTION = "hotkeyToggleOption";
+		public static final String MAIN_BARS_KEYBIND = "mainBarsKeybind";
+		public static final String EDIT_MAIN_BARS_KEYBIND = "editMainBarsKeybind";
+		public static final String HIDE_AUX_BARS_KEYBIND = "hideAuxBarsKeybind";
 
 		//not a real config choice - internal bookkeeping key only, see
 		//HideOrbRegistry's registration of this for why it still exists
@@ -214,6 +215,11 @@ public class CompactOrbsConstants
 		public static final String PRAYER_HIDE_AUX_WHEN_MAIN_SHOWN = "prayerHideAuxWhenMainShown";
 		public static final String SPEC_HIDE_AUX_WHEN_MAIN_SHOWN = "specHideAuxWhenMainShown";
 		public static final String RUN_HIDE_AUX_WHEN_MAIN_SHOWN = "runHideAuxWhenMainShown";
+
+		public static final String HP_HIDE_DEPLETION_EFFECT = "hpHideDepletionEffect";
+		public static final String PRAYER_HIDE_DEPLETION_EFFECT = "prayerHideDepletionEffect";
+		public static final String SPEC_HIDE_DEPLETION_EFFECT = "specHideDepletionEffect";
+		public static final String RUN_HIDE_DEPLETION_EFFECT = "runHideDepletionEffect";
 
 		// ------------------------------------------------------------------
 		// Auxiliary bars - restored from v1 (see git log before the
@@ -441,6 +447,9 @@ public class CompactOrbsConstants
 		// NORTH's real number (-5/10) and content/collar group (+7) all
 		// settled and hardcoded directly in VialOverlay now, same
 		// workflow as EAST_NUMBER_X_OFFSET/Y_OFFSET's own history.
+
+		// SOUTH's own small vertical discrepancy (-1) settled and
+		// hardcoded directly in VialOverlay, same workflow as above.
 
 		//edit-modes custom positioning
 		public static final String CUSTOM_LAYOUT_PREFIX = "custom_layout_";

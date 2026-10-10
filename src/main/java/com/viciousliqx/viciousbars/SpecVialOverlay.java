@@ -187,4 +187,10 @@ class SpecVialOverlay extends VialOverlay
 	{
 		return config.specReverseDrainRing();
 	}
+
+	@Override
+	protected boolean hideDepletionEffect()
+	{
+		return config.specHideDepletionEffect();
+	}
 }

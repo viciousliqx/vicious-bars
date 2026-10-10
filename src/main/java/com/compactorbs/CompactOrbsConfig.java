@@ -34,8 +34,6 @@ import com.viciousliqx.viciousbars.Orientation;
 import com.viciousliqx.viciousbars.PlacementMode;
 import com.viciousliqx.viciousbars.WarmthVisibility;
 import java.awt.Color;
-import java.awt.event.KeyEvent;
-import lombok.Getter;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -74,13 +72,6 @@ public interface CompactOrbsConfig extends Config
 		{
 			return this == BOTTOM;
 		}
-	}
-
-	@Getter
-	enum HotkeyOptions
-	{
-		MINIMAP,
-		EDIT_MODE
 	}
 
 	/** Per-bar threshold-glow mode - see the per-bar "Threshold mode" config items below. */
@@ -583,6 +574,18 @@ public interface CompactOrbsConfig extends Config
 		return false;
 	}
 
+	@ConfigItem(
+		keyName = ConfigKeys.HP_HIDE_DEPLETION_EFFECT,
+		name = "Hide orb depletion effect",
+		description = "Hides the real orb's own native depletion mask - our own bar already shows this, the orb is meant to be the bar's label, not a second copy of the bar's own job.",
+		section = hpSection,
+		position = 26
+	)
+	default boolean hpHideDepletionEffect()
+	{
+		return false;
+	}
+
 	@ConfigSection(
 		name = "Prayer",
 		description = "",
@@ -889,6 +892,18 @@ public interface CompactOrbsConfig extends Config
 		return false;
 	}
 
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_HIDE_DEPLETION_EFFECT,
+		name = "Hide orb depletion effect",
+		description = "Hides the real orb's own native depletion mask - our own bar already shows this, the orb is meant to be the bar's label, not a second copy of the bar's own job.",
+		section = prayerSection,
+		position = 24
+	)
+	default boolean prayerHideDepletionEffect()
+	{
+		return false;
+	}
+
 	@ConfigSection(
 		name = "Special Attack",
 		description = "",
@@ -1179,6 +1194,18 @@ public interface CompactOrbsConfig extends Config
 		position = 22
 	)
 	default boolean specReverseDrainRing()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.SPEC_HIDE_DEPLETION_EFFECT,
+		name = "Hide orb depletion effect",
+		description = "Hides the real orb's own native depletion mask - our own bar already shows this, the orb is meant to be the bar's label, not a second copy of the bar's own job.",
+		section = specSection,
+		position = 23
+	)
+	default boolean specHideDepletionEffect()
 	{
 		return false;
 	}
@@ -1477,6 +1504,18 @@ public interface CompactOrbsConfig extends Config
 		return false;
 	}
 
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_HIDE_DEPLETION_EFFECT,
+		name = "Hide orb depletion effect",
+		description = "Hides the real orb's own native depletion mask - our own bar already shows this, the orb is meant to be the bar's label, not a second copy of the bar's own job.",
+		section = runSection,
+		position = 23
+	)
+	default boolean runHideDepletionEffect()
+	{
+		return false;
+	}
+
 	// Empty on purpose - same simulated-nesting trick as Main/Aux Bar
 	// Configuration above.
 	@ConfigSection(
@@ -1487,36 +1526,52 @@ public interface CompactOrbsConfig extends Config
 	String hotkeyConfig = "hotkeyConfig";
 
 	@ConfigSection(
-		name = "Hotkey",
+		name = "Hotkeys",
 		description = "",
 		closedByDefault = true,
 		position = 16
 	)
 	String hotkey = "hotkey";
 
+	// Three independent keybinds instead of one shared key + a dropdown
+	// picking which action it performs - each one is its own dedicated
+	// action now, and each defaults to NOT_SET (no modifier warning
+	// needed either, since an unbound key can't collide with anything) -
+	// only bound at all if the user explicitly sets one.
 	@ConfigItem(
-		keyName = ConfigKeys.HOTKEY_KEYBIND,
-		name = "Keybind",
-		description = "Keybind used to toggle the option selected option <br>" +
-			"-Warning: a modified is recommended (e.g. Shift, Ctrl, Alt)",
+		keyName = ConfigKeys.MAIN_BARS_KEYBIND,
+		name = "Main bars",
+		description = "Toggles the main bars on/off - the same action as clicking the minimap's own toggle button.",
 		section = hotkey,
 		position = 0
 	)
-	default Keybind hotkeyKeybind()
+	default Keybind mainBarsKeybind()
 	{
-		return new Keybind(KeyEvent.VK_INSERT, KeyEvent.SHIFT_DOWN_MASK);
+		return Keybind.NOT_SET;
 	}
 
 	@ConfigItem(
-		keyName = ConfigKeys.HOTKEY_TOGGLE_OPTION,
-		name = "Select toggle",
-		description = "Select what the hotkey will control",
+		keyName = ConfigKeys.EDIT_MAIN_BARS_KEYBIND,
+		name = "Edit main bars",
+		description = "Toggles edit mode for repositioning the main bars - press again (or Escape) to exit.",
 		section = hotkey,
 		position = 1
 	)
-	default HotkeyOptions toggleOption()
+	default Keybind editMainBarsKeybind()
 	{
-		return HotkeyOptions.MINIMAP;
+		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.HIDE_AUX_BARS_KEYBIND,
+		name = "Hide aux bars",
+		description = "Toggles all aux bars hidden/shown, regardless of their own individual settings.",
+		section = hotkey,
+		position = 2
+	)
+	default Keybind hideAuxBarsKeybind()
+	{
+		return Keybind.NOT_SET;
 	}
 
 	// ==================================================================

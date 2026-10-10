@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import net.runelite.api.Client;
 import net.runelite.api.Point;
+import net.runelite.api.gameval.SpriteID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetPositionMode;
 import net.runelite.api.widgets.WidgetType;
@@ -229,6 +230,13 @@ abstract class VialOverlay extends Overlay
 	private int extraOriginalWidth;
 	private int extraOriginalHeight;
 
+	// The real depletion-mask widget (see hideDepletionEffect()'s own doc
+	// comment) - only its hidden state is ever touched, never its own
+	// position/size, so this just needs to remember which widget instance
+	// it is to restore hidden=false on cleanup, not a full original-value
+	// snapshot like extraWidget's own pair above.
+	private Widget depletionWidget;
+
 	// Null until the first render() call - deliberately NOT defaulted to
 	// one of the four real orientations, so the very first frame never
 	// looks like a "switch" and triggers a pointless restore-then-reapply.
@@ -296,6 +304,17 @@ abstract class VialOverlay extends Overlay
 
 	/** Which way this bar extends from its mount point - per-bar, not shared, so each of HP/Prayer/Spec/Run can pick its own. */
 	protected abstract CompactOrbsConfig.BarOrientation orientation();
+
+	/**
+	 * Suppresses the real orb's own native depletion mask (the
+	 * SpriteID.OrbFiller.EMPTY-sprited overlay the game itself grows
+	 * over the icon as the stat drains - confirmed live by comparing F8
+	 * dumps at different HP values: a 26x0 wrapper at 96 HP, 26x3 at 84)
+	 * - per-bar, since our own bar already shows the same information
+	 * and the real orb is meant to just be the bar's label, not a
+	 * second copy of the bar's own job.
+	 */
+	protected abstract boolean hideDepletionEffect();
 
 	// Every setting below was promoted from a single Global Bar Config
 	// shared across all four bars to a fully independent per-bar one
@@ -520,12 +539,14 @@ abstract class VialOverlay extends Overlay
 			lastOrientation = orientation;
 		}
 
+		Widget icon = client.getWidget(orbContainer().getIconId());
+		applyDepletionHiding(orb, icon);
+
 		if (orientation == CompactOrbsConfig.BarOrientation.SOUTH)
 		{
 			return renderSouth(graphics, orb);
 		}
 
-		Widget icon = client.getWidget(orbContainer().getIconId());
 		switch (orientation)
 		{
 			case EAST:
@@ -1130,7 +1151,32 @@ abstract class VialOverlay extends Overlay
 		int verticalWidth = containerOriginalHeight;
 		int verticalHeight = containerOriginalWidth;
 
-		shiftContent(container, icon, (verticalWidth - icon.getWidth()) / 2);
+		shiftContent(container, icon, (verticalWidth - icon.getWidth()) / 2, false);
+
+		// SOUTH never needed to touch the icon's own Y before (it just
+		// stays at its pure native position) - +1 dialed in live against
+		// the real widget (the config-slider version read as "-1" visually
+		// during testing, but the sign flipped once hardcoded - +1 is the
+		// value that's actually confirmed correct here). Shifts ONLY the
+		// icon itself, not the whole contentWidgets sibling group -
+		// confirmed live the other layered siblings (mostly hidden or
+		// zero-height state sprites anyway) were never the ones out of
+		// place, just this one.
+		int contentYOffset = 1;
+		for (int i = 0; i < contentWidgets.length; i++)
+		{
+			if (contentWidgets[i] != icon)
+			{
+				continue;
+			}
+			int targetContentY = contentOriginalY[i] + contentYOffset;
+			if (icon.getOriginalY() != targetContentY)
+			{
+				icon.setOriginalY(targetContentY);
+				icon.revalidate();
+			}
+			break;
+		}
 
 		if (number.getXPositionMode() != WidgetPositionMode.ABSOLUTE_LEFT)
 		{
@@ -1189,7 +1235,7 @@ abstract class VialOverlay extends Overlay
 			numberWidget = number;
 		}
 
-		shiftContent(container, icon, CONTENT_LEFT_PADDING);
+		shiftContent(container, icon, CONTENT_LEFT_PADDING, false);
 
 		if (number.getXPositionMode() != WidgetPositionMode.ABSOLUTE_LEFT)
 		{
@@ -1275,7 +1321,7 @@ abstract class VialOverlay extends Overlay
 		int verticalWidth = containerOriginalHeight;
 		int verticalHeight = containerOriginalWidth;
 
-		shiftContent(container, icon, (verticalWidth - icon.getWidth()) / 2);
+		shiftContent(container, icon, (verticalWidth - icon.getWidth()) / 2, true);
 
 		if (number.getXPositionMode() != WidgetPositionMode.ABSOLUTE_LEFT)
 		{
@@ -1355,6 +1401,79 @@ abstract class VialOverlay extends Overlay
 	}
 
 	/**
+	 * Hides (or restores) the real orb's native depletion mask - see
+	 * hideDepletionEffect()'s own doc comment. Runs unconditionally every
+	 * frame regardless of orientation (called once from the shared
+	 * render() dispatcher, before any orientation-specific branch), since
+	 * the real widget being drained is a property of the ORB itself, not
+	 * of however our own bar happens to be oriented.
+	 */
+	private void applyDepletionHiding(Widget container, Widget icon)
+	{
+		if (icon == null)
+		{
+			if (depletionWidget != null)
+			{
+				depletionWidget.setHidden(false);
+				depletionWidget = null;
+			}
+			return;
+		}
+
+		Widget depletion = findDepletionWidget(container, icon.getOriginalX());
+		if (depletion == null)
+		{
+			return;
+		}
+
+		depletionWidget = depletion;
+		boolean hide = hideDepletionEffect();
+		if (depletion.isHidden() != hide)
+		{
+			depletion.setHidden(hide);
+		}
+	}
+
+	/**
+	 * The real depletion-mask widget is a plain LAYER sharing the icon's
+	 * own native X (part of the same sibling cluster shiftContent()
+	 * matches), whose one static child is sprited
+	 * SpriteID.OrbFiller.EMPTY - confirmed via F8 dumps at different HP
+	 * values that THIS specific wrapper's own height (not the icon's)
+	 * grows as the stat drains (26x0 at 96 HP, 26x3 at 84), and that the
+	 * same EMPTY sprite ID is shared identically across all four orbs,
+	 * not just HP.
+	 */
+	private static Widget findDepletionWidget(Widget container, int iconNativeX)
+	{
+		Widget[] children = container.getStaticChildren();
+		if (children == null)
+		{
+			return null;
+		}
+		for (Widget child : children)
+		{
+			if (child == null || child.getType() != WidgetType.LAYER || child.getOriginalX() != iconNativeX)
+			{
+				continue;
+			}
+			Widget[] nested = child.getStaticChildren();
+			if (nested == null)
+			{
+				continue;
+			}
+			for (Widget n : nested)
+			{
+				if (n != null && n.getSpriteId() == SpriteID.OrbFiller.EMPTY)
+				{
+					return child;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Shifts the icon and every sibling sharing its original x (the
 	 * layered indicator/empty-fill/hover graphics - see field comment)
 	 * to targetX as one group, so whichever sibling the game happens to be
@@ -1369,7 +1488,7 @@ abstract class VialOverlay extends Overlay
 	 * from that known width rather than using a fixed padding constant
 	 * that only made sense against a minimal-fit box.
 	 */
-	private void shiftContent(Widget container, Widget icon, int targetX)
+	private void shiftContent(Widget container, Widget icon, int targetX, boolean forceTopLeftAnchor)
 	{
 		if (contentWidgets == null || contentWidget != container)
 		{
@@ -1397,23 +1516,29 @@ abstract class VialOverlay extends Overlay
 			contentWidget = container;
 		}
 
-		// Forced explicitly (not just the number) - confirmed live
-		// (screenshot) that NORTH's hard-swapped, now-taller container
-		// pushed the icon group out past its OWN bottom edge instead of
-		// leaving the expected headroom below it, exactly matching what a
-		// non-ABSOLUTE_TOP/LEFT native anchor on these specific widgets
-		// would produce when the container's height changes out from
-		// under them. The number already got this same treatment; these
-		// never did.
+		// forceTopLeftAnchor - NORTH-only (confirmed live, screenshot):
+		// its hard-swapped, now-taller container pushed the icon group out
+		// past its OWN bottom edge instead of leaving the expected
+		// headroom below it, matching what a non-ABSOLUTE_TOP/LEFT native
+		// anchor on these specific widgets would produce when the
+		// container's height changes out from under them. Confirmed live
+		// a SECOND time (screenshot) that applying this same force
+		// unconditionally to SOUTH/EAST too - which never had that
+		// problem and were already correct - introduced a NEW 1-2px
+		// vertical shift there instead, so it's opt-in per caller now
+		// rather than automatic for every orientation that calls this.
 		for (Widget content : contentWidgets)
 		{
-			if (content.getXPositionMode() != WidgetPositionMode.ABSOLUTE_LEFT)
+			if (forceTopLeftAnchor)
 			{
-				content.setXPositionMode(WidgetPositionMode.ABSOLUTE_LEFT);
-			}
-			if (content.getYPositionMode() != WidgetPositionMode.ABSOLUTE_TOP)
-			{
-				content.setYPositionMode(WidgetPositionMode.ABSOLUTE_TOP);
+				if (content.getXPositionMode() != WidgetPositionMode.ABSOLUTE_LEFT)
+				{
+					content.setXPositionMode(WidgetPositionMode.ABSOLUTE_LEFT);
+				}
+				if (content.getYPositionMode() != WidgetPositionMode.ABSOLUTE_TOP)
+				{
+					content.setYPositionMode(WidgetPositionMode.ABSOLUTE_TOP);
+				}
 			}
 			if (content.getOriginalX() != targetX)
 			{
@@ -1582,6 +1707,12 @@ abstract class VialOverlay extends Overlay
 	/** Safe to call unconditionally any time we're not actively repositioning the number - a no-op once nothing's saved. */
 	private void restoreNumber()
 	{
+		if (depletionWidget != null)
+		{
+			depletionWidget.setHidden(false);
+			depletionWidget = null;
+		}
+
 		if (extraWidget != null)
 		{
 			extraWidget.setOriginalX(extraOriginalX);

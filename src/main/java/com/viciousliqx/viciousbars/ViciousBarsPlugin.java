@@ -1,7 +1,6 @@
 package com.viciousliqx.viciousbars;
 
 import com.compactorbs.CompactOrbsConfig;
-import com.compactorbs.CompactOrbsConfig.HotkeyOptions;
 import com.compactorbs.CompactOrbsConstants.ConfigGroup;
 import static com.compactorbs.CompactOrbsConstants.ConfigGroup.GROUP_NAME;
 import com.compactorbs.CompactOrbsConstants.ConfigKeys;
@@ -1086,7 +1085,7 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 
 		if (manager.isEditingLayout)
 		{
-			if (e.getKeyCode() == KeyEvent.VK_ESCAPE || config.hotkeyKeybind().matches(e))
+			if (e.getKeyCode() == KeyEvent.VK_ESCAPE || config.editMainBarsKeybind().matches(e))
 			{
 				if (e.getKeyCode() == KeyEvent.VK_ESCAPE)
 				{
@@ -1097,31 +1096,29 @@ public class ViciousBarsPlugin extends Plugin implements KeyListener
 			return;
 		}
 
-		if (!config.hotkeyKeybind().matches(e))
-		{
-			return;
-		}
-
 		if (manager.isCutsceneActive)
 		{
 			return;
 		}
 
-		if (manager.isFixedMode())
+		// Three independent keys now instead of one shared key + a dropdown
+		// picking which action it performs - each only fires for its own
+		// dedicated binding, and an unbound (NOT_SET) key never matches.
+		if (!manager.isFixedMode() && config.mainBarsKeybind().matches(e))
+		{
+			clientThread.invokeLater(manager::onMinimapToggle);
+			return;
+		}
+
+		if (config.editMainBarsKeybind().matches(e))
 		{
 			clientThread.invokeLater(() -> editManager.toggleEditMode(true));
 			return;
 		}
 
-		switch (config.toggleOption())
+		if (config.hideAuxBarsKeybind().matches(e))
 		{
-			case MINIMAP:
-				clientThread.invokeLater(manager::onMinimapToggle);
-				break;
-
-			case EDIT_MODE:
-				clientThread.invokeLater(() -> editManager.toggleEditMode(true));
-				break;
+			manager.auxBarsHidden = !manager.auxBarsHidden;
 		}
 	}
 

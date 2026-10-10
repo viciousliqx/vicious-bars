@@ -192,7 +192,7 @@ public abstract class AuxBarOverlay extends Overlay
 	@Override
 	public final Dimension render(Graphics2D graphics)
 	{
-		if (!shouldRender())
+		if (!shouldRender() || manager.auxBarsHidden)
 		{
 			return null;
 		}

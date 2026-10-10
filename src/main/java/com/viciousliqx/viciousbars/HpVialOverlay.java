@@ -221,4 +221,10 @@ class HpVialOverlay extends VialOverlay
 	{
 		return config.hpReverseDrainRing();
 	}
+
+	@Override
+	protected boolean hideDepletionEffect()
+	{
+		return config.hpHideDepletionEffect();
+	}
 }

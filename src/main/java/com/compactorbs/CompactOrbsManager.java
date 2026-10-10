@@ -26,7 +26,6 @@
 package com.compactorbs;
 
 import com.compactorbs.CompactOrbsConfig.HorizontalAnchor;
-import com.compactorbs.CompactOrbsConfig.HotkeyOptions;
 import com.compactorbs.CompactOrbsConfig.VerticalAnchor;
 import com.compactorbs.CompactOrbsConstants.ConfigGroup;
 import com.compactorbs.CompactOrbsConstants.ConfigKeys;
@@ -55,7 +54,6 @@ import com.compactorbs.widget.layout.slot.SlotManager;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -133,6 +131,11 @@ public class CompactOrbsManager
 	// OpponentTracker#getOpponent() (see git log before the full-reset
 	// "gut pass").
 	public NPC combatTargetNpc;
+
+	// Toggled by ViciousBarsPlugin's "Hide aux bars" hotkey - checked by
+	// AuxBarOverlay's own render() to suppress every aux bar uniformly,
+	// regardless of each bar's own individual enabled/placement settings.
+	public boolean auxBarsHidden;
 
 	// Written every game tick by ViciousBarsPlugin#onGameTick(), read by
 	// Hp/SpecVialOverlay to draw the frame-ring regen highlight - same
@@ -1186,25 +1189,6 @@ public class CompactOrbsManager
 		if (version < ConfigGroup.CONFIG_VERSION)
 		{
 			migrateConfigs(
-				new MigrateConfig<>(
-					"hotkeyToggle",
-					ConfigKeys.HOTKEY_KEYBIND,
-					Keybind.class,
-					Function.identity()
-				),
-				new MigrateConfig<>(
-					"hotkeyMinimap",
-					ConfigKeys.HOTKEY_TOGGLE_OPTION,
-					Boolean.class,
-					enabled ->
-					{
-						if (enabled)
-						{
-							return HotkeyOptions.MINIMAP;
-						}
-						return null;
-					}
-				),
 				new MigrateConfig<>(
 					"verticalPosition",
 					ConfigKeys.HORIZONTAL_ANCHOR,

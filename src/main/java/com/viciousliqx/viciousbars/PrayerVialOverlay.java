@@ -217,4 +217,10 @@ class PrayerVialOverlay extends VialOverlay
 	{
 		return config.prayerReverseDrainRing();
 	}
+
+	@Override
+	protected boolean hideDepletionEffect()
+	{
+		return config.prayerHideDepletionEffect();
+	}
 }
