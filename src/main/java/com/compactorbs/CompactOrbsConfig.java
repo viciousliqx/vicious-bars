@@ -232,9 +232,9 @@ public interface CompactOrbsConfig extends Config
 	// copy of the logout X above the inventory panel while hiding the real
 	// one via opacity worked visually, but ONLY where nothing else real
 	// overlapped it. Dragged onto the toolbar's blank slot, clicks died
-	// entirely - confirmed via a widget-bounds dump (F6 in ViciousBarsPlugin)
-	// that SIDE_STATIC_LAYER (the whole tab-icon row's background, id
-	// 10747998) sits in front of the real X in the native click hit-test
+	// entirely - confirmed via a widget-bounds dump that SIDE_STATIC_LAYER
+	// (the whole tab-icon row's background, id 10747998) sits in front of
+	// the real X in the native click hit-test
 	// and has noClickThrough=true, swallowing the click before it ever
 	// reaches the (still fully listener-active) real X underneath. That
 	// flag isn't specific to the empty slot - it's load-bearing for the
