@@ -21,12 +21,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.runelite.api.Client;
+import net.runelite.api.MenuEntry;
 import net.runelite.api.Point;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.SpriteID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetPositionMode;
 import net.runelite.api.widgets.WidgetType;
 import net.runelite.client.game.SpriteManager;
+import net.runelite.client.plugins.itemstats.Effect;
+import net.runelite.client.plugins.itemstats.ItemStatChangesService;
+import net.runelite.client.plugins.itemstats.StatChange;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayPosition;
 
@@ -153,6 +158,7 @@ abstract class VialOverlay extends Overlay
 	protected final CompactOrbsConfig config;
 	protected final WidgetManager widgetManager;
 	private final SpriteManager spriteManager;
+	private final ItemStatChangesService itemStatService;
 
 	// Confirmed live (logged each piece's WidgetType): the backing/tab
 	// piece is WidgetType.GRAPHIC with modelId -1, not MODEL - so
@@ -288,13 +294,14 @@ abstract class VialOverlay extends Overlay
 	private int[] contentOriginalYMode;
 	private Widget contentWidget;
 
-	protected VialOverlay(Client client, CompactOrbsManager manager, CompactOrbsConfig config, WidgetManager widgetManager, SpriteManager spriteManager)
+	protected VialOverlay(Client client, CompactOrbsManager manager, CompactOrbsConfig config, WidgetManager widgetManager, SpriteManager spriteManager, ItemStatChangesService itemStatService)
 	{
 		this.client = client;
 		this.manager = manager;
 		this.config = config;
 		this.widgetManager = widgetManager;
 		this.spriteManager = spriteManager;
+		this.itemStatService = itemStatService;
 		setPosition(OverlayPosition.DYNAMIC);
 		setMovable(false);
 	}
@@ -424,6 +431,75 @@ abstract class VialOverlay extends Overlay
 	protected Color drainHighlightColor()
 	{
 		return fillColor().brighter();
+	}
+
+	/**
+	 * Extra amount to preview-fill beyond the current value, e.g. HP's
+	 * heal-on-hover preview - restored from v1 (see git log before the
+	 * full-reset "gut pass"), which only ever had this for HP. Generalized
+	 * to HP/Prayer/Run here; Spec has no override and stays at 0, since
+	 * there's no food/potion that instantly restores Special Attack energy
+	 * for ItemStatChangesService to compute in the first place.
+	 */
+	protected int previewAmount()
+	{
+		return 0;
+	}
+
+	/** Preview fill color while the hovered item's full effect would be used - none of it wasted over max. Only HP/Prayer/Run override this. */
+	protected Color previewFullColor()
+	{
+		return lighten(fillColor(), 0.55f);
+	}
+
+	/** Preview fill color while the hovered item would restore past max - some of its effect would be wasted. Only HP/Prayer/Run override this. */
+	protected Color previewPartialColor()
+	{
+		return lighten(fillColor(), 0.55f);
+	}
+
+	/**
+	 * Verbatim logic from RuneLite core's own StatusBarsOverlay.getRestoreValue()
+	 * - same menu-entry/widget sniffing approach to detect which inventory
+	 * item is currently hovered, same ItemStatChangesService call to get its
+	 * real computed stat change. Not guessed or approximated - this is the
+	 * exact mechanism the feature being replicated already uses. statName
+	 * matches against Stat#getName() - "Hitpoints"/"Prayer" line up with
+	 * Skill#getName(), but Run Energy isn't a Skill at all, so that one is a
+	 * literal "Run Energy" passed by the caller instead.
+	 */
+	protected int getRestoreValue(String statName)
+	{
+		MenuEntry[] menu = client.getMenuEntries();
+		int menuSize = menu.length;
+		if (menuSize == 0)
+		{
+			return 0;
+		}
+
+		MenuEntry entry = menu[menuSize - 1];
+		Widget widget = entry.getWidget();
+		int restoreValue = 0;
+
+		if (widget != null && widget.getId() == InterfaceID.Inventory.ITEMS)
+		{
+			Effect change = itemStatService.getItemStatChanges(widget.getItemId());
+
+			if (change != null)
+			{
+				for (StatChange c : change.calculate(client).getStatChanges())
+				{
+					int value = c.getTheoretical();
+
+					if (value != 0 && c.getStat().getName().equals(statName))
+					{
+						restoreValue = value;
+					}
+				}
+			}
+		}
+
+		return restoreValue;
 	}
 
 	/**
@@ -1983,6 +2059,23 @@ abstract class VialOverlay extends Overlay
 		vialGraphics.setColor(new Color(0, 0, 0, BACKGROUND_ALPHA));
 		vialGraphics.fillRect(0, 0, innerWidth, innerHeight);
 
+		// Preview fill draws FIRST, to the full current+preview extent, in
+		// green (full effect used) or yellow (some of it would be wasted
+		// past max) - then the normal fill draws over it up to just current,
+		// so the preview color only ever shows in the extra region beyond
+		// what you actually have right now. 0 for every bar except
+		// HP/Prayer/Run, so this is a no-op everywhere else.
+		int previewAmount = Math.max(0, previewAmount());
+		if (previewAmount > 0)
+		{
+			double previewRatio = (double) Math.min(max, current + previewAmount) / max;
+			int previewHeight = (int) Math.round(previewRatio * innerHeight);
+			boolean fullEffect = current + previewAmount <= max;
+			vialGraphics.setColor(fullEffect ? previewFullColor() : previewPartialColor());
+			int previewY = (anchorBottom ^ reverseBarFill()) ? innerHeight - previewHeight : 0;
+			vialGraphics.fillRect(0, previewY, innerWidth, previewHeight);
+		}
+
 		double ratio = (double) current / max;
 		int fillHeight = (int) Math.round(ratio * innerHeight);
 		vialGraphics.setColor(fillColor());
@@ -2160,6 +2253,19 @@ abstract class VialOverlay extends Overlay
 		vialGraphics.setColor(new Color(0, 0, 0, BACKGROUND_ALPHA));
 		vialGraphics.fillRect(0, 0, innerLength, innerThickness);
 
+		// Horizontal counterpart to drawVial()'s own preview fill - same
+		// draw-the-bigger-one-first-then-cover-it approach, just along X.
+		int previewAmount = Math.max(0, previewAmount());
+		if (previewAmount > 0)
+		{
+			double previewRatio = (double) Math.min(max, current + previewAmount) / max;
+			int previewLength = (int) Math.round(previewRatio * innerLength);
+			boolean fullEffect = current + previewAmount <= max;
+			vialGraphics.setColor(fullEffect ? previewFullColor() : previewPartialColor());
+			int previewX = (anchorRight ^ reverseBarFill()) ? innerLength - previewLength : 0;
+			vialGraphics.fillRect(previewX, 0, previewLength, innerThickness);
+		}
+
 		double ratio = (double) current / max;
 		int fillLength = (int) Math.round(ratio * innerLength);
 		vialGraphics.setColor(fillColor());
@@ -2167,5 +2273,13 @@ abstract class VialOverlay extends Overlay
 		vialGraphics.fillRect(fillX, 0, fillLength, innerThickness);
 
 		vialGraphics.dispose();
+	}
+
+	private static Color lighten(Color color, float fraction)
+	{
+		int r = color.getRed() + Math.round((255 - color.getRed()) * fraction);
+		int g = color.getGreen() + Math.round((255 - color.getGreen()) * fraction);
+		int b = color.getBlue() + Math.round((255 - color.getBlue()) * fraction);
+		return new Color(r, g, b, color.getAlpha());
 	}
 }

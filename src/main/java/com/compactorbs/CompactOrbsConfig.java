@@ -586,6 +586,42 @@ public interface CompactOrbsConfig extends Config
 		return false;
 	}
 
+	@ConfigItem(
+		keyName = ConfigKeys.HP_SHOW_HEAL_PREVIEW,
+		name = "Show heal preview",
+		description = "While hovering a food/potion item, previews how much it would heal by showing the extra amount in a lighter shade beyond your current Hitpoints. Requires the Item Stats plugin to be enabled - it's what actually knows how much each item heals.",
+		section = hpSection,
+		position = 27
+	)
+	default boolean hpShowHealPreview()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.HP_HEAL_PREVIEW_FULL_COLOR,
+		name = "Heal preview (full effect)",
+		description = "Preview fill color while hovering an item whose full heal would be used - none of it wasted over your max Hitpoints.",
+		section = hpSection,
+		position = 28
+	)
+	default Color hpHealPreviewFullColor()
+	{
+		return new Color(60, 220, 60);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.HP_HEAL_PREVIEW_PARTIAL_COLOR,
+		name = "Heal preview (partial effect)",
+		description = "Preview fill color while hovering an item that would heal past your max Hitpoints - some of its effect would be wasted.",
+		section = hpSection,
+		position = 29
+	)
+	default Color hpHealPreviewPartialColor()
+	{
+		return new Color(230, 200, 40);
+	}
+
 	@ConfigSection(
 		name = "Prayer",
 		description = "",
@@ -902,6 +938,42 @@ public interface CompactOrbsConfig extends Config
 	default boolean prayerHideDepletionEffect()
 	{
 		return false;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_SHOW_HEAL_PREVIEW,
+		name = "Show heal preview",
+		description = "While hovering a prayer-restoring item, previews how many points it would restore by showing the extra amount in a lighter shade beyond your current Prayer. Requires the Item Stats plugin to be enabled - it's what actually knows how much each item restores.",
+		section = prayerSection,
+		position = 25
+	)
+	default boolean prayerShowHealPreview()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_HEAL_PREVIEW_FULL_COLOR,
+		name = "Heal preview (full effect)",
+		description = "Preview fill color while hovering an item whose full restore would be used - none of it wasted over your max Prayer.",
+		section = prayerSection,
+		position = 26
+	)
+	default Color prayerHealPreviewFullColor()
+	{
+		return new Color(60, 220, 60);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_HEAL_PREVIEW_PARTIAL_COLOR,
+		name = "Heal preview (partial effect)",
+		description = "Preview fill color while hovering an item that would restore past your max Prayer - some of its effect would be wasted.",
+		section = prayerSection,
+		position = 27
+	)
+	default Color prayerHealPreviewPartialColor()
+	{
+		return new Color(230, 200, 40);
 	}
 
 	@ConfigSection(
@@ -1514,6 +1586,42 @@ public interface CompactOrbsConfig extends Config
 	default boolean runHideDepletionEffect()
 	{
 		return false;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_SHOW_HEAL_PREVIEW,
+		name = "Show heal preview",
+		description = "While hovering a run energy-restoring item, previews how much it would restore by showing the extra amount in a lighter shade beyond your current Run Energy. Requires the Item Stats plugin to be enabled - it's what actually knows how much each item restores.",
+		section = runSection,
+		position = 24
+	)
+	default boolean runShowHealPreview()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_HEAL_PREVIEW_FULL_COLOR,
+		name = "Heal preview (full effect)",
+		description = "Preview fill color while hovering an item whose full restore would be used - none of it wasted over your max Run Energy.",
+		section = runSection,
+		position = 25
+	)
+	default Color runHealPreviewFullColor()
+	{
+		return new Color(60, 220, 60);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_HEAL_PREVIEW_PARTIAL_COLOR,
+		name = "Heal preview (partial effect)",
+		description = "Preview fill color while hovering an item that would restore past your max Run Energy - some of its effect would be wasted.",
+		section = runSection,
+		position = 26
+	)
+	default Color runHealPreviewPartialColor()
+	{
+		return new Color(230, 200, 40);
 	}
 
 	// Empty on purpose - same simulated-nesting trick as Main/Aux Bar

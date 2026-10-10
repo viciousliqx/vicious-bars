@@ -19,6 +19,7 @@ Orientation, size, and position are all independent per bar - everything below i
 - Reverse-direction toggles for the bar fill and both rings, independently per bar
 - An option to hide the real orb's own native depletion effect, since the bar already shows it
 - Drag-and-drop repositioning in an edit mode, with an optional alignment grid
+- Heal preview on HP, Prayer, and Run - hovering a restoring item shows how much it would add in a lighter shade beyond your current value, colored green if the full effect would be used or yellow if some of it would be wasted past your max. Requires RuneLite's core Item Stats plugin enabled
 
 **Aux bars** (non-interactive overlay versions)
 - HP, Prayer, Special Attack, Run, Warmth, and current-target Enemy HP
@@ -37,6 +38,13 @@ Every bar (main and aux) has its own configuration section covering size, positi
 ## Installation
 
 Once available on the RuneLite Plugin Hub, search for "Vicious Bars" in the Plugin Hub browser inside the RuneLite client.
+
+## Credits
+
+- **[Compact Orbs](https://github.com/its-cue/compact-orbs)** by cue (BSD 2-Clause) - the engine this plugin is built on. All the low-level work of correctly creating, positioning, and resizing RuneLite's real orb widgets lives here; Vicious Bars is the bar-rendering, aux-bar, and feature layer built on top of it
+- **[Status Bars](https://github.com/runelite/runelite/wiki/Status-Bars)** - inspired the docked bar layout concept, and its heal/restore preview mechanism (`StatusBarsOverlay.getRestoreValue()`) was adapted directly for this plugin's own heal preview, extended here to Prayer and Run Energy as well as Hitpoints
+- **[Custom Vital Bars](https://runelite.net/plugin-hub/show/custom-vital-bars)** - inspired the depth of per-bar customizability
+- **[Prayer Drain Timer](https://github.com/JarateKing/prayer-drain-timer)** by JarateKing - inspiration for prayer-drain-related functionality
 
 ## License
 

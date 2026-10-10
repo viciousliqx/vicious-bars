@@ -14,6 +14,7 @@ import net.runelite.api.Client;
 import net.runelite.api.Skill;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.client.game.SpriteManager;
+import net.runelite.client.plugins.itemstats.ItemStatChangesService;
 
 /**
  * HP's vial bar - see VialOverlay for all the shared logic (frame, collar,
@@ -30,9 +31,9 @@ class HpVialOverlay extends VialOverlay
 	private static final int VENOM_THRESHOLD = 1_000_000;
 
 	@Inject
-	private HpVialOverlay(Client client, CompactOrbsManager manager, CompactOrbsConfig config, WidgetManager widgetManager, SpriteManager spriteManager)
+	private HpVialOverlay(Client client, CompactOrbsManager manager, CompactOrbsConfig config, WidgetManager widgetManager, SpriteManager spriteManager, ItemStatChangesService itemStatService)
 	{
-		super(client, manager, config, widgetManager, spriteManager);
+		super(client, manager, config, widgetManager, spriteManager, itemStatService);
 	}
 
 	@Override
@@ -226,5 +227,27 @@ class HpVialOverlay extends VialOverlay
 	protected boolean hideDepletionEffect()
 	{
 		return config.hpHideDepletionEffect();
+	}
+
+	@Override
+	protected int previewAmount()
+	{
+		if (!config.hpShowHealPreview())
+		{
+			return 0;
+		}
+		return getRestoreValue(Skill.HITPOINTS.getName());
+	}
+
+	@Override
+	protected Color previewFullColor()
+	{
+		return config.hpHealPreviewFullColor();
+	}
+
+	@Override
+	protected Color previewPartialColor()
+	{
+		return config.hpHealPreviewPartialColor();
 	}
 }

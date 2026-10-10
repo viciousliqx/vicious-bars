@@ -221,6 +221,19 @@ public class CompactOrbsConstants
 		public static final String SPEC_HIDE_DEPLETION_EFFECT = "specHideDepletionEffect";
 		public static final String RUN_HIDE_DEPLETION_EFFECT = "runHideDepletionEffect";
 
+		// Special Attack has no entry here - there's no food/potion that
+		// instantly restores SA energy in OSRS, so ItemStatChangesService has
+		// nothing to compute for it.
+		public static final String HP_SHOW_HEAL_PREVIEW = "hpShowHealPreview";
+		public static final String PRAYER_SHOW_HEAL_PREVIEW = "prayerShowHealPreview";
+		public static final String RUN_SHOW_HEAL_PREVIEW = "runShowHealPreview";
+		public static final String HP_HEAL_PREVIEW_FULL_COLOR = "hpHealPreviewFullColor";
+		public static final String HP_HEAL_PREVIEW_PARTIAL_COLOR = "hpHealPreviewPartialColor";
+		public static final String PRAYER_HEAL_PREVIEW_FULL_COLOR = "prayerHealPreviewFullColor";
+		public static final String PRAYER_HEAL_PREVIEW_PARTIAL_COLOR = "prayerHealPreviewPartialColor";
+		public static final String RUN_HEAL_PREVIEW_FULL_COLOR = "runHealPreviewFullColor";
+		public static final String RUN_HEAL_PREVIEW_PARTIAL_COLOR = "runHealPreviewPartialColor";
+
 		// ------------------------------------------------------------------
 		// Auxiliary bars - restored from v1 (see git log before the
 		// full-reset "gut pass"): free-floating/Docked overlays with no real

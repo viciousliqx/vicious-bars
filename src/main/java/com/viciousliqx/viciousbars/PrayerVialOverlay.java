@@ -14,6 +14,7 @@ import net.runelite.api.Client;
 import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
 import net.runelite.client.game.SpriteManager;
+import net.runelite.client.plugins.itemstats.ItemStatChangesService;
 
 /**
  * Prayer's vial bar - see VialOverlay for all the shared logic. Confirmed
@@ -29,9 +30,9 @@ import net.runelite.client.game.SpriteManager;
 class PrayerVialOverlay extends VialOverlay
 {
 	@Inject
-	private PrayerVialOverlay(Client client, CompactOrbsManager manager, CompactOrbsConfig config, WidgetManager widgetManager, SpriteManager spriteManager)
+	private PrayerVialOverlay(Client client, CompactOrbsManager manager, CompactOrbsConfig config, WidgetManager widgetManager, SpriteManager spriteManager, ItemStatChangesService itemStatService)
 	{
-		super(client, manager, config, widgetManager, spriteManager);
+		super(client, manager, config, widgetManager, spriteManager, itemStatService);
 	}
 
 	@Override
@@ -222,5 +223,27 @@ class PrayerVialOverlay extends VialOverlay
 	protected boolean hideDepletionEffect()
 	{
 		return config.prayerHideDepletionEffect();
+	}
+
+	@Override
+	protected int previewAmount()
+	{
+		if (!config.prayerShowHealPreview())
+		{
+			return 0;
+		}
+		return getRestoreValue(Skill.PRAYER.getName());
+	}
+
+	@Override
+	protected Color previewFullColor()
+	{
+		return config.prayerHealPreviewFullColor();
+	}
+
+	@Override
+	protected Color previewPartialColor()
+	{
+		return config.prayerHealPreviewPartialColor();
 	}
 }

@@ -59,44 +59,42 @@ import net.runelite.client.input.KeyListener;
 import net.runelite.client.input.KeyManager;
 import net.runelite.client.input.MouseManager;
 import net.runelite.client.plugins.Plugin;
+import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.itemstats.ItemStatPlugin;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.ui.overlay.OverlayPosition;
 
 /**
- * FULL RESET IN PROGRESS - see vicious_bars_dev_talk.txt / git log for the
- * original bars feature (fully recoverable from history, nothing lost).
+ * Vicious Bars replaces the real HP/Prayer/Special Attack/Run Energy orbs
+ * with fully configurable drawn bars, plus a matching non-interactive aux
+ * bar system (see README.md for the full feature list).
  * <p>
- * This plugin is currently the verbatim-copied Compact Orbs engine
- * (its-cue/compact-orbs, BSD-2-Clause - see com.compactorbs's own source
- * comments and compact_orbs_walkthrough.md at the hangar root), wired
- * directly into OUR plugin identity rather than running as a separate
- * parallel plugin: CompactOrbsConstants.ConfigGroup.GROUP_NAME was
- * retargeted to "vicious-bars" (this plugin's own existing config group),
- * so CompactOrbsConfig IS this plugin's real, live config now - not a
- * second entry in the plugin panel.
- * <p>
- * Being gutted down feature-by-feature from here with context applied to
- * each removal, not blanket deletion - e.g. the layout-preset SYSTEM
- * (Minimap/Orbs/Offset/Slot machinery) stays, since Vicious Bars still
- * needs it to place things; only the multi-layout CONFIG CHOICE goes,
- * since Vicious Bars will only ever have one single layout, not four.
- * Already removed before reaching this integrated state: the detached
- * minimap overlay feature, the wiki-plugin-conflict chat warning, the dead
- * "Detached Minimap" hotkey option, and orb-swapping in full (Compact Orbs'
- * own feature - letting you reassign which named orb sits in which slot
- * instead of freely dragging it. Vicious Bars is about bars, not
- * rearranging orbs, so keeping this would make us a redundant subset of
- * the real Compact Orbs rather than something distinct - see git history
- * for exact diffs). Store/activity orb hide toggles turned out to be
- * ordinary vanilla icons riding the same generic per-orb hide/reorder
- * system HP/Prayer/Run/Spec already need, so nothing to cut there. Still
- * to be picked off: the multi-layout config surface mentioned above.
+ * Built on top of cue's Compact Orbs engine (its-cue/compact-orbs,
+ * BSD-2-Clause - see com.compactorbs's own source comments), wired directly
+ * into this plugin's own identity rather than running as a separate
+ * parallel plugin: CompactOrbsConstants.ConfigGroup.GROUP_NAME is
+ * retargeted to "vicious-bars" (this plugin's own config group), so
+ * CompactOrbsConfig is this plugin's real, live config - not a second entry
+ * in the plugin panel. com.compactorbs supplies the low-level widget
+ * creation/positioning/resizing machinery; everything in
+ * com.viciousliqx.viciousbars (the bar rendering, aux bars, edit mode,
+ * hotkeys, heal preview, etc.) is original on top of it. Deliberately NOT
+ * carried over from Compact Orbs: orb-swapping (reassigning which named orb
+ * sits in which slot) and the multi-layout config system (Vicious Bars only
+ * ever has one layout, not several) - both are Compact Orbs' own distinct
+ * feature set, not something this plugin needs.
  */
 @Slf4j
 @PluginDescriptor(
 	name = "Vicious Bars"
 )
+// Same dependency Status Bars itself declares for its own heal-restore
+// preview - ItemStatChangesService (the thing that actually computes "this
+// food heals X Hitpoints") is only bound/available via Guice while this
+// plugin is enabled, so the heal-preview bars simply have nothing to show
+// if the user doesn't have Item Stats turned on.
+@PluginDependency(ItemStatPlugin.class)
 public class ViciousBarsPlugin extends Plugin implements KeyListener
 {
 	@Inject

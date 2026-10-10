@@ -13,6 +13,7 @@ import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.client.game.SpriteManager;
+import net.runelite.client.plugins.itemstats.ItemStatChangesService;
 
 /**
  * Run energy's vial bar - see VialOverlay for all the shared logic.
@@ -26,10 +27,15 @@ import net.runelite.client.game.SpriteManager;
 @Singleton
 class RunVialOverlay extends VialOverlay
 {
+	// Theoretical stat changes for the Run Energy consumables (stamina/
+	// energy potions) are reported in whole percentage points, same scale
+	// as currentValue()/maxValue() below - no extra scaling needed.
+	private static final String RUN_ENERGY_STAT_NAME = "Run Energy";
+
 	@Inject
-	private RunVialOverlay(Client client, CompactOrbsManager manager, CompactOrbsConfig config, WidgetManager widgetManager, SpriteManager spriteManager)
+	private RunVialOverlay(Client client, CompactOrbsManager manager, CompactOrbsConfig config, WidgetManager widgetManager, SpriteManager spriteManager, ItemStatChangesService itemStatService)
 	{
-		super(client, manager, config, widgetManager, spriteManager);
+		super(client, manager, config, widgetManager, spriteManager, itemStatService);
 	}
 
 	@Override
@@ -196,5 +202,27 @@ class RunVialOverlay extends VialOverlay
 	protected boolean hideDepletionEffect()
 	{
 		return config.runHideDepletionEffect();
+	}
+
+	@Override
+	protected int previewAmount()
+	{
+		if (!config.runShowHealPreview())
+		{
+			return 0;
+		}
+		return getRestoreValue(RUN_ENERGY_STAT_NAME);
+	}
+
+	@Override
+	protected Color previewFullColor()
+	{
+		return config.runHealPreviewFullColor();
+	}
+
+	@Override
+	protected Color previewPartialColor()
+	{
+		return config.runHealPreviewPartialColor();
 	}
 }

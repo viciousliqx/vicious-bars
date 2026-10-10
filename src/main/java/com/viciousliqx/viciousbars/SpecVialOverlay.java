@@ -13,6 +13,7 @@ import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.client.game.SpriteManager;
+import net.runelite.client.plugins.itemstats.ItemStatChangesService;
 
 /**
  * Special attack's vial bar - see VialOverlay for all the shared logic.
@@ -28,9 +29,9 @@ import net.runelite.client.game.SpriteManager;
 class SpecVialOverlay extends VialOverlay
 {
 	@Inject
-	private SpecVialOverlay(Client client, CompactOrbsManager manager, CompactOrbsConfig config, WidgetManager widgetManager, SpriteManager spriteManager)
+	private SpecVialOverlay(Client client, CompactOrbsManager manager, CompactOrbsConfig config, WidgetManager widgetManager, SpriteManager spriteManager, ItemStatChangesService itemStatService)
 	{
-		super(client, manager, config, widgetManager, spriteManager);
+		super(client, manager, config, widgetManager, spriteManager, itemStatService);
 	}
 
 	@Override
