@@ -167,15 +167,6 @@ public interface CompactOrbsConfig extends Config
 	// graphic to compensate for hidden toggle icons. See
 	// compact_orbs_walkthrough.md's horizontal-anchor keeper finding.
 
-	@ConfigItem(
-		keyName = ConfigKeys.HIDE_MINIMAP_WITH_SIDE_PANEL,
-		name = "Hide orbs with inventory tab",
-		description = "Hide the compact layout when the side panel tab is hidden (only works in resizable-modern).",
-		section = layout,
-		position = 7
-	)
-	default boolean hideMinimapWithSidePanel() { return false; }
-
 	// No longer dev-only/temp - a confirmed staple now. F7's diagnostic
 	// dump (see ViciousBarsPlugin) confirmed getOrbsParent() and
 	// getMapParent() are two separate widgets nested one inside the other
@@ -192,7 +183,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Bar zone width",
 		description = "Extra pixels added to both getOrbsParent() and getMapParent() (confirmed to be the same native size, nested widgets) - this is the actual boundary DragListener clamps orb positions against, and widening both together gives the bars more room without touching the orb's own relatively-sized parent.",
 		section = layout,
-		position = 8
+		position = 0
 	)
 	default int barZoneWidthOffset()
 	{
@@ -209,7 +200,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Bar zone height",
 		description = "Extra pixels added to both getOrbsParent() and getMapParent()'s height, same mechanism as Bar zone width.",
 		section = layout,
-		position = 9
+		position = 1
 	)
 	default int barZoneHeightOffset()
 	{
@@ -217,11 +208,20 @@ public interface CompactOrbsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = ConfigKeys.HIDE_MINIMAP_WITH_SIDE_PANEL,
+		name = "Hide bars with inventory tab",
+		description = "Hide the compact layout when the side panel tab is hidden (only works in resizable-modern).",
+		section = layout,
+		position = 2
+	)
+	default boolean hideMinimapWithSidePanel() { return false; }
+
+	@ConfigItem(
 		keyName = ConfigKeys.SHOW_EDIT_GRID,
 		name = "Show edit grid",
 		description = "Draws reference grid lines over the red drag zone while editing - purely visual, doesn't affect dragging.",
 		section = layout,
-		position = 10
+		position = 3
 	)
 	default boolean showEditGrid()
 	{
@@ -251,146 +251,12 @@ public interface CompactOrbsConfig extends Config
 		position = 3
 	)
 	String hpSection = "hpSection";
-
-	@ConfigItem(
-		keyName = ConfigKeys.HP_SHOW_REGEN,
-		name = "Show regen",
-		description = "Highlight the frame ring, growing toward the next hitpoint regenerated - halves in period under Rapid Heal, off entirely at full hitpoints.",
-		section = hpSection,
-		position = 0
-	)
-	default boolean hpShowRegen()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.HP_SHOW_DRAIN,
-		name = "Show drain",
-		description = "Highlight the frame ring while poisoned or envenomed, counting down to the next damage tick - starts full right after a hit and drains to empty right before the next one, the inverse of the regen ring above.",
-		section = hpSection,
-		position = 1
-	)
-	default boolean hpShowDrain()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.HP_NORMAL_COLOR,
-		name = "Normal color",
-		description = "Bar color while healthy.",
-		section = hpSection,
-		position = 2
-	)
-	default Color hpNormalColor()
-	{
-		return new Color(220, 40, 40);
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.HP_POISONED_COLOR,
-		name = "Poisoned color",
-		description = "Bar color while poisoned.",
-		section = hpSection,
-		position = 3
-	)
-	default Color hpPoisonedColor()
-	{
-		return new Color(90, 170, 60);
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.HP_ENVENOMED_COLOR,
-		name = "Envenomed color",
-		description = "Bar color while envenomed (lethal poison - won't naturally wear off).",
-		section = hpSection,
-		position = 4
-	)
-	default Color hpEnvenomedColor()
-	{
-		return new Color(60, 120, 40);
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.HP_DISEASED_COLOR,
-		name = "Diseased color",
-		description = "Bar color while diseased.",
-		section = hpSection,
-		position = 5
-	)
-	default Color hpDiseasedColor()
-	{
-		return new Color(150, 110, 40);
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.HP_REGEN_COLOR,
-		name = "Regen ring color",
-		description = "Regen outline color, growing toward the next hitpoint regenerated. Independent of the drain ring below, which has its own color (locked to the Poisoned/Envenomed color above) and its own toggle.",
-		section = hpSection,
-		position = 6
-	)
-	default Color hpRegenColor()
-	{
-		return new Color(220, 40, 40);
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.HP_THRESHOLD_MODE,
-		name = "Threshold mode",
-		description = "Disabled: off. Active: the icon pulses once the threshold condition below is met. Combat only: same, but only while you're in combat.",
-		section = hpSection,
-		position = 7
-	)
-	default ThresholdMode hpThresholdMode()
-	{
-		return ThresholdMode.DISABLED;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.HP_THRESHOLD_DIRECTION,
-		name = "Threshold direction",
-		description = "At or below: warns when hitpoints drop too low (the usual case). At or above: warns when overhealed/too high instead (e.g. to avoid wasting an incoming heal).",
-		section = hpSection,
-		position = 8
-	)
-	default ThresholdDirection hpThresholdDirection()
-	{
-		return ThresholdDirection.AT_OR_BELOW;
-	}
-
-	@Range(min = 0, max = 100)
-	@ConfigItem(
-		keyName = ConfigKeys.HP_THRESHOLD,
-		name = "Threshold",
-		description = "Hitpoints percentage the icon pulses at, per Threshold direction above.",
-		section = hpSection,
-		position = 9
-	)
-	default int hpThreshold()
-	{
-		return 25;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.HP_THRESHOLD_COLOR,
-		name = "Threshold glow color",
-		description = "Color the icon pulses in once the threshold above is reached.",
-		section = hpSection,
-		position = 10
-	)
-	default Color hpThresholdColor()
-	{
-		return new Color(220, 30, 30, 160);
-	}
-
 	@ConfigItem(
 		keyName = ConfigKeys.HP_HIDE_AUX_WHEN_MAIN_SHOWN,
 		name = "Hide matching aux bar",
 		description = "While this main bar is shown (Compact mode active), hide the auxiliary HP bar too. Turn off to run both at once.",
 		section = hpSection,
-		position = 11
+		position = 0
 	)
 	default boolean hpHideAuxWhenMainShown()
 	{
@@ -402,7 +268,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Orientation",
 		description = "Which way this bar extends from its mount point (the Orb/Vial offsets in Global Bar Config) - West is the default and matches vanilla's own native collar direction; East/North mirror it with a flipped/rotated collar; South is the original hand-built vertical layout.",
 		section = hpSection,
-		position = 12
+		position = 1
 	)
 	default BarOrientation hpOrientation()
 	{
@@ -415,7 +281,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Length",
 		description = "How long the bar is, end to end.",
 		section = hpSection,
-		position = 13
+		position = 2
 	)
 	default int hpLength()
 	{
@@ -428,7 +294,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Width",
 		description = "How thick the bar is, across its short axis.",
 		section = hpSection,
-		position = 14
+		position = 3
 	)
 	default int hpWidth()
 	{
@@ -441,7 +307,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Orb/Vial horizontal offset",
 		description = "Mounts the bar this many pixels right (+) or left (-) of the orb icon's own center, before it extends outward per Orientation above.",
 		section = hpSection,
-		position = 15
+		position = 4
 	)
 	default int hpHorizontalOffset()
 	{
@@ -454,7 +320,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Orb/Vial vertical offset",
 		description = "Mounts the bar this many pixels down (+) or up (-) of the orb icon's own center, before it extends outward per Orientation above.",
 		section = hpSection,
-		position = 16
+		position = 5
 	)
 	default int hpVerticalOffset()
 	{
@@ -467,7 +333,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Frame thickness",
 		description = "Thickness of the stone frame ring. The vial fill always fills whatever's left inside it.",
 		section = hpSection,
-		position = 17
+		position = 6
 	)
 	default int hpFrameThickness()
 	{
@@ -480,7 +346,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Frame shadow width",
 		description = "Stroke width of the dark outline traced around the whole bar's outer edge, independent of Frame thickness above.",
 		section = hpSection,
-		position = 18
+		position = 7
 	)
 	default int hpFrameShadowWidth()
 	{
@@ -493,7 +359,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Bar opacity",
 		description = "Opacity of the vial fill. The regen/drain rings read more opaque than this. Doesn't affect the frame - see Frame opacity.",
 		section = hpSection,
-		position = 19
+		position = 8
 	)
 	default int hpBarOpacity()
 	{
@@ -506,7 +372,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Frame opacity",
 		description = "Opacity of the stone frame ring, independent of Bar opacity above.",
 		section = hpSection,
-		position = 20
+		position = 9
 	)
 	default int hpFrameOpacity()
 	{
@@ -514,11 +380,107 @@ public interface CompactOrbsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = ConfigKeys.HP_REVERSE_BAR_FILL,
+		name = "Reverse bar fill",
+		description = "Flips which end the vial fill empties from first - normally the near-icon end, with the remaining \"liquid\" receding toward the far end as the value drops.",
+		section = hpSection,
+		position = 10
+	)
+	default boolean hpReverseBarFill()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.HP_NORMAL_COLOR,
+		name = "Normal color",
+		description = "Bar color while healthy.",
+		section = hpSection,
+		position = 11
+	)
+	default Color hpNormalColor()
+	{
+		return new Color(220, 40, 40);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.HP_POISONED_COLOR,
+		name = "Poisoned color",
+		description = "Bar color while poisoned.",
+		section = hpSection,
+		position = 12
+	)
+	default Color hpPoisonedColor()
+	{
+		return new Color(90, 170, 60);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.HP_ENVENOMED_COLOR,
+		name = "Envenomed color",
+		description = "Bar color while envenomed (lethal poison - won't naturally wear off).",
+		section = hpSection,
+		position = 13
+	)
+	default Color hpEnvenomedColor()
+	{
+		return new Color(60, 120, 40);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.HP_DISEASED_COLOR,
+		name = "Diseased color",
+		description = "Bar color while diseased.",
+		section = hpSection,
+		position = 14
+	)
+	default Color hpDiseasedColor()
+	{
+		return new Color(150, 110, 40);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.HP_REGEN_COLOR,
+		name = "Regen ring color",
+		description = "Regen outline color, growing toward the next hitpoint regenerated. Independent of the drain ring below, which has its own color (locked to the Poisoned/Envenomed color above) and its own toggle.",
+		section = hpSection,
+		position = 15
+	)
+	default Color hpRegenColor()
+	{
+		return new Color(220, 40, 40);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.HP_SHOW_REGEN,
+		name = "Show regen",
+		description = "Highlight the frame ring, growing toward the next hitpoint regenerated - halves in period under Rapid Heal, off entirely at full hitpoints.",
+		section = hpSection,
+		position = 16
+	)
+	default boolean hpShowRegen()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.HP_SHOW_DRAIN,
+		name = "Show drain",
+		description = "Highlight the frame ring while poisoned or envenomed, counting down to the next damage tick - starts full right after a hit and drains to empty right before the next one, the inverse of the regen ring above.",
+		section = hpSection,
+		position = 17
+	)
+	default boolean hpShowDrain()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = ConfigKeys.HP_REGEN_DRAIN_PRIORITY,
 		name = "Regen/drain priority",
 		description = "Which ring draws on top (and reads more opaque) when this bar has both a regen ring and a drain ring showing at once.",
 		section = hpSection,
-		position = 21
+		position = 18
 	)
 	default RegenDrainPriority hpRegenDrainPriority()
 	{
@@ -531,7 +493,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Drain/regen ring size",
 		description = "Thickness of the regen/drain outline traced along the inside of the vial cavity.",
 		section = hpSection,
-		position = 22
+		position = 19
 	)
 	default int hpRegenDrainRingSize()
 	{
@@ -539,23 +501,11 @@ public interface CompactOrbsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = ConfigKeys.HP_REVERSE_BAR_FILL,
-		name = "Reverse bar fill",
-		description = "Flips which end the vial fill empties from first - normally the near-icon end, with the remaining \"liquid\" receding toward the far end as the value drops.",
-		section = hpSection,
-		position = 23
-	)
-	default boolean hpReverseBarFill()
-	{
-		return false;
-	}
-
-	@ConfigItem(
 		keyName = ConfigKeys.HP_REVERSE_REGEN_RING,
 		name = "Reverse regen ring",
 		description = "Flips which end the regen ring grows from, independently of the bar fill above.",
 		section = hpSection,
-		position = 24
+		position = 20
 	)
 	default boolean hpReverseRegenRing()
 	{
@@ -567,11 +517,60 @@ public interface CompactOrbsConfig extends Config
 		name = "Reverse drain ring",
 		description = "Flips which end the drain ring shrinks toward, independently of the bar fill and regen ring above.",
 		section = hpSection,
-		position = 25
+		position = 21
 	)
 	default boolean hpReverseDrainRing()
 	{
 		return false;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.HP_THRESHOLD_MODE,
+		name = "Threshold mode",
+		description = "Disabled: off. Active: the icon pulses once the threshold condition below is met. Combat only: same, but only while you're in combat.",
+		section = hpSection,
+		position = 22
+	)
+	default ThresholdMode hpThresholdMode()
+	{
+		return ThresholdMode.DISABLED;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.HP_THRESHOLD_DIRECTION,
+		name = "Threshold direction",
+		description = "At or below: warns when hitpoints drop too low (the usual case). At or above: warns when overhealed/too high instead (e.g. to avoid wasting an incoming heal).",
+		section = hpSection,
+		position = 23
+	)
+	default ThresholdDirection hpThresholdDirection()
+	{
+		return ThresholdDirection.AT_OR_BELOW;
+	}
+
+	@Range(min = 0, max = 100)
+	@ConfigItem(
+		keyName = ConfigKeys.HP_THRESHOLD,
+		name = "Threshold",
+		description = "Hitpoints percentage the icon pulses at, per Threshold direction above.",
+		section = hpSection,
+		position = 24
+	)
+	default int hpThreshold()
+	{
+		return 25;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.HP_THRESHOLD_COLOR,
+		name = "Threshold glow color",
+		description = "Color the icon pulses in once the threshold above is reached.",
+		section = hpSection,
+		position = 25
+	)
+	default Color hpThresholdColor()
+	{
+		return new Color(220, 30, 30, 160);
 	}
 
 	@ConfigItem(
@@ -622,6 +621,7 @@ public interface CompactOrbsConfig extends Config
 		return new Color(230, 200, 40);
 	}
 
+
 	@ConfigSection(
 		name = "Prayer",
 		description = "",
@@ -629,122 +629,12 @@ public interface CompactOrbsConfig extends Config
 		position = 4
 	)
 	String prayerSection = "prayerSection";
-
-	@ConfigItem(
-		keyName = ConfigKeys.PRAYER_SHOW_REGEN,
-		name = "Show regen",
-		description = "Highlight the frame ring while a Prayer regeneration potion's effect is active, growing toward its next restored prayer point - prayer has no passive regen otherwise, so the ring stays off outside that potion's effect.",
-		section = prayerSection,
-		position = 0
-	)
-	default boolean prayerShowRegen()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.PRAYER_SHOW_DRAIN,
-		name = "Show drain",
-		description = "Highlight the frame ring while any prayer is active, counting down to the next prayer point drained - starts full right after a point drains and empties right before the next one, the inverse of the regen ring above. Paces itself off the real gap between your last two point losses rather than a formula, so it takes one point loss after activating a prayer (or changing gear) to start showing.",
-		section = prayerSection,
-		position = 1
-	)
-	default boolean prayerShowDrain()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.PRAYER_ACTIVE_COLOR,
-		name = "Active color",
-		description = "Bar color while any prayer is active.",
-		section = prayerSection,
-		position = 2
-	)
-	default Color prayerActiveColor()
-	{
-		return new Color(60, 170, 220);
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.PRAYER_INACTIVE_COLOR,
-		name = "Inactive color",
-		description = "Bar color while no prayer is active.",
-		section = prayerSection,
-		position = 3
-	)
-	default Color prayerInactiveColor()
-	{
-		return new Color(25, 35, 80);
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.PRAYER_REGEN_COLOR,
-		name = "Regen ring color",
-		description = "Regen outline color while a Prayer regeneration potion's effect is active.",
-		section = prayerSection,
-		position = 4
-	)
-	default Color prayerRegenColor()
-	{
-		return new Color(60, 170, 220);
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.PRAYER_THRESHOLD_MODE,
-		name = "Threshold mode",
-		description = "Disabled: off. Active: the icon pulses once the threshold condition below is met. Combat only: same, but only while you're in combat.",
-		section = prayerSection,
-		position = 5
-	)
-	default ThresholdMode prayerThresholdMode()
-	{
-		return ThresholdMode.DISABLED;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.PRAYER_THRESHOLD_DIRECTION,
-		name = "Threshold direction",
-		description = "At or below: warns when prayer points drop too low (the usual case). At or above: warns when too high instead.",
-		section = prayerSection,
-		position = 6
-	)
-	default ThresholdDirection prayerThresholdDirection()
-	{
-		return ThresholdDirection.AT_OR_BELOW;
-	}
-
-	@Range(min = 0, max = 100)
-	@ConfigItem(
-		keyName = ConfigKeys.PRAYER_THRESHOLD,
-		name = "Threshold",
-		description = "Prayer points percentage the icon pulses at, per Threshold direction above.",
-		section = prayerSection,
-		position = 7
-	)
-	default int prayerThreshold()
-	{
-		return 25;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.PRAYER_THRESHOLD_COLOR,
-		name = "Threshold glow color",
-		description = "Color the icon pulses in once the threshold above is reached.",
-		section = prayerSection,
-		position = 8
-	)
-	default Color prayerThresholdColor()
-	{
-		return new Color(220, 30, 30, 160);
-	}
-
 	@ConfigItem(
 		keyName = ConfigKeys.PRAYER_HIDE_AUX_WHEN_MAIN_SHOWN,
 		name = "Hide matching aux bar",
 		description = "While this main bar is shown (Compact mode active), hide the auxiliary Prayer bar too. Turn off to run both at once.",
 		section = prayerSection,
-		position = 9
+		position = 0
 	)
 	default boolean prayerHideAuxWhenMainShown()
 	{
@@ -756,7 +646,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Orientation",
 		description = "Which way this bar extends from its mount point (the Orb/Vial offsets in Global Bar Config) - West is the default and matches vanilla's own native collar direction; East/North mirror it with a flipped/rotated collar; South is the original hand-built vertical layout.",
 		section = prayerSection,
-		position = 10
+		position = 1
 	)
 	default BarOrientation prayerOrientation()
 	{
@@ -769,7 +659,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Length",
 		description = "How long the bar is, end to end.",
 		section = prayerSection,
-		position = 11
+		position = 2
 	)
 	default int prayerLength()
 	{
@@ -782,7 +672,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Width",
 		description = "How thick the bar is, across its short axis.",
 		section = prayerSection,
-		position = 12
+		position = 3
 	)
 	default int prayerWidth()
 	{
@@ -795,7 +685,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Orb/Vial horizontal offset",
 		description = "Mounts the bar this many pixels right (+) or left (-) of the orb icon's own center, before it extends outward per Orientation above.",
 		section = prayerSection,
-		position = 13
+		position = 4
 	)
 	default int prayerHorizontalOffset()
 	{
@@ -808,7 +698,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Orb/Vial vertical offset",
 		description = "Mounts the bar this many pixels down (+) or up (-) of the orb icon's own center, before it extends outward per Orientation above.",
 		section = prayerSection,
-		position = 14
+		position = 5
 	)
 	default int prayerVerticalOffset()
 	{
@@ -821,7 +711,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Frame thickness",
 		description = "Thickness of the stone frame ring. The vial fill always fills whatever's left inside it.",
 		section = prayerSection,
-		position = 15
+		position = 6
 	)
 	default int prayerFrameThickness()
 	{
@@ -834,7 +724,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Frame shadow width",
 		description = "Stroke width of the dark outline traced around the whole bar's outer edge, independent of Frame thickness above.",
 		section = prayerSection,
-		position = 16
+		position = 7
 	)
 	default int prayerFrameShadowWidth()
 	{
@@ -847,7 +737,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Bar opacity",
 		description = "Opacity of the vial fill. The regen/drain rings read more opaque than this. Doesn't affect the frame - see Frame opacity.",
 		section = prayerSection,
-		position = 17
+		position = 8
 	)
 	default int prayerBarOpacity()
 	{
@@ -860,7 +750,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Frame opacity",
 		description = "Opacity of the stone frame ring, independent of Bar opacity above.",
 		section = prayerSection,
-		position = 18
+		position = 9
 	)
 	default int prayerFrameOpacity()
 	{
@@ -868,11 +758,83 @@ public interface CompactOrbsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_REVERSE_BAR_FILL,
+		name = "Reverse bar fill",
+		description = "Flips which end the vial fill empties from first - normally the near-icon end, with the remaining \"liquid\" receding toward the far end as the value drops.",
+		section = prayerSection,
+		position = 10
+	)
+	default boolean prayerReverseBarFill()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_ACTIVE_COLOR,
+		name = "Active color",
+		description = "Bar color while any prayer is active.",
+		section = prayerSection,
+		position = 11
+	)
+	default Color prayerActiveColor()
+	{
+		return new Color(60, 170, 220);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_INACTIVE_COLOR,
+		name = "Inactive color",
+		description = "Bar color while no prayer is active.",
+		section = prayerSection,
+		position = 12
+	)
+	default Color prayerInactiveColor()
+	{
+		return new Color(25, 35, 80);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_REGEN_COLOR,
+		name = "Regen ring color",
+		description = "Regen outline color while a Prayer regeneration potion's effect is active.",
+		section = prayerSection,
+		position = 13
+	)
+	default Color prayerRegenColor()
+	{
+		return new Color(60, 170, 220);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_SHOW_REGEN,
+		name = "Show regen",
+		description = "Highlight the frame ring while a Prayer regeneration potion's effect is active, growing toward its next restored prayer point - prayer has no passive regen otherwise, so the ring stays off outside that potion's effect.",
+		section = prayerSection,
+		position = 14
+	)
+	default boolean prayerShowRegen()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_SHOW_DRAIN,
+		name = "Show drain",
+		description = "Highlight the frame ring while any prayer is active, counting down to the next prayer point drained - starts full right after a point drains and empties right before the next one, the inverse of the regen ring above. Paces itself off the real gap between your last two point losses rather than a formula, so it takes one point loss after activating a prayer (or changing gear) to start showing.",
+		section = prayerSection,
+		position = 15
+	)
+	default boolean prayerShowDrain()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = ConfigKeys.PRAYER_REGEN_DRAIN_PRIORITY,
 		name = "Regen/drain priority",
 		description = "Which ring draws on top (and reads more opaque) when this bar has both a regen ring and a drain ring showing at once.",
 		section = prayerSection,
-		position = 19
+		position = 16
 	)
 	default RegenDrainPriority prayerRegenDrainPriority()
 	{
@@ -885,7 +847,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Drain/regen ring size",
 		description = "Thickness of the regen/drain outline traced along the inside of the vial cavity.",
 		section = prayerSection,
-		position = 20
+		position = 17
 	)
 	default int prayerRegenDrainRingSize()
 	{
@@ -893,23 +855,11 @@ public interface CompactOrbsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = ConfigKeys.PRAYER_REVERSE_BAR_FILL,
-		name = "Reverse bar fill",
-		description = "Flips which end the vial fill empties from first - normally the near-icon end, with the remaining \"liquid\" receding toward the far end as the value drops.",
-		section = prayerSection,
-		position = 21
-	)
-	default boolean prayerReverseBarFill()
-	{
-		return false;
-	}
-
-	@ConfigItem(
 		keyName = ConfigKeys.PRAYER_REVERSE_REGEN_RING,
 		name = "Reverse regen ring",
 		description = "Flips which end the regen ring grows from, independently of the bar fill above.",
 		section = prayerSection,
-		position = 22
+		position = 18
 	)
 	default boolean prayerReverseRegenRing()
 	{
@@ -921,11 +871,60 @@ public interface CompactOrbsConfig extends Config
 		name = "Reverse drain ring",
 		description = "Flips which end the drain ring shrinks toward, independently of the bar fill and regen ring above.",
 		section = prayerSection,
-		position = 23
+		position = 19
 	)
 	default boolean prayerReverseDrainRing()
 	{
 		return false;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_THRESHOLD_MODE,
+		name = "Threshold mode",
+		description = "Disabled: off. Active: the icon pulses once the threshold condition below is met. Combat only: same, but only while you're in combat.",
+		section = prayerSection,
+		position = 20
+	)
+	default ThresholdMode prayerThresholdMode()
+	{
+		return ThresholdMode.DISABLED;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_THRESHOLD_DIRECTION,
+		name = "Threshold direction",
+		description = "At or below: warns when prayer points drop too low (the usual case). At or above: warns when too high instead.",
+		section = prayerSection,
+		position = 21
+	)
+	default ThresholdDirection prayerThresholdDirection()
+	{
+		return ThresholdDirection.AT_OR_BELOW;
+	}
+
+	@Range(min = 0, max = 100)
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_THRESHOLD,
+		name = "Threshold",
+		description = "Prayer points percentage the icon pulses at, per Threshold direction above.",
+		section = prayerSection,
+		position = 22
+	)
+	default int prayerThreshold()
+	{
+		return 25;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.PRAYER_THRESHOLD_COLOR,
+		name = "Threshold glow color",
+		description = "Color the icon pulses in once the threshold above is reached.",
+		section = prayerSection,
+		position = 23
+	)
+	default Color prayerThresholdColor()
+	{
+		return new Color(220, 30, 30, 160);
 	}
 
 	@ConfigItem(
@@ -976,6 +975,7 @@ public interface CompactOrbsConfig extends Config
 		return new Color(230, 200, 40);
 	}
 
+
 	@ConfigSection(
 		name = "Special Attack",
 		description = "",
@@ -983,110 +983,12 @@ public interface CompactOrbsConfig extends Config
 		position = 5
 	)
 	String specSection = "specSection";
-
-	@ConfigItem(
-		keyName = ConfigKeys.SPEC_SHOW_REGEN,
-		name = "Show regen",
-		description = "Highlight the frame ring, growing toward the next 10% of special attack energy restored - halves in period while wearing a Lightbearer, resets at full energy.",
-		section = specSection,
-		position = 0
-	)
-	default boolean specShowRegen()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.SPEC_DEFAULT_COLOR,
-		name = "Default color",
-		description = "Bar color while Special Attack isn't queued.",
-		section = specSection,
-		position = 1
-	)
-	default Color specDefaultColor()
-	{
-		return new Color(220, 40, 180);
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.SPEC_ACTIVE_COLOR,
-		name = "Active color",
-		description = "Bar color while Special Attack is queued (armed for your next hit).",
-		section = specSection,
-		position = 2
-	)
-	default Color specActiveColor()
-	{
-		return new Color(255, 255, 255);
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.SPEC_REGEN_COLOR,
-		name = "Regen ring color",
-		description = "Regen outline color, growing toward the next 10% of special attack energy restored.",
-		section = specSection,
-		position = 3
-	)
-	default Color specRegenColor()
-	{
-		return new Color(220, 40, 180);
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.SPEC_THRESHOLD_MODE,
-		name = "Threshold mode",
-		description = "Disabled: off. Active: the icon pulses once the threshold condition below is met. Combat only: same, but only while you're in combat.",
-		section = specSection,
-		position = 4
-	)
-	default ThresholdMode specThresholdMode()
-	{
-		return ThresholdMode.DISABLED;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.SPEC_THRESHOLD_DIRECTION,
-		name = "Threshold direction",
-		description = "At or above: \"ready to use\" alert once energy reaches the threshold (matches v1's original Spec threshold feature, and the usual case). At or below: warns when energy is too low instead.",
-		section = specSection,
-		position = 5
-	)
-	default ThresholdDirection specThresholdDirection()
-	{
-		return ThresholdDirection.AT_OR_ABOVE;
-	}
-
-	@Range(min = 0, max = 100)
-	@ConfigItem(
-		keyName = ConfigKeys.SPEC_THRESHOLD,
-		name = "Threshold",
-		description = "Special Attack energy percentage the icon pulses at, per Threshold direction above.",
-		section = specSection,
-		position = 6
-	)
-	default int specThreshold()
-	{
-		return 50;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.SPEC_THRESHOLD_COLOR,
-		name = "Threshold glow color",
-		description = "Color the icon pulses in once the threshold above is reached.",
-		section = specSection,
-		position = 7
-	)
-	default Color specThresholdColor()
-	{
-		return new Color(255, 215, 0, 160);
-	}
-
 	@ConfigItem(
 		keyName = ConfigKeys.SPEC_HIDE_AUX_WHEN_MAIN_SHOWN,
 		name = "Hide matching aux bar",
 		description = "While this main bar is shown (Compact mode active), hide the auxiliary Special Attack bar too. Turn off to run both at once.",
 		section = specSection,
-		position = 8
+		position = 0
 	)
 	default boolean specHideAuxWhenMainShown()
 	{
@@ -1098,7 +1000,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Orientation",
 		description = "Which way this bar extends from its mount point (the Orb/Vial offsets in Global Bar Config) - West is the default and matches vanilla's own native collar direction; East/North mirror it with a flipped/rotated collar; South is the original hand-built vertical layout.",
 		section = specSection,
-		position = 9
+		position = 1
 	)
 	default BarOrientation specOrientation()
 	{
@@ -1111,7 +1013,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Length",
 		description = "How long the bar is, end to end.",
 		section = specSection,
-		position = 10
+		position = 2
 	)
 	default int specLength()
 	{
@@ -1124,7 +1026,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Width",
 		description = "How thick the bar is, across its short axis.",
 		section = specSection,
-		position = 11
+		position = 3
 	)
 	default int specWidth()
 	{
@@ -1137,7 +1039,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Orb/Vial horizontal offset",
 		description = "Mounts the bar this many pixels right (+) or left (-) of the orb icon's own center, before it extends outward per Orientation above.",
 		section = specSection,
-		position = 12
+		position = 4
 	)
 	default int specHorizontalOffset()
 	{
@@ -1150,7 +1052,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Orb/Vial vertical offset",
 		description = "Mounts the bar this many pixels down (+) or up (-) of the orb icon's own center, before it extends outward per Orientation above.",
 		section = specSection,
-		position = 13
+		position = 5
 	)
 	default int specVerticalOffset()
 	{
@@ -1163,7 +1065,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Frame thickness",
 		description = "Thickness of the stone frame ring. The vial fill always fills whatever's left inside it.",
 		section = specSection,
-		position = 14
+		position = 6
 	)
 	default int specFrameThickness()
 	{
@@ -1176,7 +1078,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Frame shadow width",
 		description = "Stroke width of the dark outline traced around the whole bar's outer edge, independent of Frame thickness above.",
 		section = specSection,
-		position = 15
+		position = 7
 	)
 	default int specFrameShadowWidth()
 	{
@@ -1189,7 +1091,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Bar opacity",
 		description = "Opacity of the vial fill. The regen/drain rings read more opaque than this. Doesn't affect the frame - see Frame opacity.",
 		section = specSection,
-		position = 16
+		position = 8
 	)
 	default int specBarOpacity()
 	{
@@ -1202,7 +1104,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Frame opacity",
 		description = "Opacity of the stone frame ring, independent of Bar opacity above.",
 		section = specSection,
-		position = 17
+		position = 9
 	)
 	default int specFrameOpacity()
 	{
@@ -1210,11 +1112,71 @@ public interface CompactOrbsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = ConfigKeys.SPEC_REVERSE_BAR_FILL,
+		name = "Reverse bar fill",
+		description = "Flips which end the vial fill empties from first - normally the near-icon end, with the remaining \"liquid\" receding toward the far end as the value drops.",
+		section = specSection,
+		position = 10
+	)
+	default boolean specReverseBarFill()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.SPEC_DEFAULT_COLOR,
+		name = "Default color",
+		description = "Bar color while Special Attack isn't queued.",
+		section = specSection,
+		position = 11
+	)
+	default Color specDefaultColor()
+	{
+		return new Color(220, 40, 180);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.SPEC_ACTIVE_COLOR,
+		name = "Active color",
+		description = "Bar color while Special Attack is queued (armed for your next hit).",
+		section = specSection,
+		position = 12
+	)
+	default Color specActiveColor()
+	{
+		return new Color(255, 255, 255);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.SPEC_REGEN_COLOR,
+		name = "Regen ring color",
+		description = "Regen outline color, growing toward the next 10% of special attack energy restored.",
+		section = specSection,
+		position = 13
+	)
+	default Color specRegenColor()
+	{
+		return new Color(220, 40, 180);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.SPEC_SHOW_REGEN,
+		name = "Show regen",
+		description = "Highlight the frame ring, growing toward the next 10% of special attack energy restored - halves in period while wearing a Lightbearer, resets at full energy.",
+		section = specSection,
+		position = 14
+	)
+	default boolean specShowRegen()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = ConfigKeys.SPEC_REGEN_DRAIN_PRIORITY,
 		name = "Regen/drain priority",
 		description = "Which ring draws on top (and reads more opaque) when this bar has both a regen ring and a drain ring showing at once.",
 		section = specSection,
-		position = 18
+		position = 15
 	)
 	default RegenDrainPriority specRegenDrainPriority()
 	{
@@ -1227,7 +1189,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Drain/regen ring size",
 		description = "Thickness of the regen/drain outline traced along the inside of the vial cavity.",
 		section = specSection,
-		position = 19
+		position = 16
 	)
 	default int specRegenDrainRingSize()
 	{
@@ -1235,23 +1197,11 @@ public interface CompactOrbsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = ConfigKeys.SPEC_REVERSE_BAR_FILL,
-		name = "Reverse bar fill",
-		description = "Flips which end the vial fill empties from first - normally the near-icon end, with the remaining \"liquid\" receding toward the far end as the value drops.",
-		section = specSection,
-		position = 20
-	)
-	default boolean specReverseBarFill()
-	{
-		return false;
-	}
-
-	@ConfigItem(
 		keyName = ConfigKeys.SPEC_REVERSE_REGEN_RING,
 		name = "Reverse regen ring",
 		description = "Flips which end the regen ring grows from, independently of the bar fill above.",
 		section = specSection,
-		position = 21
+		position = 17
 	)
 	default boolean specReverseRegenRing()
 	{
@@ -1263,11 +1213,60 @@ public interface CompactOrbsConfig extends Config
 		name = "Reverse drain ring",
 		description = "Flips which end the drain ring shrinks toward, independently of the bar fill and regen ring above.",
 		section = specSection,
-		position = 22
+		position = 18
 	)
 	default boolean specReverseDrainRing()
 	{
 		return false;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.SPEC_THRESHOLD_MODE,
+		name = "Threshold mode",
+		description = "Disabled: off. Active: the icon pulses once the threshold condition below is met. Combat only: same, but only while you're in combat.",
+		section = specSection,
+		position = 19
+	)
+	default ThresholdMode specThresholdMode()
+	{
+		return ThresholdMode.DISABLED;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.SPEC_THRESHOLD_DIRECTION,
+		name = "Threshold direction",
+		description = "At or above: \"ready to use\" alert once energy reaches the threshold (matches v1's original Spec threshold feature, and the usual case). At or below: warns when energy is too low instead.",
+		section = specSection,
+		position = 20
+	)
+	default ThresholdDirection specThresholdDirection()
+	{
+		return ThresholdDirection.AT_OR_ABOVE;
+	}
+
+	@Range(min = 0, max = 100)
+	@ConfigItem(
+		keyName = ConfigKeys.SPEC_THRESHOLD,
+		name = "Threshold",
+		description = "Special Attack energy percentage the icon pulses at, per Threshold direction above.",
+		section = specSection,
+		position = 21
+	)
+	default int specThreshold()
+	{
+		return 50;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.SPEC_THRESHOLD_COLOR,
+		name = "Threshold glow color",
+		description = "Color the icon pulses in once the threshold above is reached.",
+		section = specSection,
+		position = 22
+	)
+	default Color specThresholdColor()
+	{
+		return new Color(255, 215, 0, 160);
 	}
 
 	@ConfigItem(
@@ -1282,6 +1281,7 @@ public interface CompactOrbsConfig extends Config
 		return false;
 	}
 
+
 	@ConfigSection(
 		name = "Run Energy",
 		description = "",
@@ -1289,110 +1289,12 @@ public interface CompactOrbsConfig extends Config
 		position = 6
 	)
 	String runSection = "runSection";
-
-	@ConfigItem(
-		keyName = ConfigKeys.RUN_SHOW_REGEN,
-		name = "Show regen",
-		description = "Highlight the frame ring with run energy's continuous per-tick regen - tracks smoothly rather than jumping, matching OSRS's 2025 run energy rework.",
-		section = runSection,
-		position = 0
-	)
-	default boolean runShowRegen()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.RUN_DEFAULT_COLOR,
-		name = "Default color",
-		description = "Bar color while Run is toggled off.",
-		section = runSection,
-		position = 1
-	)
-	default Color runDefaultColor()
-	{
-		return new Color(220, 160, 40);
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.RUN_ACTIVE_COLOR,
-		name = "Active color",
-		description = "Bar color while Run is toggled on.",
-		section = runSection,
-		position = 2
-	)
-	default Color runActiveColor()
-	{
-		return new Color(212, 175, 55);
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.RUN_REGEN_COLOR,
-		name = "Regen ring color",
-		description = "Regen outline color, tracking run energy's continuous per-tick regen.",
-		section = runSection,
-		position = 3
-	)
-	default Color runRegenColor()
-	{
-		return new Color(220, 160, 40);
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.RUN_THRESHOLD_MODE,
-		name = "Threshold mode",
-		description = "Disabled: off. Active: the icon pulses once the threshold condition below is met. Combat only: same, but only while you're in combat.",
-		section = runSection,
-		position = 4
-	)
-	default ThresholdMode runThresholdMode()
-	{
-		return ThresholdMode.DISABLED;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.RUN_THRESHOLD_DIRECTION,
-		name = "Threshold direction",
-		description = "At or below: warns when run energy drops too low (the usual case). At or above: warns when too high instead.",
-		section = runSection,
-		position = 5
-	)
-	default ThresholdDirection runThresholdDirection()
-	{
-		return ThresholdDirection.AT_OR_BELOW;
-	}
-
-	@Range(min = 0, max = 100)
-	@ConfigItem(
-		keyName = ConfigKeys.RUN_THRESHOLD,
-		name = "Threshold",
-		description = "Run energy percentage the icon pulses at, per Threshold direction above.",
-		section = runSection,
-		position = 6
-	)
-	default int runThreshold()
-	{
-		return 20;
-	}
-
-	@ConfigItem(
-		keyName = ConfigKeys.RUN_THRESHOLD_COLOR,
-		name = "Threshold glow color",
-		description = "Color the icon pulses in once the threshold above is reached.",
-		section = runSection,
-		position = 7
-	)
-	default Color runThresholdColor()
-	{
-		return new Color(220, 30, 30, 160);
-	}
-
 	@ConfigItem(
 		keyName = ConfigKeys.RUN_HIDE_AUX_WHEN_MAIN_SHOWN,
 		name = "Hide matching aux bar",
 		description = "While this main bar is shown (Compact mode active), hide the auxiliary Run Energy bar too. Turn off to run both at once.",
 		section = runSection,
-		position = 8
+		position = 0
 	)
 	default boolean runHideAuxWhenMainShown()
 	{
@@ -1404,7 +1306,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Orientation",
 		description = "Which way this bar extends from its mount point (the Orb/Vial offsets in Global Bar Config) - West is the default and matches vanilla's own native collar direction; East/North mirror it with a flipped/rotated collar; South is the original hand-built vertical layout.",
 		section = runSection,
-		position = 9
+		position = 1
 	)
 	default BarOrientation runOrientation()
 	{
@@ -1417,7 +1319,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Length",
 		description = "How long the bar is, end to end.",
 		section = runSection,
-		position = 10
+		position = 2
 	)
 	default int runLength()
 	{
@@ -1430,7 +1332,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Width",
 		description = "How thick the bar is, across its short axis.",
 		section = runSection,
-		position = 11
+		position = 3
 	)
 	default int runWidth()
 	{
@@ -1443,7 +1345,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Orb/Vial horizontal offset",
 		description = "Mounts the bar this many pixels right (+) or left (-) of the orb icon's own center, before it extends outward per Orientation above.",
 		section = runSection,
-		position = 12
+		position = 4
 	)
 	default int runHorizontalOffset()
 	{
@@ -1456,7 +1358,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Orb/Vial vertical offset",
 		description = "Mounts the bar this many pixels down (+) or up (-) of the orb icon's own center, before it extends outward per Orientation above.",
 		section = runSection,
-		position = 13
+		position = 5
 	)
 	default int runVerticalOffset()
 	{
@@ -1469,7 +1371,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Frame thickness",
 		description = "Thickness of the stone frame ring. The vial fill always fills whatever's left inside it.",
 		section = runSection,
-		position = 14
+		position = 6
 	)
 	default int runFrameThickness()
 	{
@@ -1482,7 +1384,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Frame shadow width",
 		description = "Stroke width of the dark outline traced around the whole bar's outer edge, independent of Frame thickness above.",
 		section = runSection,
-		position = 15
+		position = 7
 	)
 	default int runFrameShadowWidth()
 	{
@@ -1495,7 +1397,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Bar opacity",
 		description = "Opacity of the vial fill. The regen/drain rings read more opaque than this. Doesn't affect the frame - see Frame opacity.",
 		section = runSection,
-		position = 16
+		position = 8
 	)
 	default int runBarOpacity()
 	{
@@ -1508,7 +1410,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Frame opacity",
 		description = "Opacity of the stone frame ring, independent of Bar opacity above.",
 		section = runSection,
-		position = 17
+		position = 9
 	)
 	default int runFrameOpacity()
 	{
@@ -1516,11 +1418,71 @@ public interface CompactOrbsConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = ConfigKeys.RUN_REVERSE_BAR_FILL,
+		name = "Reverse bar fill",
+		description = "Flips which end the vial fill empties from first - normally the near-icon end, with the remaining \"liquid\" receding toward the far end as the value drops.",
+		section = runSection,
+		position = 10
+	)
+	default boolean runReverseBarFill()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_DEFAULT_COLOR,
+		name = "Default color",
+		description = "Bar color while Run is toggled off.",
+		section = runSection,
+		position = 11
+	)
+	default Color runDefaultColor()
+	{
+		return new Color(220, 160, 40);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_ACTIVE_COLOR,
+		name = "Active color",
+		description = "Bar color while Run is toggled on.",
+		section = runSection,
+		position = 12
+	)
+	default Color runActiveColor()
+	{
+		return new Color(212, 175, 55);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_REGEN_COLOR,
+		name = "Regen ring color",
+		description = "Regen outline color, tracking run energy's continuous per-tick regen.",
+		section = runSection,
+		position = 13
+	)
+	default Color runRegenColor()
+	{
+		return new Color(220, 160, 40);
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_SHOW_REGEN,
+		name = "Show regen",
+		description = "Highlight the frame ring with run energy's continuous per-tick regen - tracks smoothly rather than jumping, matching OSRS's 2025 run energy rework.",
+		section = runSection,
+		position = 14
+	)
+	default boolean runShowRegen()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = ConfigKeys.RUN_REGEN_DRAIN_PRIORITY,
 		name = "Regen/drain priority",
 		description = "Which ring draws on top (and reads more opaque) when this bar has both a regen ring and a drain ring showing at once.",
 		section = runSection,
-		position = 18
+		position = 15
 	)
 	default RegenDrainPriority runRegenDrainPriority()
 	{
@@ -1533,7 +1495,7 @@ public interface CompactOrbsConfig extends Config
 		name = "Drain/regen ring size",
 		description = "Thickness of the regen/drain outline traced along the inside of the vial cavity.",
 		section = runSection,
-		position = 19
+		position = 16
 	)
 	default int runRegenDrainRingSize()
 	{
@@ -1541,23 +1503,11 @@ public interface CompactOrbsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = ConfigKeys.RUN_REVERSE_BAR_FILL,
-		name = "Reverse bar fill",
-		description = "Flips which end the vial fill empties from first - normally the near-icon end, with the remaining \"liquid\" receding toward the far end as the value drops.",
-		section = runSection,
-		position = 20
-	)
-	default boolean runReverseBarFill()
-	{
-		return false;
-	}
-
-	@ConfigItem(
 		keyName = ConfigKeys.RUN_REVERSE_REGEN_RING,
 		name = "Reverse regen ring",
 		description = "Flips which end the regen ring grows from, independently of the bar fill above.",
 		section = runSection,
-		position = 21
+		position = 17
 	)
 	default boolean runReverseRegenRing()
 	{
@@ -1569,11 +1519,60 @@ public interface CompactOrbsConfig extends Config
 		name = "Reverse drain ring",
 		description = "Flips which end the drain ring shrinks toward, independently of the bar fill and regen ring above.",
 		section = runSection,
-		position = 22
+		position = 18
 	)
 	default boolean runReverseDrainRing()
 	{
 		return false;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_THRESHOLD_MODE,
+		name = "Threshold mode",
+		description = "Disabled: off. Active: the icon pulses once the threshold condition below is met. Combat only: same, but only while you're in combat.",
+		section = runSection,
+		position = 19
+	)
+	default ThresholdMode runThresholdMode()
+	{
+		return ThresholdMode.DISABLED;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_THRESHOLD_DIRECTION,
+		name = "Threshold direction",
+		description = "At or below: warns when run energy drops too low (the usual case). At or above: warns when too high instead.",
+		section = runSection,
+		position = 20
+	)
+	default ThresholdDirection runThresholdDirection()
+	{
+		return ThresholdDirection.AT_OR_BELOW;
+	}
+
+	@Range(min = 0, max = 100)
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_THRESHOLD,
+		name = "Threshold",
+		description = "Run energy percentage the icon pulses at, per Threshold direction above.",
+		section = runSection,
+		position = 21
+	)
+	default int runThreshold()
+	{
+		return 20;
+	}
+
+	@ConfigItem(
+		keyName = ConfigKeys.RUN_THRESHOLD_COLOR,
+		name = "Threshold glow color",
+		description = "Color the icon pulses in once the threshold above is reached.",
+		section = runSection,
+		position = 22
+	)
+	default Color runThresholdColor()
+	{
+		return new Color(220, 30, 30, 160);
 	}
 
 	@ConfigItem(
@@ -1623,6 +1622,7 @@ public interface CompactOrbsConfig extends Config
 	{
 		return new Color(230, 200, 40);
 	}
+
 
 	// Empty on purpose - same simulated-nesting trick as Main/Aux Bar
 	// Configuration above.
@@ -3632,31 +3632,147 @@ public interface CompactOrbsConfig extends Config
 		return new Color(220, 30, 30, 160);
 	}
 
+	// Empty on purpose - same simulated-nesting trick as Main/Aux Bar
+	// Configuration above: an always-expanded label with no items of its
+	// own, immediately followed by the two real (collapsed) tutorial
+	// sections below.
+	//
+	// Known RuneLite quirk, confirmed live, not fixable from plugin code:
+	// the mouse re-entering a config item's own row bounds snaps the panel's
+	// scroll back up while reading it. Traced into ConfigPanel's bytecode -
+	// every item's name label gets this hover/click/Reset-popup wiring
+	// unconditionally, for every @ConfigItem type, before any type-specific
+	// rendering happens; it's not specific to HTML/void items, just far
+	// more noticeable there since the label is the item's only interactive
+	// element. No plugin-facing hook exists to change it. Worked around
+	// below by splitting what was originally one long HTML block per
+	// section into one short boolean checkbox per step (see Main/Aux Bar
+	// Tutorial) - each row is now short enough to read without lingering
+	// over it while scrolling, which is what actually triggers the snap.
 	@ConfigSection(
 		name = "Tutorial",
 		description = "",
-		closedByDefault = true,
 		position = 17
 	)
-	String hideAndSwapUpdate = "hideAndSwapUpdate";
-	@ConfigItem(
-		keyName = "hideAndSwapUpdate",
-		name = "<html>Orb hiding has been moved to the in-game Edit-mode. <br/> <br/>" +
-			"Enable Edit-mode (either works): <br/>" +
-			"- Right-click the toggle-button (eye) <br/>" +
-			"- Configure the Hotkey for Edit-mode </html>",
-		description = "",
-		section = hideAndSwapUpdate
-	)
-	void hideAndSwapUpdate();
+	String tutorial = "tutorial";
 
 	@ConfigSection(
-		name = "Testing",
-		description = "Temporary dial-in sliders - not meant to stay long-term.",
+		name = "Main Bar Tutorial",
+		description = "",
 		closedByDefault = true,
 		position = 18
 	)
-	String testing = "testing";
+	String mainBarTutorial = "mainBarTutorial";
+
+	// One checkbox per step instead of a single HTML block: each row's
+	// label is now short enough to read without needing to linger with the
+	// mouse over it while scrolling, which is what triggers the scroll-snap
+	// quirk documented above. Doubles as an actual usable checklist - tick
+	// each one off as you complete it, same "sets nothing" convention as
+	// the per-step booleans below it, nothing reads these values.
+	@ConfigItem(
+		keyName = "mainBarTutorialStep1",
+		name = "Enable main bars",
+		description = "Enable main bar mode via the toggle button (eye icon on the minimap) or hotkey.",
+		section = mainBarTutorial,
+		position = 0
+	)
+	default boolean mainBarTutorialStep1()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "mainBarTutorialStep2",
+		name = "Enable edit mode",
+		description = "Enable edit mode (right-click the toggle button, or its hotkey) to see the zone as a red overlay, with an optional grid.",
+		section = mainBarTutorial,
+		position = 1
+	)
+	default boolean mainBarTutorialStep2()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "mainBarTutorialStep3",
+		name = "Position the zone",
+		description = "Position the zone with Alt+drag.",
+		section = mainBarTutorial,
+		position = 2
+	)
+	default boolean mainBarTutorialStep3()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "mainBarTutorialStep4",
+		name = "Customize bars",
+		description = "Customize each bar via the config panel above.",
+		section = mainBarTutorial,
+		position = 3
+	)
+	default boolean mainBarTutorialStep4()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "mainBarTutorialStep5",
+		name = "Position bars",
+		description = "Position each bar within edit mode.",
+		section = mainBarTutorial,
+		position = 4
+	)
+	default boolean mainBarTutorialStep5()
+	{
+		return false;
+	}
+
+	@ConfigSection(
+		name = "Aux Bar Tutorial",
+		description = "",
+		closedByDefault = true,
+		position = 19
+	)
+	String auxBarTutorial = "auxBarTutorial";
+
+	@ConfigItem(
+		keyName = "auxBarTutorialStep1",
+		name = "Docked or Floating",
+		description = "Decide Docked (pinned to a side of the inventory panel) or Floating (drag anywhere) via each bar's Placement setting.",
+		section = auxBarTutorial,
+		position = 0
+	)
+	default boolean auxBarTutorialStep1()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "auxBarTutorialStep2",
+		name = "Decorate",
+		description = "Decorate - colors, size, and the rest of each bar's settings above.",
+		section = auxBarTutorial,
+		position = 1
+	)
+	default boolean auxBarTutorialStep2()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "auxBarTutorialStep3",
+		name = "Done",
+		description = "Done - a simple, lightweight alternative to the main bars.",
+		section = auxBarTutorial,
+		position = 2
+	)
+	default boolean auxBarTutorialStep3()
+	{
+		return false;
+	}
 
 	//hidden from the config panel
 	@ConfigItem(
